@@ -481,17 +481,32 @@ function Employers({data,setData}){
 
 // ── IMAGE UPLOAD ──────────────────────────────────────────────────────────────
 function ImgUpload({form,setForm}){
-  const handleImageChange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setForm(fm=>({...fm,image:ev.target.result}));};r.readAsDataURL(f);};
+  const [uploading,setUploading]=React.useState(false);
+  const handleImageChange=async e=>{
+    const f=e.target.files[0];if(!f)return;
+    setUploading(true);
+    try{
+      const jobId=form.id||('j'+Date.now());
+      const ext=f.type.includes('png')?'png':'jpg';
+      const filename=`job-${jobId}.${ext}`;
+      const {error}=await sb.storage.from('job-images').upload(filename,f,{upsert:true,contentType:f.type});
+      if(error){alert('שגיאה בהעלאת תמונה');console.warn(error);return;}
+      const {data:urlData}=sb.storage.from('job-images').getPublicUrl(filename);
+      setForm(fm=>({...fm,image:urlData.publicUrl,imageUrl:urlData.publicUrl}));
+    }catch(err){alert('שגיאה בהעלאת תמונה');console.warn(err);}
+    finally{setUploading(false);}
+  };
+  const previewUrl=form.imageUrl||form.image||'';
   return <div style={{marginBottom:16}}>
     <div style={{fontSize:14,fontWeight:600,marginBottom:6}}>תמונה למשרה</div>
     <div style={{display:'flex',gap:12,alignItems:'center'}}>
-      {form.image?<div style={{position:'relative'}}>
-        <img src={form.image} alt="" style={{width:120,height:80,objectFit:'cover',border:'2px solid #333',borderRadius:3}}/>
-        <button onClick={()=>setForm(f=>({...f,image:''}))} style={{position:'absolute',top:-8,left:-8,background:ACC,color:'white',border:'none',borderRadius:'50%',width:20,height:20,cursor:'pointer',fontSize:12}}>✕</button>
+      {previewUrl?<div style={{position:'relative'}}>
+        <img src={previewUrl} alt="" style={{width:120,height:80,objectFit:'cover',border:'2px solid #333',borderRadius:3}}/>
+        <button onClick={()=>setForm(f=>({...f,image:'',imageUrl:''}))} style={{position:'absolute',top:-8,left:-8,background:ACC,color:'white',border:'none',borderRadius:'50%',width:20,height:20,cursor:'pointer',fontSize:12}}>✕</button>
       </div>:<div className="sbox" style={{width:120,height:80,background:'#f5f0e8',display:'flex',alignItems:'center',justifyContent:'center',color:MUT,fontSize:13}}>אין תמונה</div>}
-      <label style={{cursor:'pointer',background:'white',border:'2px solid #333',borderRadius:3,padding:'7px 14px',fontSize:14,fontWeight:600}}>
-        📸 העלה תמונה
-        <input type="file" accept="image/*" style={{display:'none'}} onChange={handleImageChange}/>
+      <label style={{cursor:uploading?'wait':'pointer',background:'white',border:'2px solid #333',borderRadius:3,padding:'7px 14px',fontSize:14,fontWeight:600,opacity:uploading?0.6:1}}>
+        {uploading?'⏳ מעלה...':'📸 העלה תמונה'}
+        <input type="file" accept="image/*" style={{display:'none'}} onChange={handleImageChange} disabled={uploading}/>
       </label>
     </div>
   </div>;
@@ -541,21 +556,14 @@ function Jobs({data,setData}){
 
   const openAdd=()=>{setForm({jobNumber:nextNum(),title:'',publishTitle:'',domain:'',role:'',employerId:data.employers[0]?.id||'',type:'משרה מלאה',location:'',salary:'',status:'פתוח',deadline:'',description:'',requirements:'',benefits:'',image:'',imageUrl:''});setModal('add');};
   const openEdit=j=>{setForm({...j});setModal('edit');};
-  const save=async()=>{
-    let savedForm = {...form};
-    // If image is base64, upload to Supabase Storage
-    if(form.image && form.image.startsWith('data:')) {
-      const jobId = form.id || ('j'+Date.now());
-      const url = await uploadImageToStorage(form.image, jobId);
-      if(url) savedForm = {...savedForm, imageUrl: url};
-    }
+  const save=()=>{
+    const savedForm={...form, image: form.imageUrl||''};
     if(modal==='add') setData(d=>({...d,jobs:[...d.jobs,{...savedForm,id:'j'+Date.now(),candidates:[],createdAt:new Date().toLocaleDateString('he-IL')}]}));
     else setData(d=>({...d,jobs:d.jobs.map(j=>j.id===savedForm.id?savedForm:j)}));
     setModal(null);
   };
   const del=id=>{if(confirm('למחוק משרה?'))setData(d=>({...d,jobs:d.jobs.filter(j=>j.id!==id)}));};
 
-  const handleImageChange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setForm(fm=>({...fm,image:ev.target.result}));};r.readAsDataURL(f);};
 
   return <div style={{padding:28}} className="mobile-pad">
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
