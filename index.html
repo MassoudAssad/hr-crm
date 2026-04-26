@@ -537,7 +537,8 @@ function Jobs({data,setData}){
   };
   const del=id=>{if(confirm('למחוק משרה?'))setData(d=>({...d,jobs:d.jobs.filter(j=>j.id!==id)}));};
 
-  const ImgUpload=()=><div style={{marginBottom:16}}>
+  const handleImageChange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setForm(fm=>({...fm,image:ev.target.result}));};r.readAsDataURL(f);};
+const ImgUpload=()=><div style={{marginBottom:16}}>
     <div style={{fontSize:14,fontWeight:600,marginBottom:6}}>תמונה למשרה</div>
     <div style={{display:'flex',gap:12,alignItems:'center'}}>
       {form.image?<div style={{position:'relative'}}>
@@ -546,14 +547,8 @@ function Jobs({data,setData}){
       </div>:<div className="sbox" style={{width:120,height:80,background:'#f5f0e8',display:'flex',alignItems:'center',justifyContent:'center',color:MUT,fontSize:13}}>אין תמונה</div>}
       <label style={{cursor:'pointer',background:'white',border:'2px solid #333',borderRadius:3,padding:'7px 14px',fontSize:14,fontWeight:600}}>
         📸 העלה תמונה
-        <input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{
-  const f=e.target.files[0];
-  if(!f)return;
-  const r=new FileReader();
-  r.onload=ev=>{setForm(fm=>({...fm,image:ev.target.result}));};
-  r.onerror=err=>console.error('FileReader error:',err);
-  r.readAsDataURL(f);
-}}/>
+        <input type="file" accept="image/*" style={{display:'none'}} onChange={handleImageChange}/>
+
       </label>
     </div>
   </div>;
