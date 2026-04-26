@@ -518,7 +518,7 @@ function Jobs({data,setData}){
     };
     // Use encodeURIComponent on the base64 to preserve + and / characters
     const encoded=encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(p)))));
-    return `https://crm-hr.topgroup4u.com/job-landing-page?job=${encoded}`;
+    return `https://crm-hr.topgroup4u.com/job-landing-page.html?job=${encoded}`;
   };
 
   const openAdd=()=>{setForm({jobNumber:nextNum(),title:'',publishTitle:'',domain:'',role:'',employerId:data.employers[0]?.id||'',type:'משרה מלאה',location:'',salary:'',status:'פתוח',deadline:'',description:'',requirements:'',benefits:'',image:'',imageUrl:''});setModal('add');};
@@ -611,7 +611,7 @@ function Jobs({data,setData}){
         <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
           <Btn variant="primary" onClick={()=>window.open(getUrl(pubJob),'_blank')}>🚀 פתח דף נחיתה</Btn>
           <Btn onClick={()=>{
-            const fullUrl=window.location.origin+'/'+getUrl(pubJob);
+            const fullUrl=getUrl(pubJob);
             navigator.clipboard?.writeText(fullUrl).then(()=>alert('✅ הקישור הועתק!')).catch(()=>{
               // fallback
               const ta=document.createElement('textarea');
