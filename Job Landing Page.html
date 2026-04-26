@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>טופ גרופ – דרושים</title>
+
+<!-- Open Graph / Facebook / LinkedIn -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="טופ גרופ גיוס והשמה">
+<meta property="og:title" id="og-title" content="משרה חדשה – טופ גרופ גיוס והשמה">
+<meta property="og:description" id="og-desc" content="הצטרף לצוות שלנו! הגש מועמדות עכשיו דרך טופ גרופ גיוס והשמה">
+<meta property="og:image" content="https://crm-hr.topgroup4u.com/og-image.png">
+<meta property="og:url" id="og-url" content="https://crm-hr.topgroup4u.com">
+<meta property="og:locale" content="he_IL">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" id="tw-title" content="משרה חדשה – טופ גרופ">
+<meta name="twitter:description" id="tw-desc" content="הגש מועמדות עכשיו">
+<meta name="twitter:image" content="https://crm-hr.topgroup4u.com/og-image.png">
+
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Heebo', sans-serif; background: #f4f6fa; color: #222; direction: rtl; }
+  .page-wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 80px; }
+  .header { background: #1a1a2e; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; }
+  .logo-text { color: #e85d26; font-size: 22px; font-weight: 800; }
+  .logo-sub { color: rgba(255,255,255,0.5); font-size: 13px; }
+  .header-badge { background: rgba(232,93,38,0.2); border: 1px solid #e85d26; color: #e85d26; border-radius: 20px; padding: 4px 14px; font-size: 13px; font-weight: 600; }
+  .job-hero { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,0.08); margin: 24px 0 20px; }
+  .job-image { width: 100%; height: 240px; object-fit: cover; display: block; }
+  .job-image-placeholder { width: 100%; height: 180px; background: linear-gradient(135deg, #1a1a2e 0%, #e85d26 100%); display: flex; align-items: center; justify-content: center; font-size: 64px; }
+  .job-body { padding: 28px; }
+  .job-number { color: #e85d26; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .job-title { font-size: 28px; font-weight: 800; margin-bottom: 6px; line-height: 1.2; }
+  .job-company { font-size: 16px; color: #666; margin-bottom: 20px; }
+  .job-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .job-tag { display: flex; align-items: center; gap: 5px; background: #f4f6fa; border: 1px solid #e0e4ed; border-radius: 20px; padding: 5px 14px; font-size: 14px; color: #444; }
+  .salary-tag { background: #fff5f0; border-color: #fcd5c0; color: #c0440d; font-weight: 700; }
+  .section-title { font-size: 17px; font-weight: 700; margin-bottom: 12px; color: #1a1a2e; padding-bottom: 8px; border-bottom: 2px solid #f0f0f0; }
+  .content-section { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); margin-bottom: 16px; }
+  .form-card { background: white; border-radius: 12px; padding: 28px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); }
+  .form-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; color: #1a1a2e; }
+  .form-sub { font-size: 14px; color: #888; margin-bottom: 24px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 14px; font-weight: 600; color: #333; }
+  .form-input { padding: 10px 14px; border: 1.5px solid #dde1ea; border-radius: 8px; font-family: 'Heebo'; font-size: 14px; color: #222; transition: border-color .2s; outline: none; }
+  .form-input:focus { border-color: #e85d26; box-shadow: 0 0 0 3px rgba(232,93,38,0.1); }
+  .form-textarea { resize: vertical; min-height: 90px; }
+  .cv-upload { border: 2px dashed #dde1ea; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all .2s; }
+  .cv-upload:hover { border-color: #e85d26; background: #fff5f0; }
+  .cv-upload.has-file { border-color: #4caf50; background: #f1f8e9; }
+  .submit-btn { width: 100%; padding: 14px; background: #e85d26; color: white; border: none; border-radius: 8px; font-family: 'Heebo'; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 6px; }
+  .submit-btn:hover { background: #c94d1a; }
+  .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+  .success-card { background: white; border-radius: 12px; padding: 48px 28px; text-align: center; box-shadow: 0 2px 16px rgba(0,0,0,0.08); }
+  .footer { text-align: center; color: #aaa; font-size: 13px; margin-top: 40px; }
+  @media (max-width: 540px) { .form-grid { grid-template-columns: 1fr; } .job-title { font-size: 22px; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="logo-text">טופ גרופ</div>
+    <div class="logo-sub">גיוס והשמה</div>
+  </div>
+  <div class="header-badge">דרושים</div>
+</div>
+
+<div class="page-wrap" id="app">
+  <div style="text-align:center;padding:60px 0;color:#888;font-size:18px;">טוען משרה...</div>
+</div>
+
+<script>
+(function(){
+  const app = document.getElementById('app');
+
+  function getJob(){
+    try {
+      // Support both query param (?job=) and hash (#)
+      const params = new URLSearchParams(window.location.search);
+      const jobParam = params.get('job');
+      if (jobParam) return JSON.parse(decodeURIComponent(escape(atob(jobParam))));
+      const hash = window.location.hash.slice(1);
+      if (hash) return JSON.parse(decodeURIComponent(escape(atob(hash))));
+      return null;
+    } catch(e) { return null; }
+  }
+
+  const job = getJob();
+
+  if (!job) {
+    app.innerHTML = `<div class="form-card" style="margin-top:40px;text-align:center"><div style="font-size:48px;margin-bottom:16px">😕</div><div style="font-size:22px;font-weight:800;margin-bottom:10px">המשרה לא נמצאה</div><div style="font-size:15px;color:#888">הקישור שגוי – פנה למגייס שלך לקבלת קישור מעודכן.</div></div>`;
+    return;
+  }
+
+  // Update OG tags dynamically (for when page is pre-rendered)
+  document.title = `${job.publishTitle||job.title} – טופ גרופ גיוס והשמה`;
+  const ogTitle = document.getElementById('og-title');
+  const ogDesc = document.getElementById('og-desc');
+  const ogUrl = document.getElementById('og-url');
+  const ogImg = document.querySelector('meta[property="og:image"]');
+  const twTitle = document.getElementById('tw-title');
+  const twDesc = document.getElementById('tw-desc');
+  const twImg = document.querySelector('meta[name="twitter:image"]');
+  if(ogTitle) ogTitle.content = `${job.publishTitle||job.title} | טופ גרופ`;
+  if(ogDesc) ogDesc.content = `📍 ${job.location} | 💼 ${job.type} | ${job.domain||''} – הגש מועמדות עכשיו!`;
+  if(ogUrl) ogUrl.content = window.location.href;
+  if(twTitle) twTitle.content = `${job.publishTitle||job.title} | טופ גרופ`;
+  if(twDesc) twDesc.content = `📍 ${job.location} – ${job.domain||''} – הגש מועמדות עכשיו`;
+  // Update image if available
+  if(job.imageUrl) {
+    if(ogImg) ogImg.content = job.imageUrl;
+    if(twImg) twImg.content = job.imageUrl;
+  }
+
+  const fmtSalary = s => (s||'').replace(/\B(?=(\d{3})+(?!\d))/g,',');
+
+  const tags = [
+    job.location ? `<div class="job-tag"><span>📍</span>${job.location}</div>` : '',
+    job.type ? `<div class="job-tag"><span>💼</span>${job.type}</div>` : '',
+    job.domain ? `<div class="job-tag"><span>🏷</span>${job.domain}</div>` : '',
+    job.role ? `<div class="job-tag"><span>👤</span>${job.role}</div>` : '',
+    job.salary ? `<div class="job-tag salary-tag"><span>₪</span>${fmtSalary(job.salary)}</div>` : '',
+  ].filter(Boolean).join('');
+
+  const imageHtml = job.imageUrl
+    ? `<img src="${job.imageUrl}" class="job-image" alt="תמונת משרה" onerror="this.parentElement.innerHTML='<div class=\\'job-image-placeholder\\'>💼</div>'">`
+    : `<div class="job-image-placeholder">💼</div>`;
+
+  app.innerHTML = `
+    <div class="job-hero">
+      ${imageHtml}
+      <div class="job-body">
+        <div class="job-number">${job.jobNumber||''}</div>
+        <div class="job-title">${job.publishTitle||job.title}</div>
+        <div class="job-company">${job.employerName||''}</div>
+        <div class="job-tags">${tags}</div>
+      </div>
+    </div>
+
+    ${job.description||job.requirements||job.benefits ? `
+    <div class="content-section">
+      ${job.description?`<div style="margin-bottom:18px"><div class="section-title">תיאור המשרה</div><div style="font-size:15px;color:#333;line-height:1.8;white-space:pre-wrap">${job.description}</div></div>`:''}
+      ${job.requirements?`<div style="margin-bottom:18px"><div class="section-title">דרישות המשרה</div><div style="font-size:15px;color:#333;line-height:1.8;white-space:pre-wrap">${job.requirements}</div></div>`:''}
+      ${job.benefits?`<div><div class="section-title">מה אנחנו מציעים</div><div style="font-size:15px;color:#333;line-height:1.8;white-space:pre-wrap">${job.benefits}</div></div>`:''}
+    </div>` : ''}
+
+    <div class="form-card" id="form-card">
+      <div class="form-title">הגשת מועמדות</div>
+      <div class="form-sub">מלא את הפרטים ונחזור אליך בהקדם</div>
+      <form id="apply-form" novalidate>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">שם מלא *</label><input class="form-input" name="name" required placeholder="ישראל ישראלי"/></div>
+          <div class="form-group"><label class="form-label">טלפון *</label><input class="form-input" name="phone" required placeholder="05X-XXXXXXX"/></div>
+          <div class="form-group"><label class="form-label">דוא"ל *</label><input class="form-input" type="email" name="email" required placeholder="name@email.com"/></div>
+          <div class="form-group"><label class="form-label">עיר מגורים</label><input class="form-input" name="city" placeholder="תל אביב"/></div>
+          <div class="form-group full"><label class="form-label">הערות</label><textarea class="form-input form-textarea" name="notes" placeholder="מידע נוסף שתרצה לשתף..."></textarea></div>
+          <div class="form-group full">
+            <label class="form-label">קורות חיים (CV)</label>
+            <div class="cv-upload" id="cv-drop" onclick="document.getElementById('cv-input').click()">
+              <div style="font-size:32px;margin-bottom:8px">📄</div>
+              <div style="font-size:15px;color:#555;font-weight:600">לחץ להעלאת קובץ CV</div>
+              <div style="font-size:12px;color:#bbb;margin-top:4px">PDF, Word – עד 5MB</div>
+              <div id="cv-name" style="display:none;font-size:13px;color:#4caf50;font-weight:600;margin-top:6px"></div>
+            </div>
+            <input type="file" id="cv-input" accept=".pdf,.doc,.docx" style="display:none"/>
+          </div>
+        </div>
+        <div id="form-error" style="display:none;color:#c94d1a;font-size:13px;margin-bottom:10px;padding:10px;background:#fff5f0;border-radius:6px;"></div>
+        <button type="submit" class="submit-btn" id="submit-btn">שלח מועמדות ←</button>
+      </form>
+    </div>
+    <div class="footer">טופ גרופ גיוס והשמה · ${job.jobNumber}</div>
+  `;
+
+  // CV upload
+  let cvFileName = '';
+  document.getElementById('cv-input').addEventListener('change', function(){
+    const file = this.files[0];
+    if(!file) return;
+    cvFileName = file.name;
+    document.getElementById('cv-drop').classList.add('has-file');
+    const el = document.getElementById('cv-name');
+    el.textContent = '✅ ' + file.name;
+    el.style.display = 'block';
+  });
+
+  // Form submit
+  document.getElementById('apply-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    const f = this;
+    const errEl = document.getElementById('form-error');
+    const btn = document.getElementById('submit-btn');
+    errEl.style.display = 'none';
+    const name = f.name.value.trim();
+    const phone = f.phone.value.trim();
+    const email = f.email.value.trim();
+    if(!name||!phone||!email){errEl.textContent='נא למלא את כל השדות המחויבים (*)';errEl.style.display='block';return;}
+    btn.disabled=true;btn.textContent='שולח...';
+    const candidate = {
+      id:'c'+Date.now(),name,phone,email,
+      city:f.city.value.trim(),experience:f.experience.value.trim(),
+      education:f.education.value.trim(),notes:f.notes.value.trim(),
+      cv:!!cvFileName,domain:job.domain||'',role:job.role||job.title||'',
+      status:'חדש',appliedJobs:[job.id],source:'landing_page',jobNumber:job.jobNumber
+    };
+    try{
+      const existing=JSON.parse(localStorage.getItem('crm_data')||'{}');
+      const candidates=existing.candidates||[];
+      const alreadyApplied=candidates.some(c=>c.phone===phone&&c.appliedJobs?.includes(job.id));
+      if(alreadyApplied){errEl.textContent='כבר הגשת מועמדות למשרה זו.';errEl.style.display='block';btn.disabled=false;btn.textContent='שלח מועמדות ←';return;}
+      const jobs=(existing.jobs||[]).map(j=>j.id===job.id?{...j,candidates:[...(j.candidates||[]),candidate.id]}:j);
+      existing.candidates=[...candidates,candidate];
+      existing.jobs=jobs;
+      localStorage.setItem('crm_data',JSON.stringify(existing));
+    }catch(err){}
+    setTimeout(()=>{
+      document.getElementById('form-card').innerHTML=`
+        <div class="success-card">
+          <div style="font-size:60px;margin-bottom:16px">🎉</div>
+          <div style="font-size:26px;font-weight:800;margin-bottom:10px">המועמדות התקבלה!</div>
+          <div style="font-size:15px;color:#666;line-height:1.7">תודה <strong>${name}</strong>!<br/>קיבלנו את פרטיך למשרת <strong>${job.publishTitle||job.title}</strong>.<br/>נציג מטופ גרופ יצור איתך קשר בהקדם.</div>
+        </div>`;
+    },600);
+  });
+})();
+</script>
+</body>
+</html>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Heebo', sans-serif; background: #f4f6fa; color: #222; direction: rtl; }
+
+  .page-wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  /* Header */
+  .header { background: #1a1a2e; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; }
+  .logo-text { color: #e85d26; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo-sub { color: rgba(255,255,255,0.5); font-size: 13px; }
+  .header-badge { background: rgba(232,93,38,0.2); border: 1px solid #e85d26; color: #e85d26; border-radius: 20px; padding: 4px 14px; font-size: 13px; font-weight: 600; }
+
+  /* Job card */
+  .job-hero { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,0.08); margin: 24px 0 20px; }
+  .job-image { width: 100%; height: 240px; object-fit: cover; display: block; }
+  .job-image-placeholder { width: 100%; height: 200px; background: linear-gradient(135deg, #1a1a2e 0%, #e85d26 100%); display: flex; align-items: center; justify-content: center; font-size: 64px; }
+  .job-body { padding: 28px; }
+  .job-number { color: #e85d26; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .job-title { font-size: 28px; font-weight: 800; margin-bottom: 6px; line-height: 1.2; }
+  .job-company { font-size: 16px; color: #666; margin-bottom: 20px; }
+  .job-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .job-tag { display: flex; align-items: center; gap: 5px; background: #f4f6fa; border: 1px solid #e0e4ed; border-radius: 20px; padding: 5px 14px; font-size: 14px; color: #444; }
+  .job-tag span { font-size: 15px; }
+  .salary-tag { background: #fff5f0; border-color: #fcd5c0; color: #c0440d; font-weight: 700; }
+  .section-title { font-size: 17px; font-weight: 700; margin-bottom: 12px; color: #1a1a2e; padding-bottom: 8px; border-bottom: 2px solid #f0f0f0; }
+
+  /* Form */
+  .form-card { background: white; border-radius: 12px; padding: 28px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); }
+  .form-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; color: #1a1a2e; }
+  .form-sub { font-size: 14px; color: #888; margin-bottom: 24px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 14px; font-weight: 600; color: #333; }
+  .form-input { padding: 10px 14px; border: 1.5px solid #dde1ea; border-radius: 8px; font-family: 'Heebo'; font-size: 14px; color: #222; transition: border-color .2s; outline: none; }
+  .form-input:focus { border-color: #e85d26; box-shadow: 0 0 0 3px rgba(232,93,38,0.1); }
+  .form-textarea { resize: vertical; min-height: 90px; }
+
+  /* CV Upload */
+  .cv-upload { border: 2px dashed #dde1ea; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all .2s; }
+  .cv-upload:hover { border-color: #e85d26; background: #fff5f0; }
+  .cv-upload.has-file { border-color: #4caf50; background: #f1f8e9; }
+  .cv-icon { font-size: 28px; margin-bottom: 6px; }
+  .cv-text { font-size: 14px; color: #666; }
+  .cv-filename { font-size: 13px; color: #4caf50; font-weight: 600; margin-top: 4px; }
+
+  /* Submit */
+  .submit-btn { width: 100%; padding: 14px; background: #e85d26; color: white; border: none; border-radius: 8px; font-family: 'Heebo'; font-size: 17px; font-weight: 700; cursor: pointer; transition: background .2s, transform .1s; margin-top: 6px; }
+  .submit-btn:hover { background: #c94d1a; }
+  .submit-btn:active { transform: scale(0.98); }
+  .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  /* Success */
+  .success-card { background: white; border-radius: 12px; padding: 48px 28px; text-align: center; box-shadow: 0 2px 16px rgba(0,0,0,0.08); }
+  .success-icon { font-size: 60px; margin-bottom: 16px; }
+  .success-title { font-size: 26px; font-weight: 800; margin-bottom: 10px; color: #1a1a2e; }
+  .success-sub { font-size: 15px; color: #666; line-height: 1.7; }
+
+  /* Error */
+  .error-card { background: white; border-radius: 12px; padding: 48px 28px; text-align: center; box-shadow: 0 2px 16px rgba(0,0,0,0.08); }
+
+  /* Footer */
+  .footer { text-align: center; color: #aaa; font-size: 13px; margin-top: 40px; }
+
+  @media (max-width: 540px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .job-title { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo-text">טופ גרופ</div>
+    <div class="logo-sub">גיוס והשמה</div>
+  </div>
+  <div class="header-badge">דרושים</div>
+</div>
+
+<div class="page-wrap" id="app">
+  <div style="text-align:center; padding: 60px 0; color:#888; font-size:18px;">טוען משרה...</div>
+</div>
+
+<script>
+(function() {
+  const app = document.getElementById('app');
+
+  // Parse job from URL hash
+  function getJob() {
+    try {
+      const hash = window.location.hash.slice(1);
+      if (!hash) return null;
+      return JSON.parse(decodeURIComponent(escape(atob(hash))));
+    } catch(e) { return null; }
+  }
+
+  const job = getJob();
+
+  if (!job) {
+    app.innerHTML = `
+      <div class="error-card" style="margin-top:40px">
+        <div style="font-size:48px;margin-bottom:16px">😕</div>
+        <div style="font-size:22px;font-weight:800;margin-bottom:10px">המשרה לא נמצאה</div>
+        <div style="font-size:15px;color:#888">הקישור שגוי או שפג תוקפו. פנה למגייס שלך לקבלת קישור מעודכן.</div>
+      </div>`;
+    return;
+  }
+
+  // Format salary with commas
+  const formatSalary = s => (s || '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  // Build job display
+  const tags = [
+    job.location ? `<div class="job-tag"><span>📍</span>${job.location}</div>` : '',
+    job.type     ? `<div class="job-tag"><span>💼</span>${job.type}</div>` : '',
+    job.domain   ? `<div class="job-tag"><span>🏷</span>${job.domain}</div>` : '',
+    job.role     ? `<div class="job-tag"><span>👤</span>${job.role}</div>` : '',
+    job.salary   ? `<div class="job-tag salary-tag"><span>₪</span>${formatSalary(job.salary)}</div>` : '',
+  ].filter(Boolean).join('');
+
+  const imageHtml = job.image
+    ? `<img src="${job.image}" class="job-image" alt="תמונת משרה" />`
+    : `<div class="job-image-placeholder">💼</div>`;
+
+  app.innerHTML = `
+    <div class="job-hero">
+      ${imageHtml}
+      <div class="job-body">
+        <div class="job-number">${job.jobNumber || ''}</div>
+        <div class="job-title">${job.publishTitle || job.title}</div>
+        <div class="job-company">${job.employerName || ''}</div>
+        <div class="job-tags">${tags}</div>
+      </div>
+    </div>
+
+    ${job.description || job.requirements || job.benefits ? `
+    <div class="form-card" style="margin-bottom:20px">
+      ${job.description ? `
+        <div style="margin-bottom:18px">
+          <div class="section-title">תיאור המשרה</div>
+          <div style="font-size:15px;color:#333;line-height:1.8;white-space:pre-wrap">${job.description}</div>
+        </div>` : ''}
+      ${job.requirements ? `
+        <div style="margin-bottom:18px">
+          <div class="section-title">דרישות המשרה</div>
+          <div style="font-size:15px;color:#333;line-height:1.8;white-space:pre-wrap">${job.requirements}</div>
+        </div>` : ''}
+      ${job.benefits ? `
+        <div>
+          <div class="section-title">מה אנחנו מציעים</div>
+          <div style="font-size:15px;color:#333;line-height:1.8;white-space:pre-wrap">${job.benefits}</div>
+        </div>` : ''}
+    </div>` : ''}
+
+    <div class="form-card" id="form-card">
+      <div class="form-title">הגשת מועמדות</div>
+      <div class="form-sub">מלא את הפרטים ונחזור אליך בהקדם</div>
+
+      <form id="apply-form" novalidate>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">שם מלא *</label>
+            <input class="form-input" name="name" required placeholder="ישראל ישראלי" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">טלפון *</label>
+            <input class="form-input" name="phone" required placeholder="05X-XXXXXXX" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">אימייל *</label>
+            <input class="form-input" type="email" name="email" required placeholder="name@email.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">עיר מגורים</label>
+            <input class="form-input" name="city" placeholder="תל אביב" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">ניסיון רלוונטי</label>
+            <input class="form-input" name="experience" placeholder="3 שנים בתחום..." />
+          </div>
+          <div class="form-group">
+            <label class="form-label">השכלה</label>
+            <input class="form-input" name="education" placeholder="תואר ראשון / תעודה..." />
+          </div>
+          <div class="form-group full">
+            <label class="form-label">ספר/י לנו קצת על עצמך</label>
+            <textarea class="form-input form-textarea" name="notes" placeholder="מה מניע אותך להגיש מועמדות למשרה זו?"></textarea>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">קורות חיים (CV)</label>
+            <div class="cv-upload" id="cv-drop" onclick="document.getElementById('cv-input').click()">
+              <div class="cv-icon">📄</div>
+              <div class="cv-text">לחץ להעלאת קובץ CV</div>
+              <div class="cv-text" style="font-size:12px;color:#bbb;margin-top:4px">PDF, Word, עד 5MB</div>
+              <div class="cv-filename" id="cv-name" style="display:none"></div>
+            </div>
+            <input type="file" id="cv-input" accept=".pdf,.doc,.docx" style="display:none" />
+          </div>
+        </div>
+
+        <div id="form-error" style="display:none;color:#c94d1a;font-size:13px;margin-bottom:10px;padding:10px;background:#fff5f0;border-radius:6px;"></div>
+        <button type="submit" class="submit-btn" id="submit-btn">שלח מועמדות ←</button>
+      </form>
+    </div>
+
+    <div class="footer">
+      טופ גרופ גיוס והשמה &nbsp;·&nbsp; ${job.jobNumber}
+    </div>
+  `;
+
+  // CV upload handler
+  let cvFileName = '';
+  const cvInput = document.getElementById('cv-input');
+  cvInput.addEventListener('change', () => {
+    const file = cvInput.files[0];
+    if (!file) return;
+    cvFileName = file.name;
+    const drop = document.getElementById('cv-drop');
+    const nameEl = document.getElementById('cv-name');
+    drop.classList.add('has-file');
+    nameEl.textContent = '✅ ' + file.name;
+    nameEl.style.display = 'block';
+  });
+
+  // Form submit
+  document.getElementById('apply-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const f = this;
+    const errEl = document.getElementById('form-error');
+    const btn = document.getElementById('submit-btn');
+    errEl.style.display = 'none';
+
+    // Validate
+    const name = f.name.value.trim();
+    const phone = f.phone.value.trim();
+    const email = f.email.value.trim();
+    if (!name || !phone || !email) {
+      errEl.textContent = 'נא למלא את כל השדות המחויבים (*)';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'שולח...';
+
+    // Build candidate object
+    const candidate = {
+      id: 'c' + Date.now(),
+      name, phone, email,
+      city: f.city.value.trim(),
+      experience: f.experience.value.trim(),
+      education: f.education.value.trim(),
+      notes: f.notes.value.trim(),
+      cv: !!cvFileName,
+      domain: job.domain || '',
+      role: job.role || job.title || '',
+      status: 'חדש',
+      appliedJobs: [job.id],
+      source: 'landing_page',
+      jobNumber: job.jobNumber,
+    };
+
+    // Save to localStorage so CRM can pick it up
+    try {
+      const existing = JSON.parse(localStorage.getItem('crm_data') || '{}');
+      const candidates = existing.candidates || [];
+      // Avoid duplicate
+      const alreadyApplied = candidates.some(c => c.phone === phone && c.appliedJobs?.includes(job.id));
+      if (alreadyApplied) {
+        errEl.textContent = 'כבר הגשת מועמדות למשרה זו עם מספר טלפון זה.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'שלח מועמדות ←';
+        return;
+      }
+      // Also add candidate to job's candidates list
+      const jobs = (existing.jobs || []).map(j =>
+        j.id === job.id ? { ...j, candidates: [...(j.candidates || []), candidate.id] } : j
+      );
+      existing.candidates = [...candidates, candidate];
+      existing.jobs = jobs;
+      localStorage.setItem('crm_data', JSON.stringify(existing));
+    } catch(err) {
+      console.error(err);
+    }
+
+    // Show success
+    setTimeout(() => {
+      document.getElementById('form-card').innerHTML = `
+        <div class="success-card">
+          <div class="success-icon">🎉</div>
+          <div class="success-title">המועמדות התקבלה בהצלחה!</div>
+          <div class="success-sub">
+            תודה <strong>${name}</strong>!<br/>
+            קיבלנו את פרטיך למשרת <strong>${job.title}</strong>.<br/>
+            נציג מטופ גרופ יצור איתך קשר בהקדם.
+          </div>
+        </div>
+      `;
+    }, 600);
+  });
+
+})();
+</script>
+</body>
+</html>

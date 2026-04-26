@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>טופ גרופ CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; overflow-x: hidden; }
+.sbox { border: 2px solid #333; border-radius: 2px; position: relative; }
+.sbox::before { content:''; position:absolute; inset:2px; border:1px solid rgba(0,0,0,0.07); border-radius:1px; pointer-events:none; }
+
+@media (max-width: 768px) {
+  #mobile-nav { display:flex !important; }
+  #desktop-sidebar { display:none !important; width:0 !important; }
+  #main-content { padding-bottom: 80px !important; }
+  .desktop-only { display:none !important; }
+  .mobile-only { display:block !important; }
+  .mobile-grid-1 { grid-template-columns: 1fr !important; }
+  .mobile-grid-2 { grid-template-columns: 1fr 1fr !important; }
+  .mobile-pad { padding: 14px !important; }
+}
+@media (min-width: 769px) {
+  #mobile-nav { display:none !important; }
+  .desktop-only { display:block !important; }
+  .mobile-only { display:none !important; }
+}
+.mobile-only { display: none; }
+
+#mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: #1a1a2e;
+  border-top: 2px solid #333;
+  z-index: 100;
+  height: 64px;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 4px;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.mnav-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  flex: 1; height: 64px; cursor: pointer;
+  color: rgba(255,255,255,0.55); border: none; background: none;
+  font-family: 'Heebo', sans-serif; font-size: 10px; gap: 2px;
+  -webkit-tap-highlight-color: transparent;
+}
+.mnav-btn.active { color: #e85d26; }
+.mnav-btn span { font-size: 20px; line-height: 1; }
+
+@media (max-width: 768px) {
+  .modal-box { width: 95vw !important; padding: 16px !important; }
+  .form-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{"accentColor":"#e85d26"}/*EDITMODE-END*/;
+
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
+const SB_URL = 'https://rdzmwtixtfenmojeugyx.supabase.co';
+const SB_KEY = 'sb_publishable_0pW8AwUFXpNhUT9rFytYeQ_XYHE51Xh';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+async function saveToSupabase(data) {
+  try {
+    const { error } = await sb.from('crm_state').upsert({ id: 'main', data, updated_at: new Date().toISOString() });
+    if (error) { console.warn('SB save error:', error); return false; }
+    return true;
+  } catch(e) { console.warn('SB save:', e); return false; }
+}
+
+async function loadFromSupabase() {
+  try {
+    const { data, error } = await sb.from('crm_state').select('data').eq('id','main').single();
+    if (error || !data) return null;
+    return data.data;
+  } catch(e) { console.warn('SB load:', e); return null; }
+}
+
+async function uploadImageToStorage(base64, jobId) {
+  try {
+    const res = await fetch(base64);
+    const blob = await res.blob();
+    const ext = blob.type.includes('png') ? 'png' : 'jpg';
+    const filename = `job-${jobId}.${ext}`;
+    const { error } = await sb.storage.from('job-images').upload(filename, blob, { upsert: true, contentType: blob.type });
+    if (error) { console.warn('Storage upload error:', error); return null; }
+    const { data: urlData } = sb.storage.from('job-images').getPublicUrl(filename);
+    return urlData.publicUrl;
+  } catch(e) { console.warn('Upload exception:', e); return null; }
+}
+
+// ── CONSTANTS ─────────────────────────────────────────────────────────────────
+const ACC = '#e85d26';
+const SIDEBAR_BG = '#1a1a2e';
+const MUT = '#888';
+const TAG_COLORS = {
+  'פעיל':'#d4edda','פסיבי':'#f8d7da','פתוח':'#d4edda','ממתין':'#fff3cd',
+  'סגור':'#e2e3e5','בתהליך':'#cce5ff','הוצב':'#d4edda','ראיון נקבע':'#fff3cd','חדש':'#e2e3e5'
+};
+
+const INIT = {
+  employers: [
+    {id:'e1',name:'חברת הייטק בע"מ',industry:'הייטק',contact:'דני כהן',phone:'052-1111111',email:'danny@hitech.co.il',city:'תל אביב',status:'פעיל',notes:'לקוח VIP',needs:[{id:1,domain:'הייטק',role:'מפתח Full Stack',count:2,fee:'8000'}],expectedIncome:''},
+    {id:'e2',name:'מפעל ABC',industry:'תעשייה',contact:'רונית לוי',phone:'054-2222222',email:'ronit@abc.co.il',city:'חיפה',status:'פעיל',notes:'',needs:[],expectedIncome:''},
+    {id:'e3',name:'בנק ישראל',industry:'פיננסים',contact:'משה אבוחצירא',phone:'050-3333333',email:'moshe@bank.co.il',city:'ירושלים',status:'פסיבי',notes:'',needs:[],expectedIncome:''},
+    {id:'e4',name:'קמעונאות גדולה',industry:'קמעונאות',contact:'שרה מזרחי',phone:'058-4444444',email:'sara@retail.co.il',city:'ראשון לציון',status:'פעיל',notes:'',needs:[],expectedIncome:''},
+  ],
+  jobs: [
+    {id:'j1',jobNumber:'TG-001',title:'מפתח Full Stack',publishTitle:'',domain:'הייטק',role:'מפתח Full Stack',employerId:'e1',type:'משרה מלאה',location:'תל אביב',salary:'25,000-35,000',status:'פתוח',candidates:['c1','c2'],createdAt:'01/03/2026',deadline:'30/04/2026',description:'',requirements:'',benefits:'',image:''},
+    {id:'j2',jobNumber:'TG-002',title:'מנהל מוצר',publishTitle:'',domain:'הייטק',role:'מנהל מוצר',employerId:'e1',type:'משרה מלאה',location:'תל אביב',salary:'30,000-40,000',status:'פתוח',candidates:['c3'],createdAt:'15/03/2026',deadline:'15/05/2026',description:'',requirements:'',benefits:'',image:''},
+    {id:'j3',jobNumber:'TG-003',title:'מפעיל מכונות',publishTitle:'',domain:'',role:'מפעיל מכונות',employerId:'e2',type:'משמרות',location:'חיפה',salary:'12,000-15,000',status:'ממתין',candidates:['c4','c5'],createdAt:'20/02/2026',deadline:'20/04/2026',description:'',requirements:'',benefits:'',image:''},
+  ],
+  candidates: [
+    {id:'c1',name:'אבי ישראלי',domain:'הייטק',role:'מפתח Full Stack',phone:'052-9876543',email:'avi@gmail.com',city:'תל אביב',status:'בתהליך',appliedJobs:['j1'],experience:'5 שנים',education:'B.Sc מדעי המחשב',cv:true,notes:'מועמד מצוין'},
+    {id:'c2',name:'מיכל ברגר',domain:'הייטק',role:'מפתחת Frontend',phone:'054-8765432',email:'michal@gmail.com',city:'הרצליה',status:'הוצב',appliedJobs:['j1'],experience:'3 שנים',education:'B.Sc הנדסת תוכנה',cv:true,notes:''},
+    {id:'c3',name:'יוסי פרץ',domain:'הייטק',role:'מנהל מוצר',phone:'050-7654321',email:'yossi@gmail.com',city:'רמת גן',status:'ראיון נקבע',appliedJobs:['j2'],experience:'8 שנים',education:'MBA',cv:true,notes:''},
+    {id:'c4',name:'חנה כץ',domain:'רפואה',role:'אחות',phone:'058-6543210',email:'hana@gmail.com',city:'חיפה',status:'חדש',appliedJobs:['j3'],experience:'2 שנים',education:'תיכון',cv:false,notes:''},
+    {id:'c5',name:'אחמד חסן',domain:'רפואה',role:'איש אחזקה',phone:'050-5432109',email:'ahmad@gmail.com',city:'עכו',status:'חדש',appliedJobs:['j3'],experience:'4 שנים',education:'הנדסאי',cv:true,notes:''},
+  ],
+  jobDomains: [
+    {id:'d1',name:'הייטק',roles:['מפתח Full Stack','מפתחת Frontend','מפתח Backend','מנהל מוצר','UX Designer','DevOps']},
+    {id:'d2',name:'רפואה',roles:['אחות','אח','כח עזר','איש אחזקה','רופא','פיזיותרפיסט']},
+    {id:'d3',name:'קמעונאות',roles:['קופאי/ת','מנהל סניף','מוכר/ת','מחסנאי']},
+  ]
+};
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+const fmtNum = s => (s||'').toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');
+
+function Tag({label}){
+  return <span style={{background:TAG_COLORS[label]||'#e2e3e5',border:'1.5px solid #333',borderRadius:3,padding:'1px 8px',fontSize:13,fontWeight:600}}>{label}</span>;
+}
+
+function Avatar({name,size=32}){
+  const ini=(name||'').split(' ').map(w=>w[0]).join('').slice(0,2);
+  const hue=(name||'').charCodeAt(0)*37%360;
+  return <div style={{width:size,height:size,borderRadius:'50%',background:`hsl(${hue},45%,70%)`,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:size*.38,border:'2px solid #333',flexShrink:0,color:'#222'}}>{ini}</div>;
+}
+
+function Btn({children,variant,onClick,style={}}){
+  const pri=variant==='primary';
+  return <button onClick={onClick} style={{background:pri?ACC:'white',color:pri?'white':'#333',border:'2px solid #333',borderRadius:3,padding:'6px 14px',cursor:'pointer',fontFamily:'Heebo,sans-serif',fontSize:14,fontWeight:600,...style}}
+    onMouseDown={e=>e.currentTarget.style.transform='scale(0.97)'}
+    onMouseUp={e=>e.currentTarget.style.transform='scale(1)'}
+    onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>{children}</button>;
+}
+
+function SearchBar({placeholder,value,onChange}){
+  return <div style={{position:'relative',flex:1,maxWidth:320}}>
+    <span style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',fontSize:16}}>🔍</span>
+    <input value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}
+      style={{width:'100%',padding:'7px 34px 7px 12px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:14,outline:'none'}}/>
+  </div>;
+}
+
+function Modal({title,onClose,children}){
+  return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div className="sbox modal-box" style={{background:'#fff',width:600,maxWidth:'100%',maxHeight:'90vh',overflow:'auto',padding:24,position:'relative'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <h2 style={{fontSize:22,fontWeight:700}}>{title}</h2>
+        <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer'}}>✕</button>
+      </div>
+      {children}
+    </div>
+  </div>;
+}
+
+function FF({label,type='text',value,onChange,options,hint}){
+  const s={width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:14};
+  return <div style={{marginBottom:12}}>
+    {label && <label style={{display:'block',fontSize:14,marginBottom:4,fontWeight:600}}>{label}</label>}
+    {type==='select'?<select value={value} onChange={e=>onChange(e.target.value)} style={s}>{options.map(o=><option key={o}>{o}</option>)}</select>
+     :type==='textarea'?<textarea value={value} onChange={e=>onChange(e.target.value)} rows={3} style={{...s,resize:'vertical'}}/>
+     :<input type={type} value={value} onChange={e=>onChange(e.target.value)} style={s}/>}
+    {hint&&<div style={{fontSize:12,color:MUT,marginTop:2}}>{hint}</div>}
+  </div>;
+}
+
+function Sec({title,children}){
+  return <div style={{background:'#f9f7f3',border:'1.5px solid #e0dbd0',borderRadius:4,padding:14,marginBottom:12}}>
+    <div style={{fontSize:14,fontWeight:700,color:ACC,marginBottom:8,borderBottom:'1px dashed #ddd',paddingBottom:6}}>{title}</div>
+    {children}
+  </div>;
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+const NAV=[{id:'dashboard',icon:'⊞',label:'דשבורד'},{id:'employers',icon:'🏢',label:'מעסיקים'},{id:'jobs',icon:'📋',label:'משרות'},{id:'candidates',icon:'👥',label:'מועמדים'},{id:'settings',icon:'⚙',label:'הגדרות'}];
+
+function Sidebar({active,onNav}){
+  return <div style={{width:200,background:SIDEBAR_BG,height:'100vh',display:'flex',flexDirection:'column',flexShrink:0,borderLeft:'3px solid #000'}}>
+    <div style={{padding:'20px 16px',borderBottom:'2px solid rgba(255,255,255,0.15)'}}>
+      <div style={{color:ACC,fontSize:22,fontWeight:700,lineHeight:1.1}}>טופ גרופ</div>
+      <div style={{color:'rgba(255,255,255,0.5)',fontSize:13}}>גיוס והשמה</div>
+    </div>
+    <nav style={{flex:1,padding:'12px 0'}}>
+      {NAV.map(item=>(
+        <div key={item.id} onClick={()=>onNav(item.id)} style={{display:'flex',alignItems:'center',gap:10,padding:'11px 16px',cursor:'pointer',background:active===item.id?'rgba(232,93,38,0.25)':'transparent',borderRight:active===item.id?`3px solid ${ACC}`:'3px solid transparent',color:active===item.id?'#fff':'rgba(255,255,255,0.65)',fontSize:16,fontWeight:600}}>
+          <span style={{fontSize:18}}>{item.icon}</span>{item.label}
+        </div>
+      ))}
+    </nav>
+    <div style={{padding:16,borderTop:'2px solid rgba(255,255,255,0.1)',display:'flex',alignItems:'center',gap:8}}>
+      <Avatar name="מנהל" size={30}/>
+      <div style={{color:'rgba(255,255,255,0.7)',fontSize:13}}>מנהל מערכת</div>
+    </div>
+  </div>;
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function Dashboard({data,onNav}){
+  const openJobs=data.jobs.filter(j=>j.status==='פתוח').length;
+  const activeEmp=data.employers.filter(e=>e.status==='פעיל').length;
+  const placed=data.candidates.filter(c=>c.status==='הוצב').length;
+  const stats=[
+    {label:'משרות פתוחות',value:openJobs,icon:'📋',color:'#cce5ff',link:'jobs'},
+    {label:'מעסיקים פעילים',value:activeEmp,icon:'🏢',color:'#d4edda',link:'employers'},
+    {label:'מועמדים',value:data.candidates.length,icon:'👥',color:'#fff3cd',link:'candidates'},
+    {label:'הוצבו',value:placed,icon:'✅',color:'#d4edda',link:'candidates'},
+  ];
+  const pipeline=[
+    {label:'חדשים',count:data.candidates.filter(c=>c.status==='חדש').length,color:'#e2e3e5'},
+    {label:'בתהליך',count:data.candidates.filter(c=>c.status==='בתהליך').length,color:'#cce5ff'},
+    {label:'ראיון',count:data.candidates.filter(c=>c.status==='ראיון נקבע').length,color:'#fff3cd'},
+    {label:'הוצבו',count:placed,color:'#d4edda'},
+  ];
+  const recent=[
+    ...data.candidates.slice().reverse().slice(0,2).map(c=>({text:`מועמד: ${c.name}`,sub:`${c.domain?c.domain+' › ':''}${c.role||''}`,icon:'👤'})),
+    ...data.jobs.slice().reverse().slice(0,2).map(j=>{const e=data.employers.find(x=>x.id===j.employerId);return{text:`משרה: ${j.title}`,sub:e?.name||'',icon:'📋'};})
+  ].slice(0,5);
+
+  return <div style={{padding:28}} className="mobile-pad">
+    <div style={{marginBottom:16}}>
+      <h1 style={{fontSize:30,fontWeight:800,marginBottom:4}}>שלום 👋</h1>
+      <div style={{color:MUT,fontSize:13}}>{new Date().toLocaleDateString('he-IL',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,marginBottom:24}} className="mobile-grid-2">
+      {stats.map(s=><div key={s.label} className="sbox" onClick={()=>onNav(s.link)} style={{background:s.color,padding:'16px 14px',cursor:'pointer'}}>
+        <div style={{fontSize:24,marginBottom:4}}>{s.icon}</div>
+        <div style={{fontSize:32,fontWeight:800,lineHeight:1}}>{s.value}</div>
+        <div style={{fontSize:14,color:'#444',marginTop:2}}>{s.label}</div>
+      </div>)}
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}} className="mobile-grid-1">
+      <div className="sbox" style={{background:'#fff',padding:18}}>
+        <h3 style={{fontSize:17,fontWeight:700,marginBottom:12,borderBottom:'2px dashed #ddd',paddingBottom:8}}>פעילות אחרונה</h3>
+        {recent.map((a,i)=><div key={i} style={{display:'flex',gap:8,alignItems:'flex-start',marginBottom:10,paddingBottom:10,borderBottom:i<recent.length-1?'1px dashed #eee':'none'}}>
+          <span style={{fontSize:16}}>{a.icon}</span>
+          <div><div style={{fontSize:13,fontWeight:600}}>{a.text}</div><div style={{fontSize:11,color:MUT}}>{a.sub}</div></div>
+        </div>)}
+        {!recent.length&&<div style={{color:MUT,fontSize:13}}>אין פעילות עדיין</div>}
+      </div>
+      <div className="sbox" style={{background:'#fff',padding:18}}>
+        <h3 style={{fontSize:17,fontWeight:700,marginBottom:12,borderBottom:'2px dashed #ddd',paddingBottom:8}}>משרות פתוחות</h3>
+        {data.jobs.filter(j=>j.status==='פתוח').map(job=>{const emp=data.employers.find(e=>e.id===job.employerId);return(
+          <div key={job.id} style={{marginBottom:10,paddingBottom:10,borderBottom:'1px dashed #eee'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div><div style={{fontSize:13,fontWeight:600}}>{job.title}</div><div style={{fontSize:11,color:MUT}}>{emp?.name} · {job.location}</div></div>
+              <div style={{fontSize:12,color:ACC,fontWeight:700}}>{job.candidates.length} מועמדים</div>
+            </div>
+          </div>
+        );})}
+        {!data.jobs.filter(j=>j.status==='פתוח').length&&<div style={{color:MUT,fontSize:13}}>אין משרות פתוחות</div>}
+      </div>
+    </div>
+    <div className="sbox desktop-only" style={{background:'#fff',padding:18}}>
+      <h3 style={{fontSize:17,fontWeight:700,marginBottom:14}}>פייפליין מועמדים</h3>
+      <div style={{display:'flex',alignItems:'center'}}>
+        {pipeline.map((s,i)=><React.Fragment key={s.label}>
+          <div className="sbox" style={{flex:1,background:s.color,padding:'12px 10px',textAlign:'center'}}>
+            <div style={{fontSize:26,fontWeight:800,lineHeight:1}}>{s.count}</div>
+            <div style={{fontSize:14}}>{s.label}</div>
+          </div>
+          {i<3&&<div style={{fontSize:20,color:'#bbb',padding:'0 4px'}}>▶</div>}
+        </React.Fragment>)}
+      </div>
+    </div>
+  </div>;
+}
+
+// ── EMPLOYERS ────────────────────────────────────────────────────────────────
+function NeedRow({need,domains,onChange,onDel}){
+  return <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 70px 90px 32px',gap:8,alignItems:'end',marginBottom:8}}>
+    <div>
+      <div style={{fontSize:12,color:MUT,marginBottom:2}}>תחום</div>
+      <select value={need.domain||''} onChange={e=>onChange({...need,domain:e.target.value,role:''})} style={{width:'100%',padding:'6px 8px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13}}>
+        <option value="">-- תחום --</option>
+        {(domains||[]).map(d=><option key={d.id} value={d.name}>{d.name}</option>)}
+      </select>
+    </div>
+    <div>
+      <div style={{fontSize:12,color:MUT,marginBottom:2}}>תפקיד</div>
+      <select value={need.role||''} onChange={e=>onChange({...need,role:e.target.value})} disabled={!need.domain} style={{width:'100%',padding:'6px 8px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:!need.domain?'#f5f5f5':'white'}}>
+        <option value="">{need.domain?'-- תפקיד --':'בחר תחום'}</option>
+        {(domains||[]).find(d=>d.name===need.domain)?.roles.map(r=><option key={r} value={r}>{r}</option>)}
+      </select>
+    </div>
+    <div>
+      <div style={{fontSize:12,color:MUT,marginBottom:2}}>כמות</div>
+      <input type="number" min="1" value={need.count||1} onChange={e=>onChange({...need,count:e.target.value})} style={{width:'100%',padding:'6px 8px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13}}/>
+    </div>
+    <div>
+      <div style={{fontSize:12,color:MUT,marginBottom:2}}>עמלה ₪</div>
+      <input type="text" value={need.fee||''} onChange={e=>onChange({...need,fee:e.target.value})} placeholder="0" style={{width:'100%',padding:'6px 8px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13}}/>
+    </div>
+    <button onClick={onDel} style={{background:'#fde8dc',border:'2px solid #333',borderRadius:3,cursor:'pointer',height:32,fontSize:14,alignSelf:'end'}}>🗑</button>
+  </div>;
+}
+
+function Employers({data,setData}){
+  const [search,setSearch]=React.useState('');
+  const [indFilter,setIndFilter]=React.useState('הכל');
+  const [modal,setModal]=React.useState(null);
+  const [form,setForm]=React.useState({});
+  const [detail,setDetail]=React.useState(null);
+  const industries=['הכל',...new Set(data.employers.map(e=>e.industry).filter(Boolean))];
+  const filtered=data.employers.filter(e=>(e.name.includes(search)||e.contact.includes(search)||e.city.includes(search))&&(indFilter==='הכל'||e.industry===indFilter));
+  const newNeed=()=>({id:Date.now(),domain:'',role:'',count:1,fee:''});
+  const totals=emp=>{const n=emp.needs||[];const tc=n.reduce((s,x)=>s+(parseInt(x.count)||0),0);const tf=n.reduce((s,x)=>s+(parseFloat((x.fee||'0').replace(/,/g,''))||0)*(parseInt(x.count||1)||1),0);return{tc,tf};};
+  const openAdd=()=>{setForm({name:'',industry:'הייטק',contact:'',phone:'',email:'',city:'',status:'פעיל',notes:'',expectedIncome:'',needs:[newNeed()]});setModal('add');};
+  const openEdit=e=>{setForm({...e,needs:e.needs?.length?e.needs:[newNeed()]});setModal('edit');};
+  const save=()=>{
+    if(modal==='add') setData(d=>({...d,employers:[...d.employers,{...form,id:'e'+Date.now(),jobs:[]}]}));
+    else setData(d=>({...d,employers:d.employers.map(e=>e.id===form.id?form:e)}));
+    setModal(null);
+  };
+  const del=id=>{if(confirm('למחוק מעסיק?'))setData(d=>({...d,employers:d.employers.filter(e=>e.id!==id)}));};
+  const updNeed=(idx,val)=>setForm(f=>({...f,needs:f.needs.map((n,i)=>i===idx?val:n)}));
+  const addNeed=()=>setForm(f=>({...f,needs:[...(f.needs||[]),newNeed()]}));
+  const delNeed=idx=>setForm(f=>({...f,needs:f.needs.filter((_,i)=>i!==idx)}));
+
+  return <div style={{padding:28}} className="mobile-pad">
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+      <h1 style={{fontSize:28,fontWeight:800}}>🏢 מעסיקים</h1>
+      <Btn variant="primary" onClick={openAdd}>+ מעסיק</Btn>
+    </div>
+    <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
+      <SearchBar placeholder="חיפוש..." value={search} onChange={setSearch}/>
+      <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+        {industries.map(ind=><Btn key={ind} onClick={()=>setIndFilter(ind)} style={{background:indFilter===ind?ACC:'white',color:indFilter===ind?'white':'#333',padding:'5px 10px',fontSize:12}}>{ind}</Btn>)}
+      </div>
+    </div>
+
+    {/* Desktop table */}
+    <div className="sbox desktop-only" style={{background:'#fff',overflowX:'auto'}}>
+      <table style={{width:'100%',borderCollapse:'collapse',fontSize:14,minWidth:700}}>
+        <thead><tr style={{background:'#f0ede6',borderBottom:'2px solid #333'}}>
+          {['שם חברה','ענף','איש קשר','טלפון','עיר','עובדים','ציפי הכנסה','סטטוס',''].map(h=><th key={h} style={{padding:'10px 12px',textAlign:'right',fontSize:14,fontWeight:700,whiteSpace:'nowrap'}}>{h}</th>)}
+        </tr></thead>
+        <tbody>
+          {filtered.map(emp=>{
+            const {tc,tf}=totals(emp);
+            return <tr key={emp.id} style={{borderBottom:'1px dashed #ddd',background:'#fff',cursor:'pointer'}}
+              onMouseEnter={e=>e.currentTarget.style.background='#fde8dc'}
+              onMouseLeave={e=>e.currentTarget.style.background='#fff'}
+              onClick={()=>setDetail(emp)}>
+              <td style={{padding:'10px 12px',fontWeight:600}}><div style={{display:'flex',alignItems:'center',gap:8}}><Avatar name={emp.name} size={28}/>{emp.name}</div></td>
+              <td style={{padding:'10px 12px',color:MUT}}>{emp.industry}</td>
+              <td style={{padding:'10px 12px'}}>{emp.contact}</td>
+              <td style={{padding:'10px 12px',direction:'ltr'}}>{emp.phone}</td>
+              <td style={{padding:'10px 12px'}}>{emp.city}</td>
+              <td style={{padding:'10px 12px'}}><span style={{background:'#cce5ff',border:'1.5px solid #333',borderRadius:3,padding:'1px 8px',fontSize:13}}>{tc}</span></td>
+              <td style={{padding:'10px 12px',color:ACC,fontWeight:600,fontSize:13}}>{emp.expectedIncome?`₪${emp.expectedIncome}`:tf?`₪${fmtNum(tf)}`:'—'}</td>
+              <td style={{padding:'10px 12px'}}><Tag label={emp.status}/></td>
+              <td style={{padding:'10px 12px'}} onClick={e=>e.stopPropagation()}>
+                <div style={{display:'flex',gap:6}}>
+                  <Btn onClick={()=>openEdit(emp)} style={{padding:'3px 10px',fontSize:12}}>עריכה</Btn>
+                  <Btn onClick={()=>del(emp.id)} style={{padding:'3px 10px',fontSize:12,background:'#fde8dc'}}>🗑</Btn>
+                </div>
+              </td>
+            </tr>;
+          })}
+        </tbody>
+      </table>
+    </div>
+
+    {/* Mobile cards */}
+    <div className="mobile-only">
+      {filtered.map(emp=>{
+        const {tc,tf}=totals(emp);
+        return <div key={emp.id} className="sbox" style={{background:'#fff',padding:14,marginBottom:10}} onClick={()=>setDetail(emp)}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <Avatar name={emp.name} size={40}/>
+              <div><div style={{fontWeight:700,fontSize:16}}>{emp.name}</div><div style={{fontSize:12,color:MUT}}>{emp.industry} · {emp.city}</div></div>
+            </div>
+            <Tag label={emp.status}/>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,padding:'10px 0',borderTop:'1px dashed #eee',borderBottom:'1px dashed #eee',marginBottom:10}}>
+            <div><div style={{fontSize:11,color:MUT}}>איש קשר</div><div style={{fontSize:13,fontWeight:600}}>{emp.contact}</div></div>
+            <div><div style={{fontSize:11,color:MUT}}>טלפון</div><div style={{fontSize:13,fontWeight:600,direction:'ltr'}}>{emp.phone}</div></div>
+            <div><div style={{fontSize:11,color:MUT}}>עובדים דרושים</div><div style={{fontSize:16,fontWeight:700,color:ACC}}>{tc}</div></div>
+            <div><div style={{fontSize:11,color:MUT}}>ציפי הכנסה</div><div style={{fontSize:14,fontWeight:700,color:ACC}}>{tf?`₪${fmtNum(tf)}`:'—'}</div></div>
+          </div>
+          <div style={{display:'flex',gap:8,justifyContent:'flex-end'}} onClick={e=>e.stopPropagation()}>
+            <Btn onClick={()=>openEdit(emp)} style={{padding:'8px 18px',fontSize:14}}>עריכה</Btn>
+            <Btn onClick={()=>del(emp.id)} style={{padding:'8px 14px',fontSize:14,background:'#fde8dc'}}>🗑</Btn>
+          </div>
+        </div>;
+      })}
+    </div>
+
+    {/* Detail modal */}
+    {detail&&(()=>{
+      const empJobs=data.jobs.filter(j=>j.employerId===detail.id);
+      const {tc,tf}=totals(detail);
+      return <Modal title={detail.name} onClose={()=>setDetail(null)}>
+        <Sec title="🏢 פרטי המעסיק">
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}} className="form-grid">
+            {[['ענף',detail.industry],['סטטוס',null],['איש קשר',detail.contact],['טלפון',detail.phone],['אימייל',detail.email],['עיר',detail.city]].map(([k,v])=><div key={k}>
+              <div style={{fontSize:11,color:MUT}}>{k}</div>
+              {k==='סטטוס'?<Tag label={detail.status}/>:<div style={{fontSize:14,fontWeight:500}}>{v||'—'}</div>}
+            </div>)}
+          </div>
+        </Sec>
+        <Sec title="👷 צרכי כח אדם">
+          {(detail.needs||[]).map((n,i)=><div key={i} style={{display:'flex',gap:8,alignItems:'center',padding:'8px 10px',background:'#fff',border:'1px dashed #ddd',borderRadius:3,marginBottom:6}}>
+            <div style={{flex:1}}><span style={{fontWeight:700,fontSize:14}}>{n.role||'—'}</span>{n.domain&&<span style={{fontSize:12,color:MUT,marginRight:6}}>({n.domain})</span>}</div>
+            <span style={{background:'#cce5ff',border:'1px solid #333',borderRadius:3,padding:'1px 8px',fontSize:13}}>{n.count} עובד/ת</span>
+            <span style={{background:'#d4edda',border:'1px solid #333',borderRadius:3,padding:'1px 8px',fontSize:13}}>₪{fmtNum(n.fee||'0')} עמלה</span>
+          </div>)}
+          {(!detail.needs||!detail.needs.length)&&<div style={{color:MUT,fontSize:13}}>לא הוגדרו צרכים</div>}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:10,padding:10,background:'#fff5f0',borderRadius:3,border:'1px solid #fcd5c0'}}>
+            <div><div style={{fontSize:11,color:MUT}}>סה"כ עובדים</div><div style={{fontSize:18,fontWeight:700,color:ACC}}>{tc}</div></div>
+            <div><div style={{fontSize:11,color:MUT}}>ציפי הכנסה</div><div style={{fontSize:18,fontWeight:700,color:ACC}}>₪{fmtNum(tf)}</div></div>
+          </div>
+        </Sec>
+        <Sec title="📋 משרות">
+          {empJobs.map(j=><div key={j.id} className="sbox" style={{padding:'8px 12px',marginBottom:6,background:'#fff',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div><div style={{fontWeight:600,fontSize:14}}>{j.title}</div><div style={{fontSize:12,color:MUT}}>{j.jobNumber} · {j.location}</div></div>
+            <Tag label={j.status}/>
+          </div>)}
+          {!empJobs.length&&<div style={{color:MUT,fontSize:13}}>אין משרות</div>}
+        </Sec>
+        {detail.notes&&<div style={{background:'#fffbf0',border:'1px dashed #e0d080',borderRadius:4,padding:10}}><span style={{fontSize:14}}>📝 {detail.notes}</span></div>}
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:12}}>
+          <Btn onClick={()=>{setDetail(null);openEdit(detail);}}>עריכה</Btn>
+        </div>
+      </Modal>;
+    })()}
+
+    {/* Add/Edit modal */}
+    {(modal==='add'||modal==='edit')&&<Modal title={modal==='add'?'מעסיק חדש':'עריכת מעסיק'} onClose={()=>setModal(null)}>
+      <Sec title="🏢 פרטי המעסיק">
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}} className="form-grid">
+          <FF label="שם חברה" value={form.name||''} onChange={v=>setForm(f=>({...f,name:v}))}/>
+          <FF label="ענף" type="select" value={form.industry||'הייטק'} onChange={v=>setForm(f=>({...f,industry:v}))} options={['הייטק','תעשייה','פיננסים','קמעונאות','בריאות','חינוך','אחר']}/>
+          <FF label="איש קשר" value={form.contact||''} onChange={v=>setForm(f=>({...f,contact:v}))}/>
+          <FF label="טלפון" value={form.phone||''} onChange={v=>setForm(f=>({...f,phone:v}))}/>
+          <FF label="אימייל" type="email" value={form.email||''} onChange={v=>setForm(f=>({...f,email:v}))}/>
+          <FF label="עיר" value={form.city||''} onChange={v=>setForm(f=>({...f,city:v}))}/>
+          <FF label="סטטוס" type="select" value={form.status||'פעיל'} onChange={v=>setForm(f=>({...f,status:v}))} options={['פעיל','פסיבי']}/>
+        </div>
+      </Sec>
+      <Sec title="👷 צרכי כח אדם">
+        {(form.needs||[]).map((n,idx)=><NeedRow key={n.id||idx} need={n} domains={data.jobDomains} onChange={val=>updNeed(idx,val)} onDel={()=>delNeed(idx)}/>)}
+        <Btn onClick={addNeed} style={{fontSize:13}}>+ הוסף תפקיד</Btn>
+        <div style={{marginTop:12}}>
+          <FF label="ציפי הכנסות (₪) – ידני" value={form.expectedIncome||''} onChange={v=>setForm(f=>({...f,expectedIncome:v}))} hint="אם ריק, יחושב אוטומטית"/>
+        </div>
+      </Sec>
+      <Sec title="📝 הערות"><FF label="" type="textarea" value={form.notes||''} onChange={v=>setForm(f=>({...f,notes:v}))}/></Sec>
+      <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+        <Btn onClick={()=>setModal(null)}>ביטול</Btn>
+        <Btn variant="primary" onClick={save}>שמירה</Btn>
+      </div>
+    </Modal>}
+  </div>;
+}
+
+// ── JOBS ─────────────────────────────────────────────────────────────────────
+function Jobs({data,setData}){
+  const [search,setSearch]=React.useState('');
+  const [stFilter,setStFilter]=React.useState('הכל');
+  const [modal,setModal]=React.useState(null);
+  const [form,setForm]=React.useState({});
+  const [detail,setDetail]=React.useState(null);
+  const [pubJob,setPubJob]=React.useState(null);
+
+  const filtered=data.jobs.filter(j=>{
+    const emp=data.employers.find(e=>e.id===j.employerId);
+    return (j.title.includes(search)||(emp?.name||'').includes(search)||j.location.includes(search))&&(stFilter==='הכל'||j.status===stFilter);
+  });
+
+  const nextNum=()=>{
+    const nums=data.jobs.map(j=>parseInt((j.jobNumber||'').replace('TG-',''))||0);
+    return 'TG-'+String(Math.max(0,...nums)+1).padStart(3,'0');
+  };
+
+  const getUrl=job=>{
+    const emp=data.employers.find(e=>e.id===job.employerId);
+    const p={
+      jobNumber:job.jobNumber,
+      title:job.title,
+      publishTitle:job.publishTitle||job.title,
+      domain:job.domain,
+      role:job.role,
+      type:job.type,
+      location:job.location,
+      salary:job.salary,
+      employerName:emp?.name||'',
+      id:job.id,
+      description:job.description||'',
+      requirements:job.requirements||'',
+      benefits:job.benefits||'',
+      imageUrl:job.imageUrl||'',
+    };
+    // Use encodeURIComponent on the base64 to preserve + and / characters
+    const encoded=encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(p)))));
+    return `https://crm-hr.topgroup4u.com/job-landing-page?job=${encoded}`;
+  };
+
+  const openAdd=()=>{setForm({jobNumber:nextNum(),title:'',publishTitle:'',domain:'',role:'',employerId:data.employers[0]?.id||'',type:'משרה מלאה',location:'',salary:'',status:'פתוח',deadline:'',description:'',requirements:'',benefits:'',image:'',imageUrl:''});setModal('add');};
+  const openEdit=j=>{setForm({...j});setModal('edit');};
+  const save=async()=>{
+    let savedForm = {...form};
+    // If image is base64, upload to Supabase Storage
+    if(form.image && form.image.startsWith('data:')) {
+      const jobId = form.id || ('j'+Date.now());
+      const url = await uploadImageToStorage(form.image, jobId);
+      if(url) savedForm = {...savedForm, imageUrl: url};
+    }
+    if(modal==='add') setData(d=>({...d,jobs:[...d.jobs,{...savedForm,id:'j'+Date.now(),candidates:[],createdAt:new Date().toLocaleDateString('he-IL')}]}));
+    else setData(d=>({...d,jobs:d.jobs.map(j=>j.id===savedForm.id?savedForm:j)}));
+    setModal(null);
+  };
+  const del=id=>{if(confirm('למחוק משרה?'))setData(d=>({...d,jobs:d.jobs.filter(j=>j.id!==id)}));};
+
+  const ImgUpload=()=><div style={{marginBottom:16}}>
+    <div style={{fontSize:14,fontWeight:600,marginBottom:6}}>תמונה למשרה</div>
+    <div style={{display:'flex',gap:12,alignItems:'center'}}>
+      {form.image?<div style={{position:'relative'}}>
+        <img src={form.image} alt="" style={{width:120,height:80,objectFit:'cover',border:'2px solid #333',borderRadius:3}}/>
+        <button onClick={()=>setForm(f=>({...f,image:''}))} style={{position:'absolute',top:-8,left:-8,background:ACC,color:'white',border:'none',borderRadius:'50%',width:20,height:20,cursor:'pointer',fontSize:12}}>✕</button>
+      </div>:<div className="sbox" style={{width:120,height:80,background:'#f5f0e8',display:'flex',alignItems:'center',justifyContent:'center',color:MUT,fontSize:13}}>אין תמונה</div>}
+      <label style={{cursor:'pointer',background:'white',border:'2px solid #333',borderRadius:3,padding:'7px 14px',fontSize:14,fontWeight:600}}>
+        📸 העלה תמונה
+        <input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setForm(fm=>({...fm,image:ev.target.result}));r.readAsDataURL(f);}}/>
+      </label>
+    </div>
+  </div>;
+
+  return <div style={{padding:28}} className="mobile-pad">
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+      <h1 style={{fontSize:28,fontWeight:800}}>📋 משרות</h1>
+      <Btn variant="primary" onClick={openAdd}>+ משרה</Btn>
+    </div>
+    <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
+      <SearchBar placeholder="חיפוש..." value={search} onChange={setSearch}/>
+      <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+        {['הכל','פתוח','ממתין','סגור'].map(s=><Btn key={s} onClick={()=>setStFilter(s)} style={{background:stFilter===s?ACC:'white',color:stFilter===s?'white':'#333',padding:'5px 10px',fontSize:12}}>{s}</Btn>)}
+      </div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:16}} className="mobile-grid-1">
+      {filtered.map(job=>{
+        const emp=data.employers.find(e=>e.id===job.employerId);
+        const cands=data.candidates.filter(c=>c.appliedJobs.includes(job.id));
+        return <div key={job.id} className="sbox" style={{background:'#fff',padding:0,cursor:'pointer',overflow:'hidden',transition:'transform .15s'}}
+          onMouseEnter={e=>e.currentTarget.style.transform='translateY(-2px)'}
+          onMouseLeave={e=>e.currentTarget.style.transform='translateY(0)'}
+          onClick={()=>setDetail(job)}>
+          {job.image&&<img src={job.image} alt="" style={{width:'100%',height:120,objectFit:'cover',display:'block',borderBottom:'2px solid #333'}}/>}
+          <div style={{padding:16}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+              <div>
+                <div style={{fontSize:11,color:ACC,fontWeight:700}}>{job.jobNumber}</div>
+                <div style={{fontWeight:700,fontSize:15,marginBottom:2}}>{job.title}</div>
+                <div style={{fontSize:13,color:MUT}}>{emp?.name}</div>
+              </div>
+              <Tag label={job.status}/>
+            </div>
+            {(job.domain||job.role)&&<div style={{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap'}}>
+              {job.domain&&<span style={{fontSize:12,background:'#e8f0fe',border:'1px solid #b8d0f8',borderRadius:3,padding:'2px 7px'}}>🏷 {job.domain}</span>}
+              {job.role&&<span style={{fontSize:12,background:'#f0e8fe',border:'1px solid #d0b8f8',borderRadius:3,padding:'2px 7px'}}>👤 {job.role}</span>}
+            </div>}
+            <div style={{fontSize:13,color:'#555',marginBottom:8}}>📍 {job.location} · 💼 {job.type}</div>
+            <div style={{fontSize:13,color:ACC,fontWeight:600,marginBottom:10}}>₪ {fmtNum(job.salary)}</div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderTop:'1px dashed #ddd',paddingTop:10}}>
+              <div style={{display:'flex',gap:4}}>{cands.slice(0,3).map(c=><Avatar key={c.id} name={c.name} size={26}/>)}{!cands.length&&<span style={{fontSize:13,color:MUT}}>אין מועמדים</span>}</div>
+              <div style={{display:'flex',gap:6}} onClick={e=>e.stopPropagation()}>
+                <Btn onClick={()=>setPubJob(job)} style={{padding:'3px 8px',fontSize:12,background:'#e8f5e9',color:'#2e7d32'}}>🔗 פרסם</Btn>
+                <Btn onClick={()=>openEdit(job)} style={{padding:'3px 8px',fontSize:12}}>עריכה</Btn>
+                <Btn onClick={()=>del(job.id)} style={{padding:'3px 8px',fontSize:12,background:'#fde8dc'}}>🗑</Btn>
+              </div>
+            </div>
+          </div>
+        </div>;
+      })}
+    </div>
+
+    {pubJob&&<Modal title={`פרסום – ${pubJob.jobNumber}`} onClose={()=>setPubJob(null)}>
+      <div style={{textAlign:'center',padding:'10px 0'}}>
+        <div style={{fontSize:48,marginBottom:8}}>🔗</div>
+        <div style={{fontSize:20,fontWeight:700,marginBottom:4}}>{pubJob.publishTitle||pubJob.title}</div>
+        <div style={{fontSize:14,color:MUT,marginBottom:20}}>{pubJob.jobNumber} · {pubJob.location}</div>
+        {/* Show short friendly URL, not raw base64 */}
+        <div style={{background:'#f5f0e8',border:'2px solid #333',borderRadius:4,padding:'12px 16px',marginBottom:20,fontSize:14,color:'#444',fontWeight:600,direction:'ltr',textAlign:'center'}}>
+          crm-hr.topgroup4u.com/Job Landing Page.html
+        </div>
+        <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
+          <Btn variant="primary" onClick={()=>window.open(getUrl(pubJob),'_blank')}>🚀 פתח דף נחיתה</Btn>
+          <Btn onClick={()=>{
+            const fullUrl=window.location.origin+'/'+getUrl(pubJob);
+            navigator.clipboard?.writeText(fullUrl).then(()=>alert('✅ הקישור הועתק!')).catch(()=>{
+              // fallback
+              const ta=document.createElement('textarea');
+              ta.value=fullUrl;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+              alert('✅ הקישור הועתק!');
+            });
+          }}>📋 העתק קישור</Btn>
+        </div>
+        <div style={{marginTop:16,padding:12,background:'#fffbf0',border:'1px dashed #ccc',borderRadius:3,fontSize:13,color:'#666',textAlign:'right'}}>💡 שתף בפייסבוק, לינקדאין, ווטסאפ – המועמד ימלא טופס והנתונים יכנסו למערכת</div>
+      </div>
+    </Modal>}
+
+    {detail&&(()=>{
+      const emp=data.employers.find(e=>e.id===detail.employerId);
+      const cands=data.candidates.filter(c=>c.appliedJobs.includes(detail.id));
+      return <Modal title={detail.title} onClose={()=>setDetail(null)}>
+        {detail.image&&<img src={detail.image} alt="" style={{width:'100%',height:160,objectFit:'cover',borderRadius:4,marginBottom:14,border:'2px solid #333'}}/>}
+        <Sec title="🔖 זיהוי משרה">
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}} className="form-grid">
+            {[['מספר',detail.jobNumber],['שם',detail.title],['כותרת פרסום',detail.publishTitle||'—'],['סטטוס',null]].map(([k,v])=><div key={k}>
+              <div style={{fontSize:11,color:MUT}}>{k}</div>
+              {k==='סטטוס'?<Tag label={detail.status}/>:<div style={{fontSize:14,fontWeight:600}}>{v}</div>}
+            </div>)}
+          </div>
+        </Sec>
+        <Sec title="📋 פרטי המשרה">
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}} className="form-grid">
+            {[['מעסיק',emp?.name],['תחום',detail.domain],['תפקיד',detail.role],['סוג',detail.type],['מיקום',detail.location],['שכר',`₪${fmtNum(detail.salary)}`],['נוצרה',detail.createdAt],['דדליין',detail.deadline]].map(([k,v])=><div key={k}>
+              <div style={{fontSize:11,color:MUT}}>{k}</div>
+              <div style={{fontSize:14,fontWeight:500}}>{v||'—'}</div>
+            </div>)}
+          </div>
+        </Sec>
+        {(detail.description||detail.requirements||detail.benefits)&&<Sec title="📝 תוכן">
+          {detail.description&&<div style={{marginBottom:10}}><div style={{fontWeight:600,fontSize:13,marginBottom:4}}>תיאור</div><div style={{fontSize:13,color:'#444',lineHeight:1.6,whiteSpace:'pre-wrap'}}>{detail.description}</div></div>}
+          {detail.requirements&&<div style={{marginBottom:10}}><div style={{fontWeight:600,fontSize:13,marginBottom:4}}>דרישות</div><div style={{fontSize:13,color:'#444',lineHeight:1.6,whiteSpace:'pre-wrap'}}>{detail.requirements}</div></div>}
+          {detail.benefits&&<div><div style={{fontWeight:600,fontSize:13,marginBottom:4}}>יתרונות</div><div style={{fontSize:13,color:'#444',lineHeight:1.6,whiteSpace:'pre-wrap'}}>{detail.benefits}</div></div>}
+        </Sec>}
+        <Sec title={`👥 מועמדים (${cands.length})`}>
+          {cands.map(c=><div key={c.id} className="sbox" style={{padding:'8px 12px',marginBottom:6,background:'#fff',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div style={{display:'flex',alignItems:'center',gap:8}}><Avatar name={c.name} size={28}/><div><div style={{fontWeight:600,fontSize:14}}>{c.name}</div><div style={{fontSize:12,color:MUT}}>{c.domain?`${c.domain} › ${c.role}`:c.role}</div></div></div>
+            <Tag label={c.status}/>
+          </div>)}
+          {!cands.length&&<div style={{color:MUT,fontSize:13}}>אין מועמדים עדיין</div>}
+        </Sec>
+      </Modal>;
+    })()}
+
+    {(modal==='add'||modal==='edit')&&<Modal title={modal==='add'?`משרה חדשה – ${form.jobNumber}`:`עריכת משרה – ${form.jobNumber}`} onClose={()=>setModal(null)}>
+      <ImgUpload/>
+      <Sec title="🔖 זיהוי משרה">
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}} className="form-grid">
+          <div><label style={{display:'block',fontSize:14,fontWeight:600,marginBottom:4}}>מספר משרה</label><input value={form.jobNumber} readOnly style={{width:'100%',padding:'7px 10px',border:'2px solid #ccc',borderRadius:3,fontFamily:'Heebo',fontSize:14,background:'#f5f0e8',color:ACC,fontWeight:700}}/></div>
+          <FF label="שם המשרה" value={form.title||''} onChange={v=>setForm(f=>({...f,title:v}))}/>
+          <div style={{gridColumn:'1 / -1'}}><FF label="כותרת פרסום" value={form.publishTitle||''} onChange={v=>setForm(f=>({...f,publishTitle:v}))} hint="הכותרת שתופיע בדף הנחיתה"/></div>
+        </div>
+      </Sec>
+      <Sec title="📋 פרטי המשרה">
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}} className="form-grid">
+          <div>
+            <label style={{display:'block',fontSize:14,fontWeight:600,marginBottom:4}}>תחום</label>
+            <select value={form.domain||''} onChange={e=>setForm(f=>({...f,domain:e.target.value,role:''}))} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:14}}>
+              <option value="">-- בחר תחום --</option>
+              {(data.jobDomains||[]).map(d=><option key={d.id} value={d.name}>{d.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{display:'block',fontSize:14,fontWeight:600,marginBottom:4}}>תפקיד</label>
+            <select value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))} disabled={!form.domain} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:14,background:!form.domain?'#f5f5f5':'white'}}>
+              <option value="">{form.domain?'-- בחר תפקיד --':'בחר תחום תחילה'}</option>
+              {(data.jobDomains||[]).find(d=>d.name===form.domain)?.roles.map(r=><option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+          <FF label="מעסיק" type="select" value={data.employers.find(e=>e.id===form.employerId)?.name||''} onChange={v=>setForm(f=>({...f,employerId:data.employers.find(e=>e.name===v)?.id||f.employerId}))} options={data.employers.map(e=>e.name)}/>
+          <FF label="סוג משרה" type="select" value={form.type||'משרה מלאה'} onChange={v=>setForm(f=>({...f,type:v}))} options={['משרה מלאה','חצי משרה','משמרות','פרילנס','זמני']}/>
+          <FF label="מיקום" value={form.location||''} onChange={v=>setForm(f=>({...f,location:v}))}/>
+          <FF label="טווח שכר (₪)" value={form.salary||''} onChange={v=>setForm(f=>({...f,salary:v}))}/>
+          <FF label="תאריך דדליין" type="date" value={form.deadline||''} onChange={v=>setForm(f=>({...f,deadline:v}))}/>
+          <FF label="סטטוס" type="select" value={form.status||'פתוח'} onChange={v=>setForm(f=>({...f,status:v}))} options={['פתוח','ממתין','סגור']}/>
+        </div>
+      </Sec>
+      <Sec title="📝 תוכן המשרה">
+        <FF label="תיאור המשרה" type="textarea" value={form.description||''} onChange={v=>setForm(f=>({...f,description:v}))}/>
+        <FF label="דרישות המשרה" type="textarea" value={form.requirements||''} onChange={v=>setForm(f=>({...f,requirements:v}))}/>
+        <FF label="יתרונות" type="textarea" value={form.benefits||''} onChange={v=>setForm(f=>({...f,benefits:v}))}/>
+      </Sec>
+      <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+        <Btn onClick={()=>setModal(null)}>ביטול</Btn>
+        <Btn variant="primary" onClick={save}>שמירה</Btn>
+      </div>
+    </Modal>}
+  </div>;
+}
+
+// ── CANDIDATES ───────────────────────────────────────────────────────────────
+function Candidates({data,setData}){
+  const [search,setSearch]=React.useState('');
+  const [stFilter,setStFilter]=React.useState('הכל');
+  const [modal,setModal]=React.useState(null);
+  const [form,setForm]=React.useState({});
+  const [detail,setDetail]=React.useState(null);
+  const stages=['חדש','בתהליך','ראיון נקבע','הוצב'];
+  const filtered=data.candidates.filter(c=>(c.name.includes(search)||c.role.includes(search)||c.city.includes(search))&&(stFilter==='הכל'||c.status===stFilter));
+  const openAdd=()=>{setForm({name:'',domain:'',role:'',phone:'',email:'',city:'',status:'חדש',experience:'',education:'',appliedJobs:[],cv:false,notes:''});setModal('add');};
+  const openEdit=c=>{setForm({...c,appliedJobs:[...c.appliedJobs]});setModal('edit');};
+  const save=()=>{
+    if(modal==='add') setData(d=>({...d,candidates:[...d.candidates,{...form,id:'c'+Date.now()}]}));
+    else setData(d=>({...d,candidates:d.candidates.map(c=>c.id===form.id?form:c)}));
+    setModal(null);
+  };
+  const del=id=>{if(confirm('למחוק מועמד?'))setData(d=>({...d,candidates:d.candidates.filter(c=>c.id!==id)}));};
+
+  return <div style={{padding:28}} className="mobile-pad">
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+      <h1 style={{fontSize:28,fontWeight:800}}>👥 מועמדים</h1>
+      <Btn variant="primary" onClick={openAdd}>+ מועמד</Btn>
+    </div>
+    <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
+      <SearchBar placeholder="חיפוש..." value={search} onChange={setSearch}/>
+      <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+        {['הכל','חדש','בתהליך','ראיון נקבע','הוצב'].map(s=><Btn key={s} onClick={()=>setStFilter(s)} style={{background:stFilter===s?ACC:'white',color:stFilter===s?'white':'#333',padding:'5px 8px',fontSize:11}}>{s}</Btn>)}
+      </div>
+    </div>
+
+    {/* Mobile list */}
+    <div className="mobile-only">
+      {stages.map(stage=>{
+        const sc=data.candidates.filter(c=>c.status===stage&&(search===''||c.name.includes(search)||c.role.includes(search)));
+        if(!sc.length) return null;
+        return <div key={stage} style={{marginBottom:16}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+            <span style={{fontSize:14,fontWeight:700,background:TAG_COLORS[stage]||'#e2e3e5',border:'1.5px solid #333',borderRadius:3,padding:'2px 10px'}}>{stage}</span>
+            <span style={{fontSize:13,color:MUT}}>({sc.length})</span>
+          </div>
+          {sc.map(c=>{
+            const jobs=data.jobs.filter(j=>c.appliedJobs.includes(j.id));
+            return <div key={c.id} className="sbox" style={{background:'#fff',padding:14,marginBottom:8}} onClick={()=>setDetail(c)}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <Avatar name={c.name} size={36}/>
+                  <div><div style={{fontWeight:700,fontSize:15}}>{c.name}</div><div style={{fontSize:12,color:MUT}}>{c.domain?`${c.domain} › ${c.role}`:c.role}</div></div>
+                </div>
+                <Tag label={c.status}/>
+              </div>
+              <div style={{fontSize:12,color:'#555',marginBottom:6}}>📍 {c.city} · {c.experience}{c.cv&&<span style={{marginRight:8,background:'#e8f5e9',border:'1px solid #ccc',borderRadius:3,padding:'1px 5px'}}>📄 CV</span>}</div>
+              {jobs[0]&&<div style={{fontSize:12,background:'#f0ede6',border:'1px solid #ddd',borderRadius:3,padding:'3px 8px',marginBottom:8}}>🔗 {jobs[0].title}</div>}
+              <div style={{display:'flex',gap:8,justifyContent:'flex-end'}} onClick={e=>e.stopPropagation()}>
+                <Btn onClick={()=>openEdit(c)} style={{padding:'6px 16px',fontSize:13}}>עריכה</Btn>
+                <Btn onClick={()=>del(c.id)} style={{padding:'6px 14px',fontSize:13,background:'#fde8dc'}}>🗑</Btn>
+              </div>
+            </div>;
+          })}
+        </div>;
+      })}
+    </div>
+
+    {/* Desktop kanban */}
+    <div className="desktop-only" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}}>
+      {stages.map(stage=>{
+        const sc=filtered.filter(c=>c.status===stage);
+        return <div key={stage}>
+          <div className="sbox" style={{background:TAG_COLORS[stage]||'#e2e3e5',padding:'8px 12px',marginBottom:10,display:'flex',justifyContent:'space-between'}}>
+            <span style={{fontSize:15,fontWeight:700}}>{stage}</span>
+            <span style={{fontSize:14,background:'#fff',border:'1.5px solid #333',borderRadius:3,padding:'0 6px'}}>{sc.length}</span>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:10,minHeight:200}}>
+            {sc.map(c=>{
+              const jobs=data.jobs.filter(j=>c.appliedJobs.includes(j.id));
+              return <div key={c.id} className="sbox" style={{background:'#fff',padding:14,cursor:'pointer',transition:'transform .15s'}}
+                onMouseEnter={e=>e.currentTarget.style.transform='translateY(-1px)'}
+                onMouseLeave={e=>e.currentTarget.style.transform='translateY(0)'}
+                onClick={()=>setDetail(c)}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                  <Avatar name={c.name} size={32}/>
+                  <div><div style={{fontWeight:700,fontSize:14}}>{c.name}</div><div style={{fontSize:12,color:MUT}}>{c.domain?`${c.domain} › ${c.role}`:c.role}</div></div>
+                </div>
+                <div style={{fontSize:12,color:'#555',marginBottom:6}}>📍 {c.city} · {c.experience}</div>
+                {jobs[0]&&<div style={{fontSize:11,background:'#f0ede6',border:'1px solid #ddd',borderRadius:3,padding:'3px 6px',marginBottom:4}}>🔗 {jobs[0].title}</div>}
+                {c.cv&&<span style={{fontSize:12,color:'#666',background:'#e8f5e9',border:'1px solid #ccc',borderRadius:3,padding:'2px 6px'}}>📄 CV</span>}
+                <div style={{display:'flex',gap:4,marginTop:8,justifyContent:'flex-end'}} onClick={e=>e.stopPropagation()}>
+                  <Btn onClick={()=>openEdit(c)} style={{padding:'2px 8px',fontSize:11}}>עריכה</Btn>
+                  <Btn onClick={()=>del(c.id)} style={{padding:'2px 8px',fontSize:11,background:'#fde8dc'}}>🗑</Btn>
+                </div>
+              </div>;
+            })}
+          </div>
+        </div>;
+      })}
+    </div>
+
+    {detail&&<Modal title={detail.name} onClose={()=>setDetail(null)}>
+      <div style={{display:'flex',gap:14,alignItems:'flex-start',marginBottom:16}}>
+        <Avatar name={detail.name} size={60}/>
+        <div><div style={{fontWeight:700,fontSize:18}}>{detail.name}</div><div style={{color:MUT,fontSize:14}}>{detail.domain?`${detail.domain} › ${detail.role}`:detail.role}</div><div style={{marginTop:6}}><Tag label={detail.status}/></div></div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}} className="form-grid">
+        {[['תחום',detail.domain],['תפקיד',detail.role],['טלפון',detail.phone],['אימייל',detail.email],['עיר',detail.city],['ניסיון',detail.experience],['השכלה',detail.education],['CV',detail.cv?'✅ קיים':'❌ חסר']].map(([k,v])=><div key={k}>
+          <div style={{fontSize:12,color:MUT}}>{k}</div>
+          <div style={{fontSize:14,fontWeight:500}}>{v||'—'}</div>
+        </div>)}
+      </div>
+      <div style={{fontSize:15,fontWeight:700,marginBottom:8}}>משרות</div>
+      {data.jobs.filter(j=>detail.appliedJobs.includes(j.id)).map(j=>{const e=data.employers.find(x=>x.id===j.employerId);return(
+        <div key={j.id} className="sbox" style={{padding:'8px 12px',marginBottom:6,background:'#f9f9f6',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div><div style={{fontWeight:600,fontSize:14}}>{j.title}</div><div style={{fontSize:12,color:MUT}}>{e?.name}</div></div>
+          <Tag label={j.status}/>
+        </div>
+      );})}
+      {detail.notes&&<div className="sbox" style={{background:'#fffbf0',padding:10,marginTop:12}}><span style={{fontSize:14}}>📝 {detail.notes}</span></div>}
+    </Modal>}
+
+    {(modal==='add'||modal==='edit')&&<Modal title={modal==='add'?'מועמד חדש':'עריכת מועמד'} onClose={()=>setModal(null)}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}} className="form-grid">
+        <FF label="שם מלא" value={form.name||''} onChange={v=>setForm(f=>({...f,name:v}))}/>
+        <div>
+          <label style={{display:'block',fontSize:14,fontWeight:600,marginBottom:4}}>תחום</label>
+          <select value={form.domain||''} onChange={e=>setForm(f=>({...f,domain:e.target.value,role:''}))} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:14}}>
+            <option value="">-- בחר תחום --</option>
+            {(data.jobDomains||[]).map(d=><option key={d.id} value={d.name}>{d.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={{display:'block',fontSize:14,fontWeight:600,marginBottom:4}}>תפקיד</label>
+          <select value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))} disabled={!form.domain} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:14,background:!form.domain?'#f5f5f5':'white'}}>
+            <option value="">{form.domain?'-- בחר תפקיד --':'בחר תחום תחילה'}</option>
+            {(data.jobDomains||[]).find(d=>d.name===form.domain)?.roles.map(r=><option key={r} value={r}>{r}</option>)}
+          </select>
+        </div>
+        <FF label="טלפון" value={form.phone||''} onChange={v=>setForm(f=>({...f,phone:v}))}/>
+        <FF label="אימייל" type="email" value={form.email||''} onChange={v=>setForm(f=>({...f,email:v}))}/>
+        <FF label="עיר" value={form.city||''} onChange={v=>setForm(f=>({...f,city:v}))}/>
+        <FF label="ניסיון" value={form.experience||''} onChange={v=>setForm(f=>({...f,experience:v}))}/>
+        <FF label="השכלה" value={form.education||''} onChange={v=>setForm(f=>({...f,education:v}))}/>
+        <FF label="סטטוס" type="select" value={form.status||'חדש'} onChange={v=>setForm(f=>({...f,status:v}))} options={['חדש','בתהליך','ראיון נקבע','הוצב']}/>
+      </div>
+      <div style={{marginBottom:12}}>
+        <div style={{fontSize:14,fontWeight:600,marginBottom:6}}>שייך למשרות</div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+          {data.jobs.map(j=>{const chk=form.appliedJobs?.includes(j.id);return(
+            <label key={j.id} style={{display:'flex',alignItems:'center',gap:4,cursor:'pointer',background:chk?'#cce5ff':'#f0ede6',border:'1.5px solid #333',borderRadius:3,padding:'3px 8px',fontSize:13}}>
+              <input type="checkbox" checked={!!chk} onChange={()=>setForm(f=>({...f,appliedJobs:chk?f.appliedJobs.filter(id=>id!==j.id):[...(f.appliedJobs||[]),j.id]}))}/>
+              {j.title}
+            </label>
+          );})}
+        </div>
+      </div>
+      <FF label="הערות" type="textarea" value={form.notes||''} onChange={v=>setForm(f=>({...f,notes:v}))}/>
+      <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+        <Btn onClick={()=>setModal(null)}>ביטול</Btn>
+        <Btn variant="primary" onClick={save}>שמירה</Btn>
+      </div>
+    </Modal>}
+  </div>;
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────────────────────
+function DomainsTab({data,setData}){
+  const [sel,setSel]=React.useState(null);
+  const [newD,setNewD]=React.useState('');
+  const [newR,setNewR]=React.useState('');
+  const [addD,setAddD]=React.useState(false);
+  const [addR,setAddR]=React.useState(false);
+  const domains=data.jobDomains||[];
+  const active=domains.find(d=>d.id===sel);
+  const addDomain=()=>{if(!newD.trim())return;const d={id:'d'+Date.now(),name:newD.trim(),roles:[]};setData(x=>({...x,jobDomains:[...x.jobDomains,d]}));setNewD('');setAddD(false);setSel(d.id);};
+  const delDomain=id=>{if(!confirm('למחוק תחום?'))return;setData(x=>({...x,jobDomains:x.jobDomains.filter(d=>d.id!==id)}));if(sel===id)setSel(null);};
+  const addRole=()=>{if(!newR.trim()||!sel)return;setData(x=>({...x,jobDomains:x.jobDomains.map(d=>d.id===sel?{...d,roles:[...d.roles,newR.trim()]}:d)}));setNewR('');setAddR(false);};
+  const delRole=(did,r)=>setData(x=>({...x,jobDomains:x.jobDomains.map(d=>d.id===did?{...d,roles:d.roles.filter(x=>x!==r)}:d)}));
+  return <div style={{display:'grid',gridTemplateColumns:'240px 1fr',gap:20,maxWidth:740}} className="mobile-grid-1">
+    <div>
+      <div style={{fontSize:17,fontWeight:700,marginBottom:10}}>תחומים</div>
+      <div className="sbox" style={{background:'#fff',overflow:'hidden'}}>
+        {domains.map(d=><div key={d.id} onClick={()=>setSel(d.id)} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',cursor:'pointer',borderBottom:'1px dashed #ddd',background:sel===d.id?'#fde8dc':'white',borderRight:sel===d.id?`3px solid ${ACC}`:'3px solid transparent'}}>
+          <span style={{fontSize:15}}>{d.name} <span style={{fontSize:12,color:MUT}}>({d.roles.length})</span></span>
+          <button onClick={e=>{e.stopPropagation();delDomain(d.id);}} style={{background:'none',border:'none',cursor:'pointer',color:'#bbb',fontSize:14}}>✕</button>
+        </div>)}
+        {!domains.length&&<div style={{padding:14,color:MUT,fontSize:13}}>אין תחומים</div>}
+      </div>
+      {addD?<div className="sbox" style={{background:'#fff',padding:10,marginTop:10}}>
+        <input autoFocus value={newD} onChange={e=>setNewD(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addDomain();if(e.key==='Escape')setAddD(false);}} placeholder="שם התחום..." style={{width:'100%',border:'2px solid #333',borderRadius:3,padding:'6px 10px',fontFamily:'Heebo',fontSize:14,marginBottom:8}}/>
+        <div style={{display:'flex',gap:6}}><Btn variant="primary" onClick={addDomain} style={{flex:1,fontSize:13}}>הוסף</Btn><Btn onClick={()=>setAddD(false)} style={{fontSize:13}}>ביטול</Btn></div>
+      </div>:<Btn onClick={()=>setAddD(true)} style={{marginTop:10,width:'100%',fontSize:14}}>+ הוסף תחום</Btn>}
+    </div>
+    <div>
+      {active?<>
+        <div style={{fontSize:17,fontWeight:700,marginBottom:10}}>תפקידים: <span style={{color:ACC}}>{active.name}</span></div>
+        <div className="sbox" style={{background:'#fff',padding:14,minHeight:200}}>
+          {!active.roles.length&&<div style={{color:MUT,fontSize:13,marginBottom:10}}>אין תפקידים – הוסף ראשון</div>}
+          <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:14}}>
+            {active.roles.map(r=><div key={r} style={{display:'flex',alignItems:'center',gap:6,background:'#f0ede6',border:'2px solid #333',borderRadius:3,padding:'5px 12px'}}>
+              <span style={{fontSize:14}}>{r}</span>
+              <button onClick={()=>delRole(active.id,r)} style={{background:'none',border:'none',cursor:'pointer',color:'#999',fontSize:14}}>✕</button>
+            </div>)}
+          </div>
+          {addR?<div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <input autoFocus value={newR} onChange={e=>setNewR(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addRole();if(e.key==='Escape')setAddR(false);}} placeholder="שם התפקיד..." style={{flex:1,border:'2px solid #333',borderRadius:3,padding:'7px 10px',fontFamily:'Heebo',fontSize:14}}/>
+            <Btn variant="primary" onClick={addRole} style={{fontSize:13}}>הוסף</Btn>
+            <Btn onClick={()=>setAddR(false)} style={{fontSize:13}}>ביטול</Btn>
+          </div>:<Btn onClick={()=>setAddR(true)} style={{fontSize:14}}>+ הוסף תפקיד</Btn>}
+        </div>
+      </>:<div className="sbox" style={{background:'#fff',padding:40,textAlign:'center'}}><div style={{fontSize:36,marginBottom:12}}>👈</div><div style={{fontSize:17,color:MUT}}>בחר תחום לניהול תפקידים</div></div>}
+    </div>
+  </div>;
+}
+
+function Settings({data,setData}){
+  const [tab,setTab]=React.useState('general');
+  const tabs=[{id:'general',label:'כללי'},{id:'users',label:'משתמשים'},{id:'domains',label:'תחומים ותפקידים'},{id:'statuses',label:'סטטוסים'},{id:'notifications',label:'התראות'}];
+  return <div style={{padding:28}} className="mobile-pad">
+    <h1 style={{fontSize:28,fontWeight:800,marginBottom:20}}>⚙ הגדרות מערכת</h1>
+    <div style={{display:'flex',gap:0,marginBottom:24,borderBottom:'2px solid #333',overflowX:'auto'}}>
+      {tabs.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{padding:'8px 16px',cursor:'pointer',fontSize:14,fontWeight:600,border:'none',borderBottom:tab===t.id?`3px solid ${ACC}`:'3px solid transparent',background:'none',color:tab===t.id?ACC:'#555',marginBottom:-2,whiteSpace:'nowrap'}}>{t.label}</button>)}
+    </div>
+
+    {tab==='general'&&<div className="sbox" style={{background:'#fff',padding:24,maxWidth:560}}>
+      <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>פרטי החברה</h3>
+      <FF label="שם החברה" value="טופ גרופ גיוס והשמה" onChange={()=>{}}/>
+      <FF label="אימייל ראשי" value="info@topgroup4u.com" onChange={()=>{}}/>
+      <FF label="טלפון" value="" onChange={()=>{}}/>
+      <Btn variant="primary">שמירת שינויים</Btn>
+      <div style={{marginTop:28,borderTop:'2px dashed #ddd',paddingTop:20}}>
+        <h3 style={{fontSize:17,fontWeight:700,marginBottom:6}}>📦 גיבוי ושחזור נתונים</h3>
+        <div style={{fontSize:13,color:MUT,marginBottom:14}}>ייצא את כל הנתונים לקובץ JSON, ואחר כך ייבא אותו בכל דפדפן או מכשיר.</div>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+          <Btn variant="primary" onClick={()=>{
+            const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+            const url=URL.createObjectURL(blob);
+            const a=document.createElement('a');
+            a.href=url;a.download='topgroup-crm-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);
+          }}>⬇️ ייצא נתונים (JSON)</Btn>
+          <label style={{cursor:'pointer',background:'white',border:'2px solid #333',borderRadius:3,padding:'6px 14px',fontSize:14,fontWeight:600}}>
+            ⬆️ ייבא נתונים (JSON)
+            <input type="file" accept=".json" style={{display:'none'}} onChange={e=>{
+              const file=e.target.files[0];if(!file)return;
+              const reader=new FileReader();
+              reader.onload=ev=>{
+                try{
+                  const parsed=JSON.parse(ev.target.result);
+                  if(!parsed.employers||!parsed.jobs||!parsed.candidates){alert('קובץ לא תקין');return;}
+                  if(confirm(`ייבא ${parsed.employers.length} מעסיקים, ${parsed.jobs.length} משרות, ${parsed.candidates.length} מועמדים?\nהנתונים הנוכחיים יוחלפו!`)){
+                    setData(parsed);
+                    alert('✅ הנתונים יובאו בהצלחה!');
+                  }
+                }catch(err){alert('שגיאה בקריאת הקובץ');}
+              };
+              reader.readAsText(file);e.target.value='';
+            }}/>
+          </label>
+        </div>
+        <div style={{marginTop:12,padding:12,background:'#fffbf0',border:'1px dashed #e0d080',borderRadius:4,fontSize:13,color:'#666'}}>
+          💡 <strong>הנתונים מסונכרנים אוטומטית עם Supabase בענן</strong>
+        </div>
+      </div>
+    </div>}
+
+    {tab==='users'&&<div>
+      <div className="sbox" style={{background:'#fff',overflow:'auto',maxWidth:640}}>
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:14,minWidth:400}}>
+          <thead><tr style={{background:'#f0ede6',borderBottom:'2px solid #333'}}>
+            {['שם','אימייל','תפקיד','סטטוס',''].map(h=><th key={h} style={{padding:'10px 12px',textAlign:'right',fontSize:14}}>{h}</th>)}
+          </tr></thead>
+          <tbody>
+            {[{name:'מנהל מערכת',email:'admin@topgroup4u.com',role:'מנהל',status:'פעיל'},{name:"רקרוטר א'",email:'recruiter1@topgroup4u.com',role:'רקרוטר',status:'פעיל'},{name:"רקרוטר ב'",email:'recruiter2@topgroup4u.com',role:'רקרוטר',status:'פעיל'}].map((u,i)=><tr key={i} style={{borderBottom:'1px dashed #ddd'}}>
+              <td style={{padding:'10px 12px',fontWeight:600}}><div style={{display:'flex',alignItems:'center',gap:8}}><Avatar name={u.name} size={26}/>{u.name}</div></td>
+              <td style={{padding:'10px 12px',color:MUT}}>{u.email}</td>
+              <td style={{padding:'10px 12px'}}>{u.role}</td>
+              <td style={{padding:'10px 12px'}}><Tag label={u.status}/></td>
+              <td style={{padding:'10px 12px'}}><Btn style={{padding:'3px 10px',fontSize:12}}>עריכה</Btn></td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div>
+      <div style={{marginTop:14}}><Btn variant="primary">+ הוסף משתמש</Btn></div>
+    </div>}
+
+    {tab==='domains'&&<DomainsTab data={data} setData={setData}/>}
+
+    {tab==='statuses'&&<div style={{maxWidth:500}}>
+      {[['סטטוס מועמדים',['חדש','בתהליך','ראיון נקבע','הוצב','נדחה']],['סטטוס משרות',['פתוח','ממתין','סגור']],['סטטוס מעסיקים',['פעיל','פסיבי']]].map(([title,items])=><div key={title} className="sbox" style={{background:'#fff',padding:18,marginBottom:14}}>
+        <h3 style={{fontSize:17,fontWeight:700,marginBottom:12}}>{title}</h3>
+        <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+          {items.map(item=><div key={item} style={{display:'flex',alignItems:'center',gap:6,background:'#f0ede6',border:'2px solid #333',borderRadius:3,padding:'4px 10px'}}>
+            <span style={{fontSize:14}}>{item}</span>
+            <button style={{background:'none',border:'none',cursor:'pointer',fontSize:14,color:'#999'}}>✕</button>
+          </div>)}
+          <button style={{background:'white',border:'2px dashed #999',borderRadius:3,padding:'4px 10px',fontSize:14,cursor:'pointer',color:'#888'}}>+ הוסף</button>
+        </div>
+      </div>)}
+    </div>}
+
+    {tab==='notifications'&&<div className="sbox" style={{background:'#fff',padding:24,maxWidth:480}}>
+      <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>הגדרות התראות</h3>
+      {['מועמד חדש נרשם','ראיון נקבע','מועמד הוצב','משרה חדשה נוספה','דדליין משרה קרוב'].map(item=><label key={item} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:'1px dashed #eee',cursor:'pointer'}}>
+        <span style={{fontSize:14}}>{item}</span>
+        <div style={{display:'flex',gap:10}}>{['אימייל','מערכת'].map(ch=><label key={ch} style={{display:'flex',gap:4,fontSize:13,color:'#555'}}><input type="checkbox" defaultChecked/>{ch}</label>)}</div>
+      </label>)}
+      <div style={{marginTop:16}}><Btn variant="primary">שמירה</Btn></div>
+    </div>}
+  </div>;
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+function App(){
+  const [page,setPage]=React.useState(()=>localStorage.getItem('crm_page')||'dashboard');
+  const [syncStatus,setSyncStatus]=React.useState('syncing');
+  const [data,setData]=React.useState(()=>{
+    try{
+      const saved=localStorage.getItem('crm_data');
+      if(!saved)return INIT;
+      const p=JSON.parse(saved);
+      let nextN=1;
+      const jobs=(p.jobs||[]).map(j=>{
+        const mj={domain:'',role:'',description:'',requirements:'',benefits:'',image:'',publishTitle:'',...j};
+        if(!mj.jobNumber){mj.jobNumber='TG-'+String(nextN).padStart(3,'0');}
+        const n=parseInt((mj.jobNumber||'').replace('TG-',''))||0;
+        if(n>=nextN)nextN=n+1;
+        return mj;
+      });
+      return{...p,jobs,candidates:(p.candidates||[]).map(c=>({domain:'',...c})),employers:(p.employers||[]).map(e=>({needs:[],...e})),jobDomains:p.jobDomains||INIT.jobDomains};
+    }catch{return INIT;}
+  });
+
+  // Load from Supabase on startup
+  React.useEffect(()=>{
+    loadFromSupabase().then(sbData=>{
+      if(sbData&&(sbData.employers?.length||sbData.jobs?.length||sbData.candidates?.length||sbData.jobDomains?.length)){
+        const jobs=(sbData.jobs||[]).map(j=>({domain:'',role:'',description:'',requirements:'',benefits:'',image:'',publishTitle:'',...j}));
+        const merged={...sbData,jobs,candidates:(sbData.candidates||[]).map(c=>({domain:'',...c})),employers:(sbData.employers||[]).map(e=>({needs:[],...e})),jobDomains:sbData.jobDomains?.length?sbData.jobDomains:INIT.jobDomains};
+        setData(merged);
+        localStorage.setItem('crm_data',JSON.stringify(merged));
+        setSyncStatus('ok');
+      }else{
+        const local=JSON.parse(localStorage.getItem('crm_data')||'null');
+        saveToSupabase(local||INIT).then(ok=>setSyncStatus(ok?'ok':'error'));
+      }
+    }).catch(()=>setSyncStatus('error'));
+  },[]);
+
+  // Auto-refresh from Supabase every 10 seconds
+  React.useEffect(()=>{
+    const interval=setInterval(()=>{
+      loadFromSupabase().then(sbData=>{
+        if(!sbData)return;
+        const jobs=(sbData.jobs||[]).map(j=>({domain:'',role:'',description:'',requirements:'',benefits:'',image:'',publishTitle:'',...j}));
+        const merged={...sbData,jobs,candidates:(sbData.candidates||[]).map(c=>({domain:'',...c})),employers:(sbData.employers||[]).map(e=>({needs:[],...e})),jobDomains:sbData.jobDomains?.length?sbData.jobDomains:INIT.jobDomains};
+        setData(merged);
+        localStorage.setItem('crm_data',JSON.stringify(merged));
+        setSyncStatus('ok');
+      }).catch(()=>{});
+    },10000);
+    return()=>clearInterval(interval);
+  },[]);
+
+  // Save to Supabase on data change (debounced 1s)
+  const isFirst=React.useRef(true);
+  const saveTimer=React.useRef(null);
+  React.useEffect(()=>{
+    if(isFirst.current){isFirst.current=false;return;}
+    localStorage.setItem('crm_data',JSON.stringify(data));
+    setSyncStatus('syncing');
+    if(saveTimer.current)clearTimeout(saveTimer.current);
+    saveTimer.current=setTimeout(()=>{
+      saveToSupabase(data).then(ok=>setSyncStatus(ok?'ok':'error'));
+    },1000);
+  },[data]);
+
+  React.useEffect(()=>{localStorage.setItem('crm_page',page);},[page]);
+
+  const syncBg=syncStatus==='ok'?'#d4edda':syncStatus==='error'?'#fde8dc':'#fff3cd';
+  const syncMsg=syncStatus==='syncing'?'🔄 מסנכרן...':syncStatus==='ok'?'☁️ מסונכרן עם Supabase':'⚠️ שגיאת סנכרון';
+
+  return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#f5f0e8'}}>
+    <div id="desktop-sidebar"><Sidebar active={page} onNav={setPage}/></div>
+    <div id="main-content" style={{flex:1,overflow:'auto',minWidth:0}}>
+      <div style={{background:syncBg,padding:'3px 14px',fontSize:12,textAlign:'center',borderBottom:'1px solid #ddd'}}>{syncMsg}</div>
+      {page==='dashboard'&&<Dashboard data={data} onNav={setPage}/>}
+      {page==='employers'&&<Employers data={data} setData={setData}/>}
+      {page==='jobs'&&<Jobs data={data} setData={setData}/>}
+      {page==='candidates'&&<Candidates data={data} setData={setData}/>}
+      {page==='settings'&&<Settings data={data} setData={setData}/>}
+    </div>
+    <nav id="mobile-nav">
+      {NAV.map(item=>(
+        <button key={item.id} className={`mnav-btn${page===item.id?' active':''}`} onClick={()=>setPage(item.id)}>
+          <span>{item.icon}</span>
+          <span>{item.label}</span>
+        </button>
+      ))}
+    </nav>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
