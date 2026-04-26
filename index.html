@@ -518,7 +518,7 @@ function Jobs({data,setData}){
     };
     // Use encodeURIComponent on the base64 to preserve + and / characters
     const encoded=encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(p)))));
-    return `https://crm-hr.topgroup4u.com/job-landing-page.html?job=${encoded}`;
+    return `https://crm-hr.topgroup4u.com/apply.html?job=${encoded}`;
   };
 
   const openAdd=()=>{setForm({jobNumber:nextNum(),title:'',publishTitle:'',domain:'',role:'',employerId:data.employers[0]?.id||'',type:'משרה מלאה',location:'',salary:'',status:'פתוח',deadline:'',description:'',requirements:'',benefits:'',image:'',imageUrl:''});setModal('add');};
