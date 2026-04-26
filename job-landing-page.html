@@ -327,10 +327,16 @@
   // Parse job from URL hash
   function getJob() {
     try {
+      const search = window.location.search;
+      const match = search.match(/[?&]job=([^&]+)/);
+      if (match) {
+        const decoded = decodeURIComponent(match[1]);
+        return JSON.parse(decodeURIComponent(escape(atob(decoded))));
+      }
       const hash = window.location.hash.slice(1);
-      if (!hash) return null;
-      return JSON.parse(decodeURIComponent(escape(atob(hash))));
-    } catch(e) { return null; }
+      if (hash) return JSON.parse(decodeURIComponent(escape(atob(hash))));
+      return null;
+    } catch(e) { console.error('getJob error:', e); return null; }
   }
 
   const job = getJob();
