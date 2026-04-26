@@ -479,6 +479,24 @@ function Employers({data,setData}){
   </div>;
 }
 
+// ── IMAGE UPLOAD ──────────────────────────────────────────────────────────────
+function ImgUpload({form,setForm}){
+  const handleImageChange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setForm(fm=>({...fm,image:ev.target.result}));};r.readAsDataURL(f);};
+  return <div style={{marginBottom:16}}>
+    <div style={{fontSize:14,fontWeight:600,marginBottom:6}}>תמונה למשרה</div>
+    <div style={{display:'flex',gap:12,alignItems:'center'}}>
+      {form.image?<div style={{position:'relative'}}>
+        <img src={form.image} alt="" style={{width:120,height:80,objectFit:'cover',border:'2px solid #333',borderRadius:3}}/>
+        <button onClick={()=>setForm(f=>({...f,image:''}))} style={{position:'absolute',top:-8,left:-8,background:ACC,color:'white',border:'none',borderRadius:'50%',width:20,height:20,cursor:'pointer',fontSize:12}}>✕</button>
+      </div>:<div className="sbox" style={{width:120,height:80,background:'#f5f0e8',display:'flex',alignItems:'center',justifyContent:'center',color:MUT,fontSize:13}}>אין תמונה</div>}
+      <label style={{cursor:'pointer',background:'white',border:'2px solid #333',borderRadius:3,padding:'7px 14px',fontSize:14,fontWeight:600}}>
+        📸 העלה תמונה
+        <input type="file" accept="image/*" style={{display:'none'}} onChange={handleImageChange}/>
+      </label>
+    </div>
+  </div>;
+}
+
 // ── JOBS ─────────────────────────────────────────────────────────────────────
 function Jobs({data,setData}){
   const [search,setSearch]=React.useState('');
@@ -538,20 +556,6 @@ function Jobs({data,setData}){
   const del=id=>{if(confirm('למחוק משרה?'))setData(d=>({...d,jobs:d.jobs.filter(j=>j.id!==id)}));};
 
   const handleImageChange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setForm(fm=>({...fm,image:ev.target.result}));};r.readAsDataURL(f);};
-const ImgUpload=()=><div style={{marginBottom:16}}>
-    <div style={{fontSize:14,fontWeight:600,marginBottom:6}}>תמונה למשרה</div>
-    <div style={{display:'flex',gap:12,alignItems:'center'}}>
-      {form.image?<div style={{position:'relative'}}>
-        <img src={form.image} alt="" style={{width:120,height:80,objectFit:'cover',border:'2px solid #333',borderRadius:3}}/>
-        <button onClick={()=>setForm(f=>({...f,image:''}))} style={{position:'absolute',top:-8,left:-8,background:ACC,color:'white',border:'none',borderRadius:'50%',width:20,height:20,cursor:'pointer',fontSize:12}}>✕</button>
-      </div>:<div className="sbox" style={{width:120,height:80,background:'#f5f0e8',display:'flex',alignItems:'center',justifyContent:'center',color:MUT,fontSize:13}}>אין תמונה</div>}
-      <label style={{cursor:'pointer',background:'white',border:'2px solid #333',borderRadius:3,padding:'7px 14px',fontSize:14,fontWeight:600}}>
-        📸 העלה תמונה
-        <input type="file" accept="image/*" style={{display:'none'}} onChange={handleImageChange}/>
-
-      </label>
-    </div>
-  </div>;
 
   return <div style={{padding:28}} className="mobile-pad">
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
@@ -663,7 +667,7 @@ const ImgUpload=()=><div style={{marginBottom:16}}>
     })()}
 
     {(modal==='add'||modal==='edit')&&<Modal title={modal==='add'?`משרה חדשה – ${form.jobNumber}`:`עריכת משרה – ${form.jobNumber}`} onClose={()=>setModal(null)}>
-      <ImgUpload/>
+      <ImgUpload form={form} setForm={setForm}/>
       <Sec title="🔖 זיהוי משרה">
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}} className="form-grid">
           <div><label style={{display:'block',fontSize:14,fontWeight:600,marginBottom:4}}>מספר משרה</label><input value={form.jobNumber} readOnly style={{width:'100%',padding:'7px 10px',border:'2px solid #ccc',borderRadius:3,fontFamily:'Heebo',fontSize:14,background:'#f5f0e8',color:ACC,fontWeight:700}}/></div>
