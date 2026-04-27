@@ -503,7 +503,7 @@ function ImgUpload({form,setForm}){
     setUploading(true);
     try{
       const jobId=form.id||('j'+Date.now());
-      const filename=`job-${jobId}.jpg`;
+      const filename=`job-${jobId}-${Date.now()}.jpg`;
       const compressed=await compressImage(f);
       const uploadUrl=`${SB_URL}/storage/v1/object/job-images/${filename}`;
       const res=await fetch(uploadUrl,{method:'POST',headers:{'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'image/jpeg','x-upsert':'true'},body:compressed});
