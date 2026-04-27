@@ -69,7 +69,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{"accentColor":"#e85d26"}/*EDITMODE-END
 
 // ── SUPABASE ──────────────────────────────────────────────────────────────────
 const SB_URL = 'https://rdzmwtixtfenmojeugyx.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkem13dGl4dGZlbm1vamV1Z3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjcxODUsImV4cCI6MjA5MjM0MzE4NX0.FUHtMO-wRs0B0weWGuDxSbXflx7RsVOGVYbC7kUrn0M';
+const SB_KEY = 'sb_publishable_0pW8AwUFXpNhUT9rFytYeQ_XYHE51Xh';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 async function saveToSupabase(data) {
@@ -482,15 +482,31 @@ function Employers({data,setData}){
 // ── IMAGE UPLOAD ──────────────────────────────────────────────────────────────
 function ImgUpload({form,setForm}){
   const [uploading,setUploading]=React.useState(false);
+  const compressImage=f=>new Promise((res,rej)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(f);
+    img.onload=()=>{
+      const MAX=1200;
+      let w=img.width,h=img.height;
+      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+      const canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(blob=>blob?res(blob):rej(new Error('compress failed')),'image/jpeg',0.82);
+    };
+    img.onerror=rej;
+    img.src=url;
+  });
   const handleImageChange=async e=>{
     const f=e.target.files[0];if(!f)return;
     setUploading(true);
     try{
       const jobId=form.id||('j'+Date.now());
-      const ext=f.type.includes('png')?'png':'jpg';
-      const filename=`job-${jobId}.${ext}`;
+      const filename=`job-${jobId}.jpg`;
+      const compressed=await compressImage(f);
       const uploadUrl=`${SB_URL}/storage/v1/object/job-images/${filename}`;
-      const res=await fetch(uploadUrl,{method:'POST',headers:{'Authorization':`Bearer ${SB_KEY}`,'Content-Type':f.type,'x-upsert':'true'},body:f});
+      const res=await fetch(uploadUrl,{method:'POST',headers:{'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'image/jpeg','x-upsert':'true'},body:compressed});
       if(!res.ok){const e=await res.text();alert('שגיאה בהעלאת תמונה');console.warn(e);return;}
       const publicUrl=`${SB_URL}/storage/v1/object/public/job-images/${filename}`;
       setForm(fm=>({...fm,image:publicUrl,imageUrl:publicUrl}));
@@ -558,7 +574,7 @@ function Jobs({data,setData}){
   const openAdd=()=>{setForm({jobNumber:nextNum(),title:'',publishTitle:'',domain:'',role:'',employerId:data.employers[0]?.id||'',type:'משרה מלאה',location:'',salary:'',status:'פתוח',deadline:'',description:'',requirements:'',benefits:'',image:'',imageUrl:''});setModal('add');};
   const openEdit=j=>{setForm({...j});setModal('edit');};
   const save=()=>{
-    const savedForm={...form};
+    const savedForm={...form, image: form.imageUrl||''};
     if(modal==='add') setData(d=>({...d,jobs:[...d.jobs,{...savedForm,id:'j'+Date.now(),candidates:[],createdAt:new Date().toLocaleDateString('he-IL')}]}));
     else setData(d=>({...d,jobs:d.jobs.map(j=>j.id===savedForm.id?savedForm:j)}));
     setModal(null);
