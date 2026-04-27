@@ -34,32 +34,42 @@ export default async (request, context) => {
   const image = job.imageUrl || 'https://crm-hr.topgroup4u.com/og-default.png';
   const pageUrl = request.url;
 
-  // Inject OG tags into <head>
-  const ogTags = `
-  <meta property="og:title" content="${title}">
-  <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${image}">
+  // Build OG tags block
+  const ogTags = `<meta property="og:title" content="${escapeAttr(title)}">
+  <meta property="og:description" content="${escapeAttr(description)}">
+  <meta property="og:image" content="${escapeAttr(image)}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:url" content="${pageUrl}">
+  <meta property="og:url" content="${escapeAttr(pageUrl)}">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="טופ גרופ גיוס והשמה">
   <meta property="og:locale" content="he_IL">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${title}">
-  <meta name="twitter:description" content="${description}">
-  <meta name="twitter:image" content="${image}">
-  <title>${title}</title>`;
+  <meta name="twitter:title" content="${escapeAttr(title)}">
+  <meta name="twitter:description" content="${escapeAttr(description)}">
+  <meta name="twitter:image" content="${escapeAttr(image)}">
+  <title>${escapeAttr(title)}</title>`;
 
-  // Replace existing meta tags and title
+  // Remove ALL existing og/twitter meta tags and title, then inject fresh ones
   let newHtml = html
-    .replace(/<title>[^<]*<\/title>/, '')
-    .replace(/<!-- Open Graph[^>]*-->[\s\S]*?<!-- Twitter Card -->[\s\S]*?<meta name="twitter:image"[^>]*>/, '')
-    .replace('</head>', ogTags + '\n</head>');
+    .replace(/<title>[^<]*<\/title>/gi, '')
+    .replace(/<meta\s+[^>]*property="og:[^"]*"[^>]*>/gi, '')
+    .replace(/<meta\s+[^>]*name="twitter:[^"]*"[^>]*>/gi, '')
+    .replace(/<!--\s*Open Graph[^>]*-->/gi, '')
+    .replace(/<!--\s*Twitter Card[^>]*-->/gi, '')
+    .replace('</head>', `  ${ogTags}\n</head>`);
 
   return new Response(newHtml, {
-    headers: { 'content-type': 'text/html; charset=utf-8' },
+    status: 200,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-cache',
+    },
   });
 };
+
+function escapeAttr(str) {
+  return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 export const config = { path: '/apply.html' };
