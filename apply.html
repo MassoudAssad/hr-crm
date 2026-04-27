@@ -364,7 +364,7 @@
   ].filter(Boolean).join('');
 
   const imageHtml = job.imageUrl || job.image
-    ? `<img src="${job.image}" class="job-image" alt="תמונת משרה" />`
+    ? `<img src="${job.imageUrl || job.image}" class="job-image" alt="תמונת משרה" />`
     : `<div class="job-image-placeholder">💼</div>`;
 
   app.innerHTML = `
