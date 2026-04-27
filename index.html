@@ -558,7 +558,7 @@ function Jobs({data,setData}){
   const openAdd=()=>{setForm({jobNumber:nextNum(),title:'',publishTitle:'',domain:'',role:'',employerId:data.employers[0]?.id||'',type:'משרה מלאה',location:'',salary:'',status:'פתוח',deadline:'',description:'',requirements:'',benefits:'',image:'',imageUrl:''});setModal('add');};
   const openEdit=j=>{setForm({...j});setModal('edit');};
   const save=()=>{
-    const savedForm={...form, image: form.imageUrl||''};
+    const savedForm={...form};
     if(modal==='add') setData(d=>({...d,jobs:[...d.jobs,{...savedForm,id:'j'+Date.now(),candidates:[],createdAt:new Date().toLocaleDateString('he-IL')}]}));
     else setData(d=>({...d,jobs:d.jobs.map(j=>j.id===savedForm.id?savedForm:j)}));
     setModal(null);
