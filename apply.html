@@ -131,7 +131,7 @@
     job.salary ? `<div class="job-tag salary-tag"><span>₪</span>${fmtSalary(job.salary)}</div>` : '',
   ].filter(Boolean).join('');
 
-  const imageHtml = job.imageUrl
+  const imageHtml = job.imageUrl || job.imageUrl
     ? `<img src="${job.imageUrl}" class="job-image" alt="תמונת משרה" onerror="this.parentElement.innerHTML='<div class=\\'job-image-placeholder\\'>💼</div>'">`
     : `<div class="job-image-placeholder">💼</div>`;
 
@@ -363,7 +363,7 @@
     job.salary   ? `<div class="job-tag salary-tag"><span>₪</span>${formatSalary(job.salary)}</div>` : '',
   ].filter(Boolean).join('');
 
-  const imageHtml = job.image
+  const imageHtml = job.imageUrl || job.image
     ? `<img src="${job.image}" class="job-image" alt="תמונת משרה" />`
     : `<div class="job-image-placeholder">💼</div>`;
 
