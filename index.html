@@ -593,36 +593,78 @@ function Jobs({data,setData}){
         {['הכל','פתוח','ממתין','סגור'].map(s=><Btn key={s} onClick={()=>setStFilter(s)} style={{background:stFilter===s?ACC:'white',color:stFilter===s?'white':'#333',padding:'5px 10px',fontSize:12}}>{s}</Btn>)}
       </div>
     </div>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:16}} className="mobile-grid-1">
+    {/* Desktop table */}
+    <div className="sbox desktop-only" style={{background:'#fff',overflowX:'auto'}}>
+      <table style={{width:'100%',borderCollapse:'collapse',fontSize:14,minWidth:750}}>
+        <thead><tr style={{background:'#f0ede6',borderBottom:'2px solid #333'}}>
+          {['מספר','משרה','מעסיק','תחום / תפקיד','מיקום','שכר','מועמדים','סטטוס',''].map(h=><th key={h} style={{padding:'10px 12px',textAlign:'right',fontSize:14,fontWeight:700,whiteSpace:'nowrap'}}>{h}</th>)}
+        </tr></thead>
+        <tbody>
+          {filtered.map(job=>{
+            const emp=data.employers.find(e=>e.id===job.employerId);
+            const cands=data.candidates.filter(c=>c.appliedJobs.includes(job.id));
+            return <tr key={job.id} style={{borderBottom:'1px dashed #ddd',background:'#fff',cursor:'pointer'}}
+              onMouseEnter={e=>e.currentTarget.style.background='#fde8dc'}
+              onMouseLeave={e=>e.currentTarget.style.background='#fff'}
+              onClick={()=>setDetail(job)}>
+              <td style={{padding:'10px 12px',color:ACC,fontWeight:700,fontSize:13}}>{job.jobNumber}</td>
+              <td style={{padding:'10px 12px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  {(job.imageUrl||job.image)&&<img src={job.imageUrl||job.image} alt="" style={{width:36,height:36,objectFit:'cover',border:'1.5px solid #333',borderRadius:3}}/>}
+                  <span style={{fontWeight:600}}>{job.title}</span>
+                </div>
+              </td>
+              <td style={{padding:'10px 12px',color:MUT}}>{emp?.name||'—'}</td>
+              <td style={{padding:'10px 12px'}}>
+                {job.domain&&<span style={{fontSize:12,background:'#e8f0fe',border:'1px solid #b8d0f8',borderRadius:3,padding:'2px 6px',marginLeft:4}}>🏷 {job.domain}</span>}
+                {job.role&&<span style={{fontSize:12,background:'#f0e8fe',border:'1px solid #d0b8f8',borderRadius:3,padding:'2px 6px'}}>👤 {job.role}</span>}
+              </td>
+              <td style={{padding:'10px 12px',color:'#555'}}>📍 {job.location||'—'}</td>
+              <td style={{padding:'10px 12px',color:ACC,fontWeight:600}}>₪{fmtNum(job.salary)}</td>
+              <td style={{padding:'10px 12px'}}>
+                <div style={{display:'flex',gap:3,alignItems:'center'}}>
+                  {cands.slice(0,3).map(c=><Avatar key={c.id} name={c.name} size={24}/>)}
+                  {cands.length>0&&<span style={{fontSize:12,color:MUT,marginRight:4}}>{cands.length}</span>}
+                  {!cands.length&&<span style={{fontSize:12,color:MUT}}>—</span>}
+                </div>
+              </td>
+              <td style={{padding:'10px 12px'}}><Tag label={job.status}/></td>
+              <td style={{padding:'10px 12px'}} onClick={e=>e.stopPropagation()}>
+                <div style={{display:'flex',gap:4}}>
+                  <Btn onClick={()=>setPubJob(job)} style={{padding:'3px 8px',fontSize:11,background:'#e8f5e9',color:'#2e7d32'}}>🔗</Btn>
+                  <Btn onClick={()=>openEdit(job)} style={{padding:'3px 8px',fontSize:11}}>עריכה</Btn>
+                  <Btn onClick={()=>del(job.id)} style={{padding:'3px 8px',fontSize:11,background:'#fde8dc'}}>🗑</Btn>
+                </div>
+              </td>
+            </tr>;
+          })}
+        </tbody>
+      </table>
+    </div>
+
+    {/* Mobile cards */}
+    <div className="mobile-only">
       {filtered.map(job=>{
         const emp=data.employers.find(e=>e.id===job.employerId);
         const cands=data.candidates.filter(c=>c.appliedJobs.includes(job.id));
-        return <div key={job.id} className="sbox" style={{background:'#fff',padding:0,cursor:'pointer',overflow:'hidden',transition:'transform .15s'}}
-          onMouseEnter={e=>e.currentTarget.style.transform='translateY(-2px)'}
-          onMouseLeave={e=>e.currentTarget.style.transform='translateY(0)'}
-          onClick={()=>setDetail(job)}>
-          {job.image&&<img src={job.image} alt="" style={{width:'100%',height:120,objectFit:'cover',display:'block',borderBottom:'2px solid #333'}}/>}
-          <div style={{padding:16}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+        return <div key={job.id} className="sbox" style={{background:'#fff',padding:0,cursor:'pointer',overflow:'hidden',marginBottom:12}} onClick={()=>setDetail(job)}>
+          {(job.imageUrl||job.image)&&<img src={job.imageUrl||job.image} alt="" style={{width:'100%',height:120,objectFit:'cover',display:'block',borderBottom:'2px solid #333'}}/>}
+          <div style={{padding:14}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
               <div>
                 <div style={{fontSize:11,color:ACC,fontWeight:700}}>{job.jobNumber}</div>
-                <div style={{fontWeight:700,fontSize:15,marginBottom:2}}>{job.title}</div>
+                <div style={{fontWeight:700,fontSize:15}}>{job.title}</div>
                 <div style={{fontSize:13,color:MUT}}>{emp?.name}</div>
               </div>
               <Tag label={job.status}/>
             </div>
-            {(job.domain||job.role)&&<div style={{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap'}}>
-              {job.domain&&<span style={{fontSize:12,background:'#e8f0fe',border:'1px solid #b8d0f8',borderRadius:3,padding:'2px 7px'}}>🏷 {job.domain}</span>}
-              {job.role&&<span style={{fontSize:12,background:'#f0e8fe',border:'1px solid #d0b8f8',borderRadius:3,padding:'2px 7px'}}>👤 {job.role}</span>}
-            </div>}
-            <div style={{fontSize:13,color:'#555',marginBottom:8}}>📍 {job.location} · 💼 {job.type}</div>
-            <div style={{fontSize:13,color:ACC,fontWeight:600,marginBottom:10}}>₪ {fmtNum(job.salary)}</div>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderTop:'1px dashed #ddd',paddingTop:10}}>
-              <div style={{display:'flex',gap:4}}>{cands.slice(0,3).map(c=><Avatar key={c.id} name={c.name} size={26}/>)}{!cands.length&&<span style={{fontSize:13,color:MUT}}>אין מועמדים</span>}</div>
-              <div style={{display:'flex',gap:6}} onClick={e=>e.stopPropagation()}>
-                <Btn onClick={()=>setPubJob(job)} style={{padding:'3px 8px',fontSize:12,background:'#e8f5e9',color:'#2e7d32'}}>🔗 פרסם</Btn>
-                <Btn onClick={()=>openEdit(job)} style={{padding:'3px 8px',fontSize:12}}>עריכה</Btn>
-                <Btn onClick={()=>del(job.id)} style={{padding:'3px 8px',fontSize:12,background:'#fde8dc'}}>🗑</Btn>
+            <div style={{fontSize:13,color:'#555',marginBottom:8}}>📍 {job.location} · ₪{fmtNum(job.salary)}</div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderTop:'1px dashed #ddd',paddingTop:8}} onClick={e=>e.stopPropagation()}>
+              <div style={{display:'flex',gap:4}}>{cands.slice(0,3).map(c=><Avatar key={c.id} name={c.name} size={24}/>)}{!cands.length&&<span style={{fontSize:12,color:MUT}}>אין מועמדים</span>}</div>
+              <div style={{display:'flex',gap:4}}>
+                <Btn onClick={()=>setPubJob(job)} style={{padding:'5px 10px',fontSize:12,background:'#e8f5e9',color:'#2e7d32'}}>🔗</Btn>
+                <Btn onClick={()=>openEdit(job)} style={{padding:'5px 10px',fontSize:12}}>עריכה</Btn>
+                <Btn onClick={()=>del(job.id)} style={{padding:'5px 10px',fontSize:12,background:'#fde8dc'}}>🗑</Btn>
               </div>
             </div>
           </div>
@@ -630,7 +672,7 @@ function Jobs({data,setData}){
       })}
     </div>
 
-    {pubJob&&<Modal title={`פרסום – ${pubJob.jobNumber}`} onClose={()=>setPubJob(null)}>
+        {pubJob&&<Modal title={`פרסום – ${pubJob.jobNumber}`} onClose={()=>setPubJob(null)}>
       <div style={{textAlign:'center',padding:'10px 0'}}>
         <div style={{fontSize:48,marginBottom:8}}>🔗</div>
         <div style={{fontSize:20,fontWeight:700,marginBottom:4}}>{pubJob.publishTitle||pubJob.title}</div>
@@ -799,41 +841,42 @@ function Candidates({data,setData}){
       })}
     </div>
 
-    {/* Desktop kanban */}
-    <div className="desktop-only" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}}>
-      {stages.map(stage=>{
-        const sc=filtered.filter(c=>c.status===stage);
-        return <div key={stage}>
-          <div className="sbox" style={{background:TAG_COLORS[stage]||'#e2e3e5',padding:'8px 12px',marginBottom:10,display:'flex',justifyContent:'space-between'}}>
-            <span style={{fontSize:15,fontWeight:700}}>{stage}</span>
-            <span style={{fontSize:14,background:'#fff',border:'1.5px solid #333',borderRadius:3,padding:'0 6px'}}>{sc.length}</span>
-          </div>
-          <div style={{display:'flex',flexDirection:'column',gap:10,minHeight:200}}>
-            {sc.map(c=>{
-              const jobs=data.jobs.filter(j=>c.appliedJobs.includes(j.id));
-              return <div key={c.id} className="sbox" style={{background:'#fff',padding:14,cursor:'pointer',transition:'transform .15s'}}
-                onMouseEnter={e=>e.currentTarget.style.transform='translateY(-1px)'}
-                onMouseLeave={e=>e.currentTarget.style.transform='translateY(0)'}
-                onClick={()=>setDetail(c)}>
-                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
-                  <Avatar name={c.name} size={32}/>
-                  <div><div style={{fontWeight:700,fontSize:14}}>{c.name}</div><div style={{fontSize:12,color:MUT}}>{c.domain?`${c.domain} › ${c.role}`:c.role}</div></div>
+    {/* Desktop table */}
+    <div className="sbox desktop-only" style={{background:'#fff',overflowX:'auto'}}>
+      <table style={{width:'100%',borderCollapse:'collapse',fontSize:14,minWidth:700}}>
+        <thead><tr style={{background:'#f0ede6',borderBottom:'2px solid #333'}}>
+          {['שם','תחום / תפקיד','טלפון','עיר','ניסיון','CV','משרות','סטטוס',''].map(h=><th key={h} style={{padding:'10px 12px',textAlign:'right',fontSize:14,fontWeight:700,whiteSpace:'nowrap'}}>{h}</th>)}
+        </tr></thead>
+        <tbody>
+          {filtered.map(c=>{
+            const jobs=data.jobs.filter(j=>c.appliedJobs.includes(j.id));
+            return <tr key={c.id} style={{borderBottom:'1px dashed #ddd',background:'#fff',cursor:'pointer'}}
+              onMouseEnter={e=>e.currentTarget.style.background='#fde8dc'}
+              onMouseLeave={e=>e.currentTarget.style.background='#fff'}
+              onClick={()=>setDetail(c)}>
+              <td style={{padding:'10px 12px'}}><div style={{display:'flex',alignItems:'center',gap:8}}><Avatar name={c.name} size={28}/><span style={{fontWeight:600}}>{c.name}</span></div></td>
+              <td style={{padding:'10px 12px',color:MUT}}>{c.domain?`${c.domain} › ${c.role}`:c.role||'—'}</td>
+              <td style={{padding:'10px 12px',direction:'ltr'}}>{c.phone||'—'}</td>
+              <td style={{padding:'10px 12px'}}>{c.city||'—'}</td>
+              <td style={{padding:'10px 12px'}}>{c.experience||'—'}</td>
+              <td style={{padding:'10px 12px'}}>{c.cv?<span style={{background:'#e8f5e9',border:'1px solid #ccc',borderRadius:3,padding:'2px 8px',fontSize:12}}>✅ CV</span>:<span style={{color:MUT,fontSize:12}}>—</span>}</td>
+              <td style={{padding:'10px 12px'}}>
+                {jobs[0]?<span style={{fontSize:12,background:'#f0ede6',border:'1px solid #ddd',borderRadius:3,padding:'2px 8px'}}>🔗 {jobs[0].title}{jobs.length>1?` +${jobs.length-1}`:''}</span>:<span style={{color:MUT,fontSize:12}}>—</span>}
+              </td>
+              <td style={{padding:'10px 12px'}}><Tag label={c.status}/></td>
+              <td style={{padding:'10px 12px'}} onClick={e=>e.stopPropagation()}>
+                <div style={{display:'flex',gap:4}}>
+                  <Btn onClick={()=>openEdit(c)} style={{padding:'3px 10px',fontSize:12}}>עריכה</Btn>
+                  <Btn onClick={()=>del(c.id)} style={{padding:'3px 10px',fontSize:12,background:'#fde8dc'}}>🗑</Btn>
                 </div>
-                <div style={{fontSize:12,color:'#555',marginBottom:6}}>📍 {c.city} · {c.experience}</div>
-                {jobs[0]&&<div style={{fontSize:11,background:'#f0ede6',border:'1px solid #ddd',borderRadius:3,padding:'3px 6px',marginBottom:4}}>🔗 {jobs[0].title}</div>}
-                {c.cv&&<span style={{fontSize:12,color:'#666',background:'#e8f5e9',border:'1px solid #ccc',borderRadius:3,padding:'2px 6px'}}>📄 CV</span>}
-                <div style={{display:'flex',gap:4,marginTop:8,justifyContent:'flex-end'}} onClick={e=>e.stopPropagation()}>
-                  <Btn onClick={()=>openEdit(c)} style={{padding:'2px 8px',fontSize:11}}>עריכה</Btn>
-                  <Btn onClick={()=>del(c.id)} style={{padding:'2px 8px',fontSize:11,background:'#fde8dc'}}>🗑</Btn>
-                </div>
-              </div>;
-            })}
-          </div>
-        </div>;
-      })}
+              </td>
+            </tr>;
+          })}
+        </tbody>
+      </table>
     </div>
 
-    {detail&&<Modal title={detail.name} onClose={()=>setDetail(null)}>
+        {detail&&<Modal title={detail.name} onClose={()=>setDetail(null)}>
       <div style={{display:'flex',gap:14,alignItems:'flex-start',marginBottom:16}}>
         <Avatar name={detail.name} size={60}/>
         <div><div style={{fontWeight:700,fontSize:18}}>{detail.name}</div><div style={{color:MUT,fontSize:14}}>{detail.domain?`${detail.domain} › ${detail.role}`:detail.role}</div><div style={{marginTop:6}}><Tag label={detail.status}/></div></div>
