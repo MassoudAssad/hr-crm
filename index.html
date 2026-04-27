@@ -69,7 +69,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{"accentColor":"#e85d26"}/*EDITMODE-END
 
 // ── SUPABASE ──────────────────────────────────────────────────────────────────
 const SB_URL = 'https://rdzmwtixtfenmojeugyx.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkem13dGl4dGZlbm1vamV1Z3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjcxODUsImV4cCI6MjA5MjM0MzE4NX0.FUHtMO-wRs0B0weWGuDxSbXflx7RsVOGVYbC7kUrn0M';
+const SB_KEY = 'sb_publishable_0pW8AwUFXpNhUT9rFytYeQ_XYHE51Xh';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 async function saveToSupabase(data) {
@@ -489,10 +489,11 @@ function ImgUpload({form,setForm}){
       const jobId=form.id||('j'+Date.now());
       const ext=f.type.includes('png')?'png':'jpg';
       const filename=`job-${jobId}.${ext}`;
-      const {error}=await sb.storage.from('job-images').upload(filename,f,{upsert:true,contentType:f.type});
-      if(error){alert('שגיאה בהעלאת תמונה');console.warn(error);return;}
-      const {data:urlData}=sb.storage.from('job-images').getPublicUrl(filename);
-      setForm(fm=>({...fm,image:urlData.publicUrl,imageUrl:urlData.publicUrl}));
+      const uploadUrl=`${SB_URL}/storage/v1/object/job-images/${filename}`;
+      const res=await fetch(uploadUrl,{method:'POST',headers:{'Authorization':`Bearer ${SB_KEY}`,'Content-Type':f.type,'x-upsert':'true'},body:f});
+      if(!res.ok){const e=await res.text();alert('שגיאה בהעלאת תמונה');console.warn(e);return;}
+      const publicUrl=`${SB_URL}/storage/v1/object/public/job-images/${filename}`;
+      setForm(fm=>({...fm,image:publicUrl,imageUrl:publicUrl}));
     }catch(err){alert('שגיאה בהעלאת תמונה');console.warn(err);}
     finally{setUploading(false);}
   };
