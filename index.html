@@ -1651,6 +1651,66 @@ function Settings({data,setData}){
   </div>;
 }
 
+// ── RESET PASSWORD ───────────────────────────────────────────────────────────
+function ResetPasswordScreen({onDone}){
+  const [password,setPassword]=React.useState('');
+  const [confirm,setConfirm]=React.useState('');
+  const [loading,setLoading]=React.useState(false);
+  const [error,setError]=React.useState('');
+  const [success,setSuccess]=React.useState(false);
+
+  const handleReset=async e=>{
+    e.preventDefault();
+    if(password.length<6){setError('הסיסמה חייבת להכיל לפחות 6 תווים');return;}
+    if(password!==confirm){setError('הסיסמאות אינן תואמות');return;}
+    setLoading(true);setError('');
+    try{
+      const {error:err}=await sb.auth.updateUser({password});
+      if(err){setError(err.message);setLoading(false);return;}
+      setSuccess(true);
+      setTimeout(()=>onDone(),2000);
+    }catch(e){setError('שגיאה בעדכון הסיסמה');setLoading(false);}
+  };
+
+  return <div style={{minHeight:'100vh',background:'#1a1a2e',display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+    <div style={{width:'100%',maxWidth:400}}>
+      <div style={{textAlign:'center',marginBottom:40}}>
+        <div style={{fontSize:42,fontWeight:900,color:'#e85d26',lineHeight:1}}>טופ גרופ</div>
+        <div style={{fontSize:16,color:'rgba(255,255,255,0.5)',marginTop:6}}>גיוס והשמה · מערכת CRM</div>
+      </div>
+      <div style={{background:'white',borderRadius:20,padding:'32px 28px',boxShadow:'0 24px 80px rgba(0,0,0,0.4)'}}>
+        {success
+          ?<div style={{textAlign:'center',padding:'20px 0'}}>
+            <div style={{fontSize:56,marginBottom:16}}>✅</div>
+            <div style={{fontSize:20,fontWeight:800,color:'#16a34a',marginBottom:8}}>הסיסמה עודכנה!</div>
+            <div style={{fontSize:14,color:'#6b7280'}}>מועבר למסך הכניסה...</div>
+          </div>
+          :<form onSubmit={handleReset}>
+            <h2 style={{fontSize:22,fontWeight:800,color:'#1a1a2e',marginBottom:4}}>הגדרת סיסמה חדשה</h2>
+            <p style={{fontSize:14,color:'#6b7280',marginBottom:24}}>בחר סיסמה חדשה לחשבון שלך</p>
+            <div style={{marginBottom:16}}>
+              <label style={{display:'block',fontSize:13,fontWeight:700,color:'#374151',marginBottom:6}}>סיסמה חדשה</label>
+              <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="לפחות 6 תווים"
+                style={{width:'100%',padding:'12px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontFamily:'Heebo',fontSize:15,outline:'none'}}
+                onFocus={e=>e.target.style.borderColor='#e85d26'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+            </div>
+            <div style={{marginBottom:20}}>
+              <label style={{display:'block',fontSize:13,fontWeight:700,color:'#374151',marginBottom:6}}>אישור סיסמה</label>
+              <input type="password" value={confirm} onChange={e=>setConfirm(e.target.value)} placeholder="הכנס שוב את הסיסמה"
+                style={{width:'100%',padding:'12px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontFamily:'Heebo',fontSize:15,outline:'none'}}
+                onFocus={e=>e.target.style.borderColor='#e85d26'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+            </div>
+            {error&&<div style={{background:'#fff5f0',border:'1px solid #fcd5c0',borderRadius:8,padding:'10px 14px',fontSize:14,color:'#c94d1a',marginBottom:16,textAlign:'center'}}>⚠️ {error}</div>}
+            <button type="submit" disabled={loading} style={{width:'100%',padding:'13px',background:loading?'#d1d5db':'#e85d26',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:800,fontSize:16,cursor:loading?'not-allowed':'pointer',boxShadow:loading?'none':'0 4px 16px rgba(232,93,38,0.35)'}}>
+              {loading?'מעדכן...':'עדכן סיסמה'}
+            </button>
+          </form>
+        }
+      </div>
+    </div>
+  </div>;
+}
+
 // ── LOGIN ────────────────────────────────────────────────────────────────────
 function LoginScreen({onLogin}){
   const [email,setEmail]=React.useState('');
@@ -1736,12 +1796,22 @@ function App(){
   const [session,setSession]=React.useState(null);
   const [authLoading,setAuthLoading]=React.useState(true);
 
+  const [resetMode,setResetMode]=React.useState(false);
+
   React.useEffect(()=>{
+    // Check for password reset token in URL hash
+    const hash=window.location.hash;
+    if(hash.includes('type=recovery')||hash.includes('access_token')){
+      setResetMode(true);
+      setAuthLoading(false);
+      return;
+    }
     sb.auth.getSession().then(({data:{session}})=>{
       setSession(session);
       setAuthLoading(false);
     });
-    const {data:{subscription}}=sb.auth.onAuthStateChange((_,session)=>{
+    const {data:{subscription}}=sb.auth.onAuthStateChange((event,session)=>{
+      if(event==='PASSWORD_RECOVERY'){setResetMode(true);setAuthLoading(false);return;}
       setSession(session);
       setAuthLoading(false);
     });
@@ -1752,6 +1822,7 @@ function App(){
     <div style={{color:'rgba(255,255,255,0.5)',fontSize:16}}>טוען...</div>
   </div>;
 
+  if(resetMode) return <ResetPasswordScreen onDone={()=>{setResetMode(false);window.location.hash='';}} />;
   if(!session) return <LoginScreen onLogin={s=>setSession(s)}/>;
 
   return <AppInner/>;
