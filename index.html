@@ -218,7 +218,8 @@ function Sidebar({active,onNav}){
     </nav>
     <div style={{padding:16,borderTop:'2px solid rgba(255,255,255,0.1)',display:'flex',alignItems:'center',gap:8}}>
       <Avatar name="מנהל" size={30}/>
-      <div style={{color:'rgba(255,255,255,0.7)',fontSize:13}}>מנהל מערכת</div>
+      <div style={{color:'rgba(255,255,255,0.7)',fontSize:13,flex:1}}>מנהל מערכת</div>
+      <button onClick={async()=>{if(confirm('לצאת מהמערכת?'))await sb.auth.signOut();}} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'rgba(255,255,255,0.6)',borderRadius:6,padding:'4px 8px',cursor:'pointer',fontSize:12}} title="יציאה">🚪</button>
     </div>
   </div>;
 }
@@ -1650,8 +1651,113 @@ function Settings({data,setData}){
   </div>;
 }
 
+// ── LOGIN ────────────────────────────────────────────────────────────────────
+function LoginScreen({onLogin}){
+  const [email,setEmail]=React.useState('');
+  const [password,setPassword]=React.useState('');
+  const [loading,setLoading]=React.useState(false);
+  const [error,setError]=React.useState('');
+  const [showPass,setShowPass]=React.useState(false);
+
+  const handleLogin=async e=>{
+    e.preventDefault();
+    if(!email||!password){setError('נא למלא מייל וסיסמה');return;}
+    setLoading(true);setError('');
+    try{
+      const {data,error:err}=await sb.auth.signInWithPassword({email,password});
+      if(err){
+        setError(err.message.includes('Invalid')?'מייל או סיסמה שגויים':err.message);
+        setLoading(false);return;
+      }
+      onLogin(data.session);
+    }catch(e){setError('שגיאת חיבור');setLoading(false);}
+  };
+
+  return <div style={{minHeight:'100vh',background:'#1a1a2e',display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+    <div style={{width:'100%',maxWidth:400}}>
+      {/* Logo */}
+      <div style={{textAlign:'center',marginBottom:40}}>
+        <div style={{fontSize:42,fontWeight:900,color:'#e85d26',lineHeight:1}}>טופ גרופ</div>
+        <div style={{fontSize:16,color:'rgba(255,255,255,0.5)',marginTop:6}}>גיוס והשמה · מערכת CRM</div>
+      </div>
+
+      {/* Card */}
+      <div style={{background:'white',borderRadius:20,padding:'32px 28px',boxShadow:'0 24px 80px rgba(0,0,0,0.4)'}}>
+        <h2 style={{fontSize:22,fontWeight:800,color:'#1a1a2e',marginBottom:4}}>כניסה למערכת</h2>
+        <p style={{fontSize:14,color:'#6b7280',marginBottom:24}}>הכנס את פרטי הכניסה שלך</p>
+
+        <form onSubmit={handleLogin}>
+          <div style={{marginBottom:16}}>
+            <label style={{display:'block',fontSize:13,fontWeight:700,color:'#374151',marginBottom:6}}>כתובת מייל</label>
+            <input
+              type="email" value={email} onChange={e=>setEmail(e.target.value)}
+              placeholder="name@topgroup4u.com" autoComplete="email"
+              style={{width:'100%',padding:'12px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontFamily:'Heebo',fontSize:15,outline:'none',transition:'border-color .2s',direction:'ltr',textAlign:'left'}}
+              onFocus={e=>e.target.style.borderColor='#e85d26'}
+              onBlur={e=>e.target.style.borderColor='#e5e7eb'}
+            />
+          </div>
+
+          <div style={{marginBottom:20}}>
+            <label style={{display:'block',fontSize:13,fontWeight:700,color:'#374151',marginBottom:6}}>סיסמה</label>
+            <div style={{position:'relative'}}>
+              <input
+                type={showPass?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)}
+                placeholder="••••••••" autoComplete="current-password"
+                style={{width:'100%',padding:'12px 40px 12px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontFamily:'Heebo',fontSize:15,outline:'none',transition:'border-color .2s',direction:'ltr',textAlign:'left'}}
+                onFocus={e=>e.target.style.borderColor='#e85d26'}
+                onBlur={e=>e.target.style.borderColor='#e5e7eb'}
+              />
+              <button type="button" onClick={()=>setShowPass(s=>!s)} style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'#9ca3af'}}>
+                {showPass?'🙈':'👁'}
+              </button>
+            </div>
+          </div>
+
+          {error&&<div style={{background:'#fff5f0',border:'1px solid #fcd5c0',borderRadius:8,padding:'10px 14px',fontSize:14,color:'#c94d1a',marginBottom:16,textAlign:'center'}}>
+            ⚠️ {error}
+          </div>}
+
+          <button type="submit" disabled={loading} style={{width:'100%',padding:'13px',background:loading?'#d1d5db':'#e85d26',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:800,fontSize:16,cursor:loading?'not-allowed':'pointer',transition:'all .2s',boxShadow:loading?'none':'0 4px 16px rgba(232,93,38,0.35)'}}>
+            {loading?'מתחבר...':'כניסה למערכת →'}
+          </button>
+        </form>
+      </div>
+
+      <div style={{textAlign:'center',marginTop:20,fontSize:13,color:'rgba(255,255,255,0.3)'}}>
+        🔒 גישה מאובטחת · טופ גרופ גיוס והשמה
+      </div>
+    </div>
+  </div>;
+}
+
 // ── APP ───────────────────────────────────────────────────────────────────────
 function App(){
+  const [session,setSession]=React.useState(null);
+  const [authLoading,setAuthLoading]=React.useState(true);
+
+  React.useEffect(()=>{
+    sb.auth.getSession().then(({data:{session}})=>{
+      setSession(session);
+      setAuthLoading(false);
+    });
+    const {data:{subscription}}=sb.auth.onAuthStateChange((_,session)=>{
+      setSession(session);
+      setAuthLoading(false);
+    });
+    return()=>subscription.unsubscribe();
+  },[]);
+
+  if(authLoading) return <div style={{minHeight:'100vh',background:'#1a1a2e',display:'flex',alignItems:'center',justifyContent:'center'}}>
+    <div style={{color:'rgba(255,255,255,0.5)',fontSize:16}}>טוען...</div>
+  </div>;
+
+  if(!session) return <LoginScreen onLogin={s=>setSession(s)}/>;
+
+  return <AppInner/>;
+}
+
+function AppInner(){
   const [page,setPage]=React.useState(()=>localStorage.getItem('crm_page')||'dashboard');
   const [syncStatus,setSyncStatus]=React.useState('syncing');
   const [data,setData]=React.useState(()=>{
