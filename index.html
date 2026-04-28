@@ -31,6 +31,11 @@ body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; ov
   .mobile-only { display:none !important; }
 }
 .mobile-only { display: none; }
+@keyframes pendingPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(232,93,38,0.0), 0 0 0 0 rgba(232,93,38,0.0); border-color: #e85d26; }
+  50% { box-shadow: 0 0 0 6px rgba(232,93,38,0.15), 0 0 20px rgba(232,93,38,0.2); border-color: #c94d1a; }
+}
+.pending-blink { animation: pendingPulse 1.8s ease-in-out infinite; }
 
 #mobile-nav {
   display: none;
@@ -768,7 +773,9 @@ function Candidates({data,setData}){
   const [form,setForm]=React.useState({});
   const [detail,setDetail]=React.useState(null);
   const stages=['חדש','בתהליך','ראיון נקבע','הוצב'];
-  const filtered=data.candidates.filter(c=>(c.name.includes(search)||c.role.includes(search)||c.city.includes(search))&&(stFilter==='הכל'||c.status===stFilter));
+  const pendingIds=new Set(data.pendingCandidates||[]);
+  const filtered=data.candidates.filter(c=>!pendingIds.has(c.id)&&(c.name.includes(search)||c.role.includes(search)||(c.city||'').includes(search))&&(stFilter==='הכל'||c.status===stFilter));
+  const pendingList=(data.pendingCandidates||[]).map(id=>data.candidates.find(c=>c.id===id)).filter(Boolean);
   const openAdd=()=>{setForm({name:'',domain:'',role:'',phone:'',email:'',city:'',status:'חדש',experience:'',education:'',appliedJobs:[],cv:false,notes:''});setModal('add');};
   const openEdit=c=>{setForm({...c,appliedJobs:[...c.appliedJobs]});setModal('edit');};
   const save=()=>{
@@ -778,11 +785,53 @@ function Candidates({data,setData}){
   };
   const del=id=>{if(confirm('למחוק מועמד?'))setData(d=>({...d,candidates:d.candidates.filter(c=>c.id!==id)}));};
 
+  const approvePendingLocal=(cid)=>{
+    setData(d=>({...d,
+      pendingCandidates:(d.pendingCandidates||[]).filter(id=>id!==cid),
+      candidates:d.candidates.map(c=>c.id===cid?{...c,pendingApproval:false}:c)
+    }));
+  };
+  const rejectPendingLocal=(cid)=>{
+    setData(d=>({...d,
+      pendingCandidates:(d.pendingCandidates||[]).filter(id=>id!==cid),
+      candidates:d.candidates.filter(c=>c.id!==cid)
+    }));
+  };
+
   return <div style={{padding:28}} className="mobile-pad">
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
       <h1 style={{fontSize:28,fontWeight:800}}>👥 מועמדים</h1>
       <Btn variant="primary" onClick={openAdd}>+ מועמד</Btn>
     </div>
+
+    {/* ── PENDING CANDIDATES SECTION ── */}
+    {pendingList.length>0&&<div className="pending-blink" style={{border:'2px solid #e85d26',borderRadius:12,background:'#fff8f5',marginBottom:20,overflow:'hidden'}}>
+      <div style={{background:'#e85d26',padding:'10px 16px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <span style={{fontSize:18}}>🔔</span>
+          <span style={{color:'white',fontWeight:800,fontSize:15}}>מועמדים חדשים ממתינים לאישור</span>
+          <span style={{background:'white',color:'#e85d26',borderRadius:20,padding:'1px 10px',fontWeight:900,fontSize:13}}>{pendingList.length}</span>
+        </div>
+      </div>
+      <div style={{padding:12,display:'flex',flexDirection:'column',gap:10}}>
+        {pendingList.map(c=>{
+          const job=data.jobs.find(j=>c.appliedJobs?.includes(j.id));
+          return <div key={c.id} style={{background:'white',borderRadius:10,padding:'12px 14px',border:'1px solid #fcd5c0',display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+            <div style={{width:42,height:42,borderRadius:21,background:'#e85d26',color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:18,flexShrink:0}}>{c.name.charAt(0)}</div>
+            <div style={{flex:1,minWidth:120}}>
+              <div style={{fontWeight:800,fontSize:15,cursor:'pointer'}} onClick={()=>setDetail(c)}>{c.name}</div>
+              <div style={{fontSize:12,color:'#888'}}>{c.role||c.domain}{job?` · ${job.publishTitle||job.title}`:''}</div>
+              <div style={{fontSize:11,color:'#aaa',marginTop:2}}>{c.phone}{c.city?` · ${c.city}`:''}{c.cv?' · 📄 CV':''}</div>
+            </div>
+            <div style={{display:'flex',gap:8,flexShrink:0}}>
+              <button onClick={()=>approvePendingLocal(c.id)} style={{padding:'7px 14px',background:'#16a34a',color:'white',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>✅ אשר</button>
+              <button onClick={()=>rejectPendingLocal(c.id)} style={{padding:'7px 12px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>✕</button>
+            </div>
+          </div>;
+        })}
+      </div>
+    </div>}
+
     <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
       <SearchBar placeholder="חיפוש..." value={search} onChange={setSearch}/>
       <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
@@ -793,7 +842,7 @@ function Candidates({data,setData}){
     {/* Mobile list */}
     <div className="mobile-only">
       {stages.map(stage=>{
-        const sc=data.candidates.filter(c=>c.status===stage&&(search===''||c.name.includes(search)||c.role.includes(search)));
+        const sc=data.candidates.filter(c=>!pendingIds.has(c.id)&&c.status===stage&&(search===''||c.name.includes(search)||c.role.includes(search)));
         if(!sc.length) return null;
         return <div key={stage} style={{marginBottom:16}}>
           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
@@ -1320,13 +1369,7 @@ function App(){
   return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#f5f0e8'}}>
     <div id="desktop-sidebar"><Sidebar active={page} onNav={setPage}/></div>
     <div id="main-content" style={{flex:1,overflow:'auto',minWidth:0}}>
-      <div style={{background:syncBg,padding:'3px 14px',fontSize:12,textAlign:'center',borderBottom:'1px solid #ddd',display:'flex',alignItems:'center',justifyContent:'center',gap:12}}>
-        <span>{syncMsg}</span>
-        {pending.length>0&&<button onClick={()=>setShowPending(true)} style={{position:'relative',background:'#e85d26',color:'white',border:'none',borderRadius:20,padding:'2px 12px',fontSize:12,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
-          🔔 מועמדים ממתינים
-          <span style={{background:'white',color:'#e85d26',borderRadius:10,padding:'1px 7px',fontWeight:800,fontSize:11}}>{pending.length}</span>
-        </button>}
-      </div>
+      <div style={{background:syncBg,padding:'3px 14px',fontSize:12,textAlign:'center',borderBottom:'1px solid #ddd'}}>{syncMsg}</div>
       {page==='dashboard'&&<Dashboard data={data} onNav={setPage}/>}
       {page==='employers'&&<Employers data={data} setData={setData}/>}
       {page==='jobs'&&<Jobs data={data} setData={setData}/>}

@@ -304,6 +304,22 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
       };
 
       try {
+        // Upload CV to Supabase Storage if file exists
+        let cvUrl = '';
+        if (cvFileName) {
+          const cvFile = document.getElementById('cv-input').files[0];
+          if (cvFile) {
+            const ext = cvFile.name.split('.').pop();
+            const fname = `cv-${candidate.id}.${ext}`;
+            const { error: uploadErr } = await sb.storage.from('job-images').upload(fname, cvFile, { upsert: true, contentType: cvFile.type });
+            if (!uploadErr) {
+              const { data: urlData } = sb.storage.from('job-images').getPublicUrl(fname);
+              cvUrl = urlData.publicUrl;
+              candidate.cvUrl = cvUrl;
+            }
+          }
+        }
+
         const { data: rows } = await sb.from('crm_state').select('data').eq('id','main').single();
         const existing = rows?.data || {};
         const candidates = existing.candidates || [];
