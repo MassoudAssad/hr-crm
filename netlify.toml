@@ -1,8 +1,8 @@
 [[edge_functions]]
-  path = "/apply.html"
+  path = "/job/*"
   function = "og-proxy"
 
 [[headers]]
-  for = "/apply.html"
+  for = "/job/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"

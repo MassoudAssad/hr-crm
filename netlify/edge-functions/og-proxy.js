@@ -1,5 +1,5 @@
 // Netlify Edge Function: netlify/edge-functions/og-proxy.js
-// Reads ?id=JOB_ID, fetches job from Supabase, injects OG tags server-side
+// Intercepts /job/:id, fetches job from Supabase, returns apply.html with OG tags
 
 const SB_URL = 'https://rdzmwtixtfenmojeugyx.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkem13dGl4dGZlbm1vamV1Z3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjcxODUsImV4cCI6MjA5MjM0MzE4NX0.FUHtMO-wRs0B0weWGuDxSbXflx7RsVOGVYbC7kUrn0M';
@@ -7,47 +7,40 @@ const SITE_URL = 'https://crm-hr.topgroup4u.com';
 
 export default async (request, context) => {
   const url = new URL(request.url);
-  const jobId = url.searchParams.get('id');
 
-  // No ?id= param — serve page normally
-  if (!jobId) {
-    return context.next();
-  }
+  // Extract job ID from path: /job/j1234567890
+  const match = url.pathname.match(/^\/job\/(.+)$/);
+  if (!match) return context.next();
+  const jobId = match[1];
 
-  // Fetch job data from Supabase
+  // Fetch job from Supabase
   let job = null;
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/crm_state?select=data&id=eq.main`,
-      {
-        headers: {
-          'apikey': SB_KEY,
-          'Authorization': `Bearer ${SB_KEY}`,
-          'Content-Type': 'application/json',
-        }
-      }
+      { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` } }
     );
     const rows = await res.json();
-    if (rows && rows[0] && rows[0].data && rows[0].data.jobs) {
+    if (rows?.[0]?.data?.jobs) {
       job = rows[0].data.jobs.find(j => j.id === jobId);
     }
+  } catch (e) {}
+
+  // Fetch apply.html
+  let html = '';
+  try {
+    const pageRes = await fetch(`${SITE_URL}/apply.html`);
+    html = await pageRes.text();
   } catch (e) {
-    return context.next();
+    return new Response('Error loading page', { status: 500 });
   }
 
   if (!job) {
-    return context.next();
-  }
-
-  // Fetch apply.html directly from the site
-  let html = '';
-  try {
-    const pageRes = await fetch(`${SITE_URL}/apply.html`, {
-      headers: { 'User-Agent': 'Netlify-Edge-Function' }
+    // No job found — return apply.html as-is
+    return new Response(html, {
+      status: 200,
+      headers: { 'content-type': 'text/html; charset=utf-8' }
     });
-    html = await pageRes.text();
-  } catch (e) {
-    return context.next();
   }
 
   const title = `${job.publishTitle || job.title} | טופ גרופ גיוס והשמה`;
@@ -90,4 +83,4 @@ function ea(str) {
   return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-export const config = { path: '/apply.html' };
+export const config = { path: '/job/*' };

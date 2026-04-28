@@ -80,10 +80,14 @@
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkem13dGl4dGZlbm1vamV1Z3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjcxODUsImV4cCI6MjA5MjM0MzE4NX0.FUHtMO-wRs0B0weWGuDxSbXflx7RsVOGVYbC7kUrn0M';
   const app = document.getElementById('app');
 
-  // Try to get job from ?id= (new short URL)
+  // Try to get job from ?id= or /job/:id path
   function getJobId() {
     const params = new URLSearchParams(window.location.search);
-    return params.get('id');
+    if (params.get('id')) return params.get('id');
+    // Support /job/:id path
+    const pathMatch = window.location.pathname.match(/\/job\/(.+)/);
+    if (pathMatch) return pathMatch[1];
+    return null;
   }
 
   // Backward compat: get job from ?job= base64 (old URLs)
