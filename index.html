@@ -549,7 +549,6 @@ function Jobs({data,setData}){
   };
 
   const getUrl=job=>{
-    // Clean URL — OG tags injected server-side by Edge Function at /job/:id
     return `https://jobs.topgroup4u.com/job/${job.id}`;
   };
 
@@ -1181,10 +1180,35 @@ function App(){
   const syncBg=syncStatus==='ok'?'#d4edda':syncStatus==='error'?'#fde8dc':'#fff3cd';
   const syncMsg=syncStatus==='syncing'?'🔄 מסנכרן...':syncStatus==='ok'?'☁️ מסונכרן עם Supabase':'⚠️ שגיאת סנכרון';
 
+  // Pending candidates (from landing page, await approval)
+  const pending=(data.pendingCandidates||[]).map(id=>data.candidates.find(c=>c.id===id)).filter(Boolean);
+  const [showPending,setShowPending]=React.useState(false);
+
+  const approvePending=(cid)=>{
+    setData(d=>({
+      ...d,
+      pendingCandidates:(d.pendingCandidates||[]).filter(id=>id!==cid),
+      candidates:d.candidates.map(c=>c.id===cid?{...c,pendingApproval:false}:c)
+    }));
+  };
+  const rejectPending=(cid)=>{
+    setData(d=>({
+      ...d,
+      pendingCandidates:(d.pendingCandidates||[]).filter(id=>id!==cid),
+      candidates:d.candidates.filter(c=>c.id!==cid)
+    }));
+  };
+
   return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#f5f0e8'}}>
     <div id="desktop-sidebar"><Sidebar active={page} onNav={setPage}/></div>
     <div id="main-content" style={{flex:1,overflow:'auto',minWidth:0}}>
-      <div style={{background:syncBg,padding:'3px 14px',fontSize:12,textAlign:'center',borderBottom:'1px solid #ddd'}}>{syncMsg}</div>
+      <div style={{background:syncBg,padding:'3px 14px',fontSize:12,textAlign:'center',borderBottom:'1px solid #ddd',display:'flex',alignItems:'center',justifyContent:'center',gap:12}}>
+        <span>{syncMsg}</span>
+        {pending.length>0&&<button onClick={()=>setShowPending(true)} style={{position:'relative',background:'#e85d26',color:'white',border:'none',borderRadius:20,padding:'2px 12px',fontSize:12,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
+          🔔 מועמדים ממתינים
+          <span style={{background:'white',color:'#e85d26',borderRadius:10,padding:'1px 7px',fontWeight:800,fontSize:11}}>{pending.length}</span>
+        </button>}
+      </div>
       {page==='dashboard'&&<Dashboard data={data} onNav={setPage}/>}
       {page==='employers'&&<Employers data={data} setData={setData}/>}
       {page==='jobs'&&<Jobs data={data} setData={setData}/>}
@@ -1195,10 +1219,70 @@ function App(){
       {NAV.map(item=>(
         <button key={item.id} className={`mnav-btn${page===item.id?' active':''}`} onClick={()=>setPage(item.id)}>
           <span>{item.icon}</span>
-          <span>{item.label}</span>
+          {item.id==='candidates'&&pending.length>0
+            ?<span style={{position:'relative'}}>{item.label}<span style={{position:'absolute',top:-8,left:-6,background:'#e85d26',color:'white',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:800}}>{pending.length}</span></span>
+            :<span>{item.label}</span>
+          }
         </button>
       ))}
     </nav>
+
+    {/* Pending candidates modal */}
+    {showPending&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+      <div style={{background:'white',borderRadius:16,width:'100%',maxWidth:620,maxHeight:'85vh',overflow:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}>
+        <div style={{padding:'20px 24px',borderBottom:'2px solid #f0ede6',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,background:'white'}}>
+          <div>
+            <h2 style={{fontSize:20,fontWeight:800}}>🔔 מועמדים ממתינים לאישור</h2>
+            <div style={{fontSize:13,color:'#888',marginTop:2}}>מועמדים שהגישו מועמדות דרך דף הנחיתה</div>
+          </div>
+          <button onClick={()=>setShowPending(false)} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:'#888'}}>✕</button>
+        </div>
+        <div style={{padding:16}}>
+          {pending.length===0
+            ?<div style={{textAlign:'center',padding:40,color:'#aaa'}}>אין מועמדים ממתינים</div>
+            :pending.map(c=>{
+              const job=data.jobs.find(j=>c.appliedJobs?.includes(j.id));
+              return <div key={c.id} style={{border:'2px solid #f0ede6',borderRadius:12,padding:16,marginBottom:12,background:'#fafaf8'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+                  <div style={{display:'flex',gap:10,alignItems:'center'}}>
+                    <div style={{width:44,height:44,borderRadius:22,background:'#e85d26',color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:17,flexShrink:0}}>
+                      {c.name.charAt(0)}
+                    </div>
+                    <div>
+                      <div style={{fontWeight:800,fontSize:16}}>{c.name}</div>
+                      <div style={{fontSize:13,color:'#666'}}>{c.role||c.domain}</div>
+                    </div>
+                  </div>
+                  <div style={{fontSize:11,color:'#aaa',textAlign:'left'}}>
+                    {c.appliedAt?new Date(c.appliedAt).toLocaleString('he-IL',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}):''}
+                  </div>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,fontSize:13,color:'#555',marginBottom:12}}>
+                  {c.phone&&<span>📞 {c.phone}</span>}
+                  {c.email&&<span>✉️ {c.email}</span>}
+                  {c.city&&<span>📍 {c.city}</span>}
+                  {c.experience&&<span>⏱ {c.experience}</span>}
+                  {c.education&&<span>🎓 {c.education}</span>}
+                  {c.cv&&<span style={{color:'#16a34a',fontWeight:600}}>📄 CV מצורף</span>}
+                </div>
+                {job&&<div style={{fontSize:12,background:'#fff5f0',border:'1px solid #fcd5c0',borderRadius:6,padding:'5px 10px',marginBottom:10,color:'#c94d1a',fontWeight:600}}>
+                  🔗 משרה: {job.publishTitle||job.title} ({job.jobNumber})
+                </div>}
+                {c.notes&&<div style={{fontSize:13,color:'#555',background:'#f9fafb',borderRadius:6,padding:'8px 10px',marginBottom:10,fontStyle:'italic'}}>"{c.notes}"</div>}
+                <div style={{display:'flex',gap:10}}>
+                  <button onClick={()=>approvePending(c.id)} style={{flex:1,padding:'9px 0',background:'#16a34a',color:'white',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+                    ✅ אשר והוסף למועמדים
+                  </button>
+                  <button onClick={()=>rejectPending(c.id)} style={{padding:'9px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+                    ✕ דחה
+                  </button>
+                </div>
+              </div>;
+            })
+          }
+        </div>
+      </div>
+    </div>}
   </div>;
 }
 
