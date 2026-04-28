@@ -550,7 +550,7 @@ function Jobs({data,setData}){
 
   const getUrl=job=>{
     // Clean URL — OG tags injected server-side by Edge Function at /job/:id
-    return `https://crm-hr.topgroup4u.com/job/${job.id}`;
+    return `https://jobs.topgroup4u.com/job/${job.id}`;
   };
 
   const openAdd=()=>{setForm({jobNumber:nextNum(),title:'',publishTitle:'',domain:'',role:'',employerId:data.employers[0]?.id||'',type:'משרה מלאה',location:'',salary:'',status:'פתוח',deadline:'',description:'',requirements:'',benefits:'',image:'',imageUrl:''});setModal('add');};
