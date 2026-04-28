@@ -1,52 +1,40 @@
 // Netlify Edge Function: netlify/edge-functions/og-proxy.js
-// Reads ?id=JOB_ID, fetches job from Supabase, injects OG tags server-side
-
-const SB_URL = 'https://rdzmwtixtfenmojeugyx.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkem13dGl4dGZlbm1vamV1Z3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjcxODUsImV4cCI6MjA5MjM0MzE4NX0.FUHtMO-wRs0B0weWGuDxSbXflx7RsVOGVYbC7kUrn0M';
+// This function intercepts requests to apply.html and injects OG tags server-side
 
 export default async (request, context) => {
   const url = new URL(request.url);
-  const jobId = url.searchParams.get('id');
+  const jobParam = url.searchParams.get('job');
 
-  // No ?id= param — serve page normally
-  if (!jobId) {
+  if (!jobParam) {
     return context.next();
   }
 
-  // Fetch job data from Supabase
+  // Decode the job data
   let job = null;
   try {
-    const res = await fetch(
-      `${SB_URL}/rest/v1/crm_state?select=data&id=eq.main`,
-      {
-        headers: {
-          'apikey': SB_KEY,
-          'Authorization': `Bearer ${SB_KEY}`,
-          'Content-Type': 'application/json',
-        }
-      }
-    );
-    const rows = await res.json();
-    if (rows && rows[0] && rows[0].data && rows[0].data.jobs) {
-      job = rows[0].data.jobs.find(j => j.id === jobId);
+    const decoded = decodeURIComponent(jobParam);
+    try {
+      job = JSON.parse(decodeURIComponent(escape(atob(decoded))));
+    } catch {
+      const bytes = Uint8Array.from(atob(decoded), c => c.charCodeAt(0));
+      job = JSON.parse(new TextDecoder().decode(bytes));
     }
   } catch (e) {
     return context.next();
   }
 
-  if (!job) {
-    return context.next();
-  }
+  if (!job) return context.next();
 
   // Fetch the original apply.html
   const response = await context.next();
   const html = await response.text();
 
   const title = `${job.publishTitle || job.title} | טופ גרופ גיוס והשמה`;
-  const description = `📍 ${job.location || ''} | 💼 ${job.type || ''} | ${job.domain || ''} – הגש מועמדות עכשיו דרך טופ גרופ גיוס והשמה`;
+  const description = `📍 ${job.location || ''} | 💼 ${job.type || ''} | ${job.domain || ''} – הגש מועמדות עכשיו!`;
   const image = job.imageUrl || 'https://crm-hr.topgroup4u.com/og-default.png';
   const pageUrl = request.url;
 
+  // Build OG tags block
   const ogTags = `<meta property="og:title" content="${escapeAttr(title)}">
   <meta property="og:description" content="${escapeAttr(description)}">
   <meta property="og:image" content="${escapeAttr(image)}">
@@ -62,6 +50,7 @@ export default async (request, context) => {
   <meta name="twitter:image" content="${escapeAttr(image)}">
   <title>${escapeAttr(title)}</title>`;
 
+  // Remove ALL existing og/twitter meta tags and title, then inject fresh ones
   let newHtml = html
     .replace(/<title>[^<]*<\/title>/gi, '')
     .replace(/<meta\s+[^>]*property="og:[^"]*"[^>]*>/gi, '')
