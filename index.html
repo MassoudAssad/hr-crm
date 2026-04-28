@@ -106,7 +106,11 @@ async function uploadImageToStorage(base64, jobId) {
   } catch(e) { console.warn('Upload exception:', e); return null; }
 }
 
-// ── CONSTANTS ─────────────────────────────────────────────────────────────────
+// ── CONTACT CONFIG ────────────────────────────────────────────────────────────
+const FROM_EMAILS = [
+  { email: 'hr@topgroup4u.com',   label: 'טופ גרופ גיוס והשמה' },
+  { email: 'mass@topgroup4u.com', label: 'טופ גרופ נדל"ן' },
+];
 const ACC = '#e85d26';
 const SIDEBAR_BG = '#1a1a2e';
 const MUT = '#888';
@@ -198,6 +202,292 @@ function Sec({title,children}){
     <div style={{fontSize:14,fontWeight:700,color:ACC,marginBottom:8,borderBottom:'1px dashed #ddd',paddingBottom:6}}>{title}</div>
     {children}
   </div>;
+}
+
+// ── MESSAGE / CONTACT ─────────────────────────────────────────────────────────
+const MSG_TEMPLATES = {
+  candidate: [
+    { id:'interview', label:'📅 זימון ראיון',
+      subject: (c,j) => `זימון ראיון – ${j?.publishTitle||j?.title||'משרה'}`,
+      body: (c,j,emp) =>
+`שלום ${c.name},
+
+אנו שמחים לעדכן אותך כי קורות החיים שלך עוררו עניין רב!
+נשמח לזמן אותך לראיון עבודה למשרת ${j?.publishTitle||j?.title||c.role||''}${emp?' אצל '+emp.name:''}.
+
+אנא צור/י איתנו קשר לתיאום מועד נוח.
+
+בברכה,
+צוות טופ גרופ גיוס והשמה
+📞 | 📧 hr@topgroup4u.com`
+    },
+    { id:'status', label:'ℹ️ עדכון סטטוס',
+      subject: (c,j) => `עדכון לגבי מועמדותך – ${j?.publishTitle||j?.title||'משרה'}`,
+      body: (c,j,emp) =>
+`שלום ${c.name},
+
+ברצוננו לעדכן אותך בנוגע למועמדותך למשרת ${j?.publishTitle||j?.title||c.role||''}.
+
+הסטטוס הנוכחי שלך במערכת: ${c.status}.
+
+לכל שאלה, אנחנו כאן!
+
+בברכה,
+צוות טופ גרופ גיוס והשמה`
+    },
+    { id:'placed', label:'🎉 הודעת השמה',
+      subject: (c,j) => `ברכות! השמה מוצלחת – טופ גרופ`,
+      body: (c,j,emp) =>
+`שלום ${c.name},
+
+ברכות! 🎉
+אנו שמחים לבשר לך כי הושמת בהצלחה למשרת ${j?.publishTitle||j?.title||c.role||''}${emp?' אצל '+emp.name:''}.
+
+מאחלים לך הצלחה רבה בתפקיד החדש!
+
+בברכה,
+צוות טופ גרופ גיוס והשמה`
+    },
+    { id:'cv_request', label:'📄 בקשת קורות חיים',
+      subject: (c,j) => `בקשה לשליחת קורות חיים – טופ גרופ`,
+      body: (c,j,emp) =>
+`שלום ${c.name},
+
+במסגרת תהליך הגיוס למשרת ${j?.publishTitle||j?.title||c.role||''}, נשמח לקבל את קורות החיים המעודכנים שלך.
+
+אנא שלח/י את קורות החיים בהקדם האפשרי.
+
+תודה,
+צוות טופ גרופ גיוס והשמה`
+    },
+    { id:'rejection', label:'💌 דחיה מכובדת',
+      subject: (c,j) => `תגובה לפנייתך – טופ גרופ`,
+      body: (c,j,emp) =>
+`שלום ${c.name},
+
+תודה רבה על עניינך ועל הזמן שהשקעת בתהליך המיון למשרת ${j?.publishTitle||j?.title||c.role||''}.
+
+לאחר בחינה מדוקדקת, החלטנו להמשיך עם מועמדים אחרים הקרובים יותר לפרופיל הנדרש.
+
+שמרנו את פרטיך ונפנה אליך בהזדמנויות מתאימות בעתיד.
+
+בהצלחה בהמשך הדרך,
+צוות טופ גרופ גיוס והשמה`
+    },
+  ],
+  employer: [
+    { id:'intro', label:'🤝 היכרות / פרופיל מועמד',
+      subject: (emp,c) => `הצגת מועמד/ת – ${c?.name||'מועמד'} | טופ גרופ`,
+      body: (emp,c) =>
+`שלום ${emp.contact||emp.name},
+
+ברצוני להציג בפניך מועמד/ת מצוינת שלדעתי יכולה להתאים לצרכי הארגון שלכם.
+
+שם: ${c?.name||''}
+תחום: ${c?.domain||''}
+תפקיד: ${c?.role||''}
+ניסיון: ${c?.experience||''}
+השכלה: ${c?.education||''}
+עיר: ${c?.city||''}
+
+נשמח לתאם ראיון בהקדם.
+
+בברכה,
+צוות טופ גרופ גיוס והשמה
+📞 | 📧 hr@topgroup4u.com`
+    },
+    { id:'followup', label:'📞 מעקב / Follow-up',
+      subject: (emp,c) => `מעקב – תהליך גיוס | טופ גרופ`,
+      body: (emp,c) =>
+`שלום ${emp.contact||emp.name},
+
+ברצוני לבדוק האם קיבלתם את פרטי המועמד/ת שהעברתי לאחרונה, ומה הסטטוס מבחינתכם.
+
+אנחנו כאן לכל שאלה ושמחים לסייע בתהליך.
+
+בברכה,
+צוות טופ גרופ גיוס והשמה`
+    },
+    { id:'agreement', label:'📋 הסכם השמה',
+      subject: (emp,c) => `הסכם השמה – טופ גרופ גיוס והשמה`,
+      body: (emp,c) =>
+`שלום ${emp.contact||emp.name},
+
+מצורף הסכם ההשמה שלנו לחתימתכם.
+
+אנא עיינו בהסכם ובמידה ויש שאלות, אנחנו זמינים.
+
+בברכה,
+צוות טופ גרופ גיוס והשמה`
+    },
+    { id:'general', label:'✉️ הודעה כללית',
+      subject: (emp,c) => `טופ גרופ גיוס והשמה`,
+      body: (emp,c) =>
+`שלום ${emp.contact||emp.name},
+
+`
+    },
+  ],
+};
+
+function MessageModal({ type, person, job, employer, candidate, onClose }) {
+  // type: 'candidate' | 'employer'
+  const templates = MSG_TEMPLATES[type] || [];
+  const [selTpl, setSelTpl] = React.useState(templates[0]?.id || '');
+  const [channel, setChannel] = React.useState('email'); // 'email' | 'whatsapp'
+  const [fromEmail, setFromEmail] = React.useState(FROM_EMAILS[0].email);
+  const [subject, setSubject] = React.useState('');
+  const [body, setBody] = React.useState('');
+  const [sent, setSent] = React.useState(false);
+
+  const tpl = templates.find(t => t.id === selTpl);
+
+  React.useEffect(() => {
+    if (!tpl) return;
+    if (type === 'candidate') {
+      setSubject(tpl.subject(person, job));
+      setBody(tpl.body(person, job, employer));
+    } else {
+      setSubject(tpl.subject(person, candidate));
+      setBody(tpl.body(person, candidate));
+    }
+  }, [selTpl]);
+
+  // Init on mount
+  React.useEffect(() => {
+    if (tpl) {
+      if (type === 'candidate') {
+        setSubject(tpl.subject(person, job));
+        setBody(tpl.body(person, job, employer));
+      } else {
+        setSubject(tpl.subject(person, candidate));
+        setBody(tpl.body(person, candidate));
+      }
+    }
+  }, []);
+
+  const phone = (person.phone||'').replace(/[-\s]/g,'').replace(/^0/,'972');
+  const email = person.email || '';
+
+  const handleSend = () => {
+    if (channel === 'email') {
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&from=${encodeURIComponent(fromEmail)}`;
+      window.open(gmailUrl, '_blank');
+    } else {
+      const wa = `https://wa.me/${phone}?text=${encodeURIComponent(body)}`;
+      window.open(wa, '_blank');
+    }
+    setSent(true);
+    setTimeout(() => { setSent(false); onClose(); }, 1200);
+  };
+
+  const hasContact = channel === 'email' ? !!email : !!phone;
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}
+      onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:'#fff',borderRadius:18,width:'100%',maxWidth:580,maxHeight:'92vh',overflow:'auto',boxShadow:'0 24px 80px rgba(0,0,0,0.3)'}}>
+        {/* Header */}
+        <div style={{background:'#1a1a2e',borderRadius:'18px 18px 0 0',padding:'20px 24px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <div style={{color:'#e85d26',fontSize:13,fontWeight:700,marginBottom:2}}>
+              {type==='candidate'?'📧 שליחת הודעה למועמד':'📧 שליחת הודעה למעסיק'}
+            </div>
+            <div style={{color:'white',fontWeight:800,fontSize:18}}>{person.name}</div>
+          </div>
+          <button onClick={onClose} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'white',width:34,height:34,borderRadius:17,cursor:'pointer',fontSize:18}}>✕</button>
+        </div>
+
+        <div style={{padding:'20px 24px'}}>
+          {/* Channel selector */}
+          <div style={{display:'flex',gap:8,marginBottom:channel==='email'?8:18}}>
+            {[{id:'email',icon:'📧',label:'מייל'},{id:'whatsapp',icon:'💬',label:'WhatsApp'}].map(ch=>(
+              <button key={ch.id} onClick={()=>setChannel(ch.id)}
+                style={{flex:1,padding:'10px 0',border:`2px solid ${channel===ch.id?'#e85d26':'#e5e7eb'}`,borderRadius:10,background:channel===ch.id?'#fff5f0':'white',
+                  fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer',color:channel===ch.id?'#e85d26':'#374151',
+                  transition:'all .15s'}}>
+                {ch.icon} {ch.label}
+                {ch.id==='email'&&email&&<span style={{display:'block',fontSize:11,color:'#9ca3af',fontWeight:400,marginTop:2}}>{email}</span>}
+                {ch.id==='email'&&!email&&<span style={{display:'block',fontSize:11,color:'#fca5a5',fontWeight:400,marginTop:2}}>אין מייל</span>}
+                {ch.id==='whatsapp'&&person.phone&&<span style={{display:'block',fontSize:11,color:'#9ca3af',fontWeight:400,marginTop:2}}>{person.phone}</span>}
+                {ch.id==='whatsapp'&&!person.phone&&<span style={{display:'block',fontSize:11,color:'#fca5a5',fontWeight:400,marginTop:2}}>אין טלפון</span>}
+              </button>
+            ))}
+          </div>
+
+          {channel==='email'&&<div style={{background:'#f8f9fa',border:'1.5px solid #e5e7eb',borderRadius:10,padding:'10px 14px',marginBottom:14}}>
+            <div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:8}}>📤 שלח מ:</div>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+              {FROM_EMAILS.map(f=>(
+                <button key={f.email} onClick={()=>setFromEmail(f.email)}
+                  style={{padding:'7px 14px',border:`2px solid ${fromEmail===f.email?'#e85d26':'#e5e7eb'}`,borderRadius:8,
+                    background:fromEmail===f.email?'#fff5f0':'white',fontFamily:'Heebo',fontSize:13,
+                    fontWeight:fromEmail===f.email?700:500,cursor:'pointer',
+                    color:fromEmail===f.email?'#e85d26':'#374151',transition:'all .15s'}}>
+                  {fromEmail===f.email&&'✓ '}{f.label}
+                  <span style={{display:'block',fontSize:11,color:fromEmail===f.email?'#c94d1a':'#9ca3af',fontWeight:400,direction:'ltr'}}>{f.email}</span>
+                </button>
+              ))}
+            </div>
+          </div>}
+
+          {/* Template picker */}
+          <div style={{marginBottom:16}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#374151',marginBottom:8}}>תבנית הודעה</div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              {templates.map(t=>(
+                <button key={t.id} onClick={()=>setSelTpl(t.id)}
+                  style={{padding:'6px 12px',border:`1.5px solid ${selTpl===t.id?'#e85d26':'#e5e7eb'}`,borderRadius:20,
+                    background:selTpl===t.id?'#fff5f0':'white',fontFamily:'Heebo',fontSize:12,fontWeight:selTpl===t.id?700:500,
+                    cursor:'pointer',color:selTpl===t.id?'#e85d26':'#374151'}}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Subject (email only) */}
+          {channel==='email'&&(
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#374151',marginBottom:6}}>נושא</div>
+              <input value={subject} onChange={e=>setSubject(e.target.value)}
+                style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:14,outline:'none'}}/>
+            </div>
+          )}
+
+          {/* Body */}
+          <div style={{marginBottom:16}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#374151',marginBottom:6}}>תוכן ההודעה</div>
+            <textarea value={body} onChange={e=>setBody(e.target.value)} rows={10}
+              style={{width:'100%',padding:'10px 12px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,lineHeight:1.7,outline:'none',resize:'vertical'}}/>
+          </div>
+
+          {!hasContact&&(
+            <div style={{background:'#fff5f0',border:'1px solid #fcd5c0',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#c94d1a',marginBottom:14}}>
+              ⚠️ {channel==='email'?'לא קיימת כתובת מייל עבור איש קשר זה':'לא קיים מספר טלפון עבור איש קשר זה'}
+            </div>
+          )}
+
+          {sent&&(
+            <div style={{background:'#f0fdf4',border:'1px solid #86efac',borderRadius:8,padding:'10px 14px',fontSize:14,color:'#15803d',fontWeight:700,marginBottom:14,textAlign:'center'}}>
+              ✅ ההודעה נפתחה לשליחה!
+            </div>
+          )}
+
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={onClose} style={{flex:1,padding:'11px 0',background:'white',border:'2px solid #e5e7eb',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer',color:'#374151'}}>
+              ביטול
+            </button>
+            <button onClick={handleSend} disabled={!hasContact}
+              style={{flex:2,padding:'11px 0',background:hasContact?'#e85d26':'#d1d5db',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:800,fontSize:15,cursor:hasContact?'pointer':'not-allowed',
+                boxShadow:hasContact?'0 4px 16px rgba(232,93,38,0.3)':'none'}}>
+              {channel==='email'?'📧 פתח במייל →':'💬 פתח ב-WhatsApp →'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── NAV ───────────────────────────────────────────────────────────────────────
@@ -478,6 +768,7 @@ function Employers({data,setData}){
   const [modal,setModal]=React.useState(null);
   const [form,setForm]=React.useState({});
   const [detail,setDetail]=React.useState(null);
+  const [msgTarget,setMsgTarget]=React.useState(null);
   const industries=['הכל',...new Set(data.employers.map(e=>e.industry).filter(Boolean))];
   const filtered=data.employers.filter(e=>(e.name.includes(search)||e.contact.includes(search)||e.city.includes(search))&&(indFilter==='הכל'||e.industry===indFilter));
   const newNeed=()=>({id:Date.now(),domain:'',role:'',count:1,fee:''});
@@ -569,66 +860,151 @@ function Employers({data,setData}){
     {detail&&(()=>{
       const empJobs=data.jobs.filter(j=>j.employerId===detail.id);
       const {tc,tf}=totals(detail);
-      return <Modal title={detail.name} onClose={()=>setDetail(null)}>
-        <Sec title="🏢 פרטי המעסיק">
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}} className="form-grid">
-            {[['ענף',detail.industry],['סטטוס',null],['איש קשר',detail.contact],['טלפון',detail.phone],['אימייל',detail.email],['עיר',detail.city]].map(([k,v])=><div key={k}>
-              <div style={{fontSize:11,color:MUT}}>{k}</div>
-              {k==='סטטוס'?<Tag label={detail.status}/>:<div style={{fontSize:14,fontWeight:500}}>{v||'—'}</div>}
-            </div>)}
-          </div>
-        </Sec>
-        <Sec title="👷 צרכי כח אדם">
-          {(detail.needs||[]).map((n,i)=><div key={i} style={{display:'flex',gap:8,alignItems:'center',padding:'8px 10px',background:'#fff',border:'1px dashed #ddd',borderRadius:3,marginBottom:6}}>
-            <div style={{flex:1}}><span style={{fontWeight:700,fontSize:14}}>{n.role||'—'}</span>{n.domain&&<span style={{fontSize:12,color:MUT,marginRight:6}}>({n.domain})</span>}</div>
-            <span style={{background:'#cce5ff',border:'1px solid #333',borderRadius:3,padding:'1px 8px',fontSize:13}}>{n.count} עובד/ת</span>
-            <span style={{background:'#d4edda',border:'1px solid #333',borderRadius:3,padding:'1px 8px',fontSize:13}}>₪{fmtNum(n.fee||'0')} עמלה</span>
-          </div>)}
-          {(!detail.needs||!detail.needs.length)&&<div style={{color:MUT,fontSize:13}}>לא הוגדרו צרכים</div>}
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:10,padding:10,background:'#fff5f0',borderRadius:3,border:'1px solid #fcd5c0'}}>
-            <div><div style={{fontSize:11,color:MUT}}>סה"כ עובדים</div><div style={{fontSize:18,fontWeight:700,color:ACC}}>{tc}</div></div>
-            <div><div style={{fontSize:11,color:MUT}}>ציפי הכנסה</div><div style={{fontSize:18,fontWeight:700,color:ACC}}>₪{fmtNum(tf)}</div></div>
-          </div>
-        </Sec>
-        <Sec title="📋 משרות">
-          {empJobs.map(j=><div key={j.id} className="sbox" style={{padding:'8px 12px',marginBottom:6,background:'#fff',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div><div style={{fontWeight:600,fontSize:14}}>{j.title}</div><div style={{fontSize:12,color:MUT}}>{j.jobNumber} · {j.location}</div></div>
-            <Tag label={j.status}/>
-          </div>)}
-          {!empJobs.length&&<div style={{color:MUT,fontSize:13}}>אין משרות</div>}
-        </Sec>
-        {detail.notes&&<div style={{background:'#fffbf0',border:'1px dashed #e0d080',borderRadius:4,padding:10}}><span style={{fontSize:14}}>📝 {detail.notes}</span></div>}
-        
-        <Sec title="📄 הסכם השמה">
-          {detail.agreementUrl
-            ?<div style={{display:'flex',gap:10,alignItems:'center',background:'#f0fdf4',border:'1px solid #86efac',borderRadius:8,padding:'10px 14px'}}>
-                <span style={{fontSize:20}}>📋</span>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:700,fontSize:14,color:'#15803d'}}>הסכם מצורף</div>
-                  <div style={{fontSize:12,color:'#6b7280',marginTop:2}}>{detail.agreementName||'קובץ הסכם'}</div>
-                </div>
-                <a href={detail.agreementUrl} target="_blank" rel="noreferrer" style={{padding:'7px 14px',background:'#16a34a',color:'white',borderRadius:8,textDecoration:'none',fontWeight:700,fontSize:13}}>פתח</a>
-                <a href={detail.agreementUrl} download style={{padding:'7px 10px',background:'#1a1a2e',color:'white',borderRadius:8,textDecoration:'none',fontWeight:700,fontSize:13}}>⬇️</a>
-              </div>
-            :<div style={{color:'#9ca3af',fontSize:13,background:'#f9fafb',borderRadius:8,padding:'10px 14px',border:'1px dashed #d1d5db'}}>לא צורף הסכם השמה עדיין</div>
-          }
-        </Sec>
+      return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(4px)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={()=>setDetail(null)}>
+        <div style={{background:'#f8f7f4',borderRadius:20,width:'90vw',maxWidth:1100,maxHeight:'92vh',overflow:'hidden',boxShadow:'0 32px 100px rgba(0,0,0,0.35)',display:'flex',flexDirection:'column'}} onClick={e=>e.stopPropagation()}>
 
-        <div style={{marginTop:12,marginBottom:8}}>
-          <button onClick={()=>{
-            const title=prompt('כותרת המשימה:');
-            if(!title) return;
-            const t={id:'t'+Date.now(),title,description:'',dueDate:'',priority:'בינוני',status:'פתוח',candidateId:'',employerId:detail.id,createdAt:new Date().toISOString()};
-            setData(d=>({...d,tasks:[t,...(d.tasks||[])]}));
-            alert('✅ משימה נוספה!');
-          }} style={{width:'100%',padding:'10px 0',background:'#eff6ff',border:'1.5px solid #bfdbfe',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer',color:'#1d4ed8'}}>
-            + הוסף משימה למעסיק זה
-          </button>
+          {/* Header */}
+          <div style={{background:'#1a1a2e',borderRadius:'20px 20px 0 0',padding:'22px 32px',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <div style={{display:'flex',gap:14,alignItems:'center'}}>
+              <Avatar name={detail.name} size={52}/>
+              <div>
+                <div style={{color:'white',fontWeight:800,fontSize:22}}>{detail.name}</div>
+                <div style={{color:'rgba(255,255,255,0.6)',fontSize:14,marginTop:2}}>{detail.industry} · {detail.city}</div>
+              </div>
+              <div style={{marginRight:8}}><Tag label={detail.status}/></div>
+            </div>
+            <button onClick={()=>setDetail(null)} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'white',width:36,height:36,borderRadius:18,cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+          </div>
+
+          {/* Body — 2 columns */}
+          <div style={{overflow:'auto',flex:1,padding:'24px 32px'}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+
+              {/* COL 1 */}
+              <div style={{display:'flex',flexDirection:'column',gap:16}}>
+
+                {/* פרטי מעסיק */}
+                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
+                    <div style={{width:32,height:32,borderRadius:8,background:'#fff5f0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🏢</div>
+                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>פרטי המעסיק</div>
+                  </div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                    {[['ענף',detail.industry],['איש קשר',detail.contact],['טלפון',detail.phone],['אימייל',detail.email],['עיר',detail.city]].map(([k,v])=>v?<div key={k} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
+                      <div style={{fontSize:11,color:'#9ca3af',fontWeight:600,marginBottom:3}}>{k}</div>
+                      <div style={{fontSize:13,fontWeight:600,color:'#1a1a2e'}}>{v}</div>
+                    </div>:null)}
+                  </div>
+                </div>
+
+                {/* צרכי כח אדם */}
+                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+                    <div style={{width:32,height:32,borderRadius:8,background:'#eff6ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>👷</div>
+                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>צרכי כח אדם</div>
+                  </div>
+                  {(detail.needs||[]).map((n,i)=><div key={i} style={{display:'flex',gap:8,alignItems:'center',padding:'8px 10px',background:'#f8f7f4',border:'1px dashed #ddd',borderRadius:8,marginBottom:6}}>
+                    <div style={{flex:1}}><span style={{fontWeight:700,fontSize:13}}>{n.role||'—'}</span>{n.domain&&<span style={{fontSize:11,color:MUT,marginRight:6}}>({n.domain})</span>}</div>
+                    <span style={{background:'#cce5ff',border:'1px solid #333',borderRadius:3,padding:'1px 8px',fontSize:12}}>{n.count} עובד/ת</span>
+                    <span style={{background:'#d4edda',border:'1px solid #333',borderRadius:3,padding:'1px 8px',fontSize:12}}>₪{fmtNum(n.fee||'0')}</span>
+                  </div>)}
+                  {(!detail.needs||!detail.needs.length)&&<div style={{color:MUT,fontSize:13}}>לא הוגדרו צרכים</div>}
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:10,padding:10,background:'#fff5f0',borderRadius:8,border:'1px solid #fcd5c0'}}>
+                    <div><div style={{fontSize:11,color:MUT}}>סה"כ עובדים</div><div style={{fontSize:20,fontWeight:700,color:ACC}}>{tc}</div></div>
+                    <div><div style={{fontSize:11,color:MUT}}>ציפי הכנסה</div><div style={{fontSize:20,fontWeight:700,color:ACC}}>₪{fmtNum(tf)}</div></div>
+                  </div>
+                </div>
+
+                {/* הערות */}
+                {detail.notes&&<div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+                    <div style={{width:32,height:32,borderRadius:8,background:'#fffbeb',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📝</div>
+                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>הערות</div>
+                  </div>
+                  <div style={{fontSize:14,color:'#374151',lineHeight:1.7,background:'#fffbeb',borderRadius:8,padding:'12px 14px',fontStyle:'italic'}}>"{detail.notes}"</div>
+                </div>}
+
+              </div>{/* end col1 */}
+
+              {/* COL 2 */}
+              <div style={{display:'flex',flexDirection:'column',gap:16}}>
+
+                {/* משרות */}
+                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+                    <div style={{width:32,height:32,borderRadius:8,background:'#faf5ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📋</div>
+                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>משרות ({empJobs.length})</div>
+                  </div>
+                  {empJobs.map(j=><div key={j.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 12px',background:'#f8f7f4',borderRadius:8,marginBottom:6}}>
+                    <div><div style={{fontWeight:600,fontSize:13}}>{j.title}</div><div style={{fontSize:11,color:MUT}}>{j.jobNumber} · {j.location}</div></div>
+                    <Tag label={j.status}/>
+                  </div>)}
+                  {!empJobs.length&&<div style={{color:MUT,fontSize:13}}>אין משרות</div>}
+                </div>
+
+                {/* הסכם השמה */}
+                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+                    <div style={{width:32,height:32,borderRadius:8,background:'#f0fdf4',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📄</div>
+                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>הסכם השמה</div>
+                  </div>
+                  {detail.agreementUrl
+                    ?<div style={{display:'flex',gap:10,alignItems:'center',background:'#f0fdf4',border:'1px solid #86efac',borderRadius:8,padding:'10px 14px'}}>
+                        <span style={{fontSize:20}}>📋</span>
+                        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14,color:'#15803d'}}>הסכם מצורף</div><div style={{fontSize:12,color:'#6b7280'}}>{detail.agreementName||'קובץ הסכם'}</div></div>
+                        <a href={detail.agreementUrl} target="_blank" rel="noreferrer" style={{padding:'7px 14px',background:'#16a34a',color:'white',borderRadius:8,textDecoration:'none',fontWeight:700,fontSize:13}}>פתח</a>
+                        <a href={detail.agreementUrl} download style={{padding:'7px 10px',background:'#1a1a2e',color:'white',borderRadius:8,textDecoration:'none',fontWeight:700,fontSize:13}}>⬇️</a>
+                      </div>
+                    :<div style={{color:'#9ca3af',fontSize:13,background:'#f9fafb',borderRadius:8,padding:'10px 14px',border:'1px dashed #d1d5db'}}>לא צורף הסכם השמה עדיין</div>
+                  }
+                </div>
+
+                {/* יצירת קשר */}
+                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
+                    <div style={{width:32,height:32,borderRadius:8,background:'#f0f9ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>✉️</div>
+                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>יצירת קשר</div>
+                  </div>
+                  <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                    {detail.email&&<button onClick={()=>setMsgTarget({emp:detail})}
+                      style={{width:'100%',padding:'10px 0',background:'#eff6ff',border:'1.5px solid #bfdbfe',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#1d4ed8'}}>
+                      📧 שלח מייל
+                    </button>}
+                    {detail.phone&&<button onClick={()=>{const phone=(detail.phone||'').replace(/[-\s]/g,'').replace(/^0/,'972');window.open(`https://wa.me/${phone}`,'_blank');}}
+                      style={{width:'100%',padding:'10px 0',background:'#f0fdf4',border:'1.5px solid #86efac',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#15803d'}}>
+                      💬 WhatsApp
+                    </button>}
+                    <button onClick={()=>setMsgTarget({emp:detail})}
+                      style={{width:'100%',padding:'10px 0',background:'#fff5f0',border:'1.5px solid #fcd5c0',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#c94d1a'}}>
+                      ✉️ הודעה עם תבנית
+                    </button>
+                  </div>
+                </div>
+
+                {/* כפתורי פעולה */}
+                <div style={{display:'flex',gap:10}}>
+                  <button onClick={()=>{
+                    const title=prompt('כותרת המשימה:');
+                    if(!title) return;
+                    const t={id:'t'+Date.now(),title,description:'',dueDate:'',priority:'בינוני',status:'פתוח',candidateId:'',employerId:detail.id,createdAt:new Date().toISOString()};
+                    setData(d=>({...d,tasks:[t,...(d.tasks||[])]}));
+                    alert('✅ משימה נוספה!');
+                  }} style={{flex:1,padding:'10px 0',background:'#eff6ff',border:'1.5px solid #bfdbfe',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#1d4ed8'}}>
+                    + הוסף משימה
+                  </button>
+                  <button onClick={()=>{setDetail(null);openEdit(detail);}} style={{flex:1,padding:'10px 0',background:'#1a1a2e',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>
+                    ✏️ עריכה
+                  </button>
+                  <button onClick={()=>{if(confirm('למחוק מעסיק?')){del(detail.id);setDetail(null);}}} style={{padding:'10px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>
+                    🗑
+                  </button>
+                </div>
+
+              </div>{/* end col2 */}
+            </div>{/* end grid */}
+          </div>{/* end body */}
         </div>
-        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:8}}>
-          <Btn onClick={()=>{setDetail(null);openEdit(detail);}}>עריכה</Btn>
-        </div>
-      </Modal>;
+      </div>;
     })()}
 
     {/* Add/Edit modal */}
@@ -674,6 +1050,13 @@ function Employers({data,setData}){
         <Btn variant="primary" onClick={save}>שמירה</Btn>
       </div>
     </Modal>}
+
+    {msgTarget&&<MessageModal
+      type="employer"
+      person={msgTarget.emp}
+      candidate={null}
+      onClose={()=>setMsgTarget(null)}
+    />}
   </div>;
 }
 
@@ -879,37 +1262,92 @@ function Jobs({data,setData}){
     {detail&&(()=>{
       const emp=data.employers.find(e=>e.id===detail.employerId);
       const cands=data.candidates.filter(c=>c.appliedJobs.includes(detail.id));
-      return <Modal title={detail.title} onClose={()=>setDetail(null)}>
-        {detail.image&&<img src={detail.image} alt="" style={{width:'100%',height:160,objectFit:'cover',borderRadius:4,marginBottom:14,border:'2px solid #333'}}/>}
-        <Sec title="🔖 זיהוי משרה">
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}} className="form-grid">
-            {[['מספר',detail.jobNumber],['שם',detail.title],['כותרת פרסום',detail.publishTitle||'—'],['סטטוס',null]].map(([k,v])=><div key={k}>
-              <div style={{fontSize:11,color:MUT}}>{k}</div>
-              {k==='סטטוס'?<Tag label={detail.status}/>:<div style={{fontSize:14,fontWeight:600}}>{v}</div>}
-            </div>)}
+      return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(4px)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={()=>setDetail(null)}>
+        <div style={{background:'#f8f7f4',borderRadius:20,width:'90vw',maxWidth:1100,maxHeight:'92vh',overflow:'hidden',boxShadow:'0 32px 100px rgba(0,0,0,0.35)',display:'flex',flexDirection:'column'}} onClick={e=>e.stopPropagation()}>
+
+          {/* Header */}
+          <div style={{background:'#1a1a2e',borderRadius:'20px 20px 0 0',padding:'22px 32px',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <div style={{display:'flex',gap:14,alignItems:'center'}}>
+              {(detail.image||detail.imageUrl)&&<img src={detail.image||detail.imageUrl} alt="" style={{width:52,height:52,objectFit:'cover',borderRadius:10,border:'2px solid rgba(255,255,255,0.2)',flexShrink:0}}/>}
+              <div>
+                <div style={{color:'#e85d26',fontSize:12,fontWeight:700,marginBottom:2}}>{detail.jobNumber}</div>
+                <div style={{color:'white',fontWeight:800,fontSize:22}}>{detail.publishTitle||detail.title}</div>
+                <div style={{color:'rgba(255,255,255,0.6)',fontSize:13,marginTop:2}}>{emp?.name||''}{detail.location?` · 📍${detail.location}`:''}</div>
+              </div>
+              <div style={{marginRight:8}}><Tag label={detail.status}/></div>
+            </div>
+            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+              <button onClick={()=>setPubJob(detail)} style={{background:'rgba(255,255,255,0.15)',border:'none',color:'white',padding:'8px 14px',borderRadius:8,cursor:'pointer',fontFamily:'Heebo',fontWeight:700,fontSize:13}}>🔗 פרסום</button>
+              <button onClick={()=>setDetail(null)} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'white',width:36,height:36,borderRadius:18,cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+            </div>
           </div>
-        </Sec>
-        <Sec title="📋 פרטי המשרה">
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}} className="form-grid">
-            {[['מעסיק',emp?.name],['תחום',detail.domain],['תפקיד',detail.role],['סוג',detail.type],['מיקום',detail.location],['שכר',`₪${fmtNum(detail.salary)}`],['נוצרה',detail.createdAt],['דדליין',detail.deadline]].map(([k,v])=><div key={k}>
-              <div style={{fontSize:11,color:MUT}}>{k}</div>
-              <div style={{fontSize:14,fontWeight:500}}>{v||'—'}</div>
-            </div>)}
-          </div>
-        </Sec>
-        {(detail.description||detail.requirements||detail.benefits)&&<Sec title="📝 תוכן">
-          {detail.description&&<div style={{marginBottom:10}}><div style={{fontWeight:600,fontSize:13,marginBottom:4}}>תיאור</div><div style={{fontSize:13,color:'#444',lineHeight:1.6,whiteSpace:'pre-wrap'}}>{detail.description}</div></div>}
-          {detail.requirements&&<div style={{marginBottom:10}}><div style={{fontWeight:600,fontSize:13,marginBottom:4}}>דרישות</div><div style={{fontSize:13,color:'#444',lineHeight:1.6,whiteSpace:'pre-wrap'}}>{detail.requirements}</div></div>}
-          {detail.benefits&&<div><div style={{fontWeight:600,fontSize:13,marginBottom:4}}>יתרונות</div><div style={{fontSize:13,color:'#444',lineHeight:1.6,whiteSpace:'pre-wrap'}}>{detail.benefits}</div></div>}
-        </Sec>}
-        <Sec title={`👥 מועמדים (${cands.length})`}>
-          {cands.map(c=><div key={c.id} className="sbox" style={{padding:'8px 12px',marginBottom:6,background:'#fff',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div style={{display:'flex',alignItems:'center',gap:8}}><Avatar name={c.name} size={28}/><div><div style={{fontWeight:600,fontSize:14}}>{c.name}</div><div style={{fontSize:12,color:MUT}}>{c.domain?`${c.domain} › ${c.role}`:c.role}</div></div></div>
-            <Tag label={c.status}/>
-          </div>)}
-          {!cands.length&&<div style={{color:MUT,fontSize:13}}>אין מועמדים עדיין</div>}
-        </Sec>
-      </Modal>;
+
+          {/* Body — 2 columns */}
+          <div style={{overflow:'auto',flex:1,padding:'24px 32px'}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+
+              {/* COL 1 */}
+              <div style={{display:'flex',flexDirection:'column',gap:16}}>
+
+                {/* פרטי משרה */}
+                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
+                    <div style={{width:32,height:32,borderRadius:8,background:'#fff5f0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📋</div>
+                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>פרטי המשרה</div>
+                  </div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                    {[['מעסיק',emp?.name],['תחום',detail.domain],['תפקיד',detail.role],['סוג',detail.type],['שכר',detail.salary?`₪${fmtNum(detail.salary)}`:null],['מיקום',detail.location],['נוצרה',detail.createdAt],['דדליין',detail.deadline]].map(([k,v])=>v?<div key={k} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
+                      <div style={{fontSize:11,color:'#9ca3af',fontWeight:600,marginBottom:3}}>{k}</div>
+                      <div style={{fontSize:13,fontWeight:600,color:'#1a1a2e'}}>{v}</div>
+                    </div>:null)}
+                  </div>
+                </div>
+
+                {/* תוכן המשרה */}
+                {(detail.description||detail.requirements||detail.benefits)&&
+                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
+                    <div style={{width:32,height:32,borderRadius:8,background:'#fffbeb',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📝</div>
+                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>תוכן המשרה</div>
+                  </div>
+                  {detail.description&&<div style={{marginBottom:12}}><div style={{fontWeight:700,fontSize:13,color:'#374151',marginBottom:4}}>תיאור</div><div style={{fontSize:13,color:'#555',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{detail.description}</div></div>}
+                  {detail.requirements&&<div style={{marginBottom:12}}><div style={{fontWeight:700,fontSize:13,color:'#374151',marginBottom:4}}>דרישות</div><div style={{fontSize:13,color:'#555',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{detail.requirements}</div></div>}
+                  {detail.benefits&&<div><div style={{fontWeight:700,fontSize:13,color:'#374151',marginBottom:4}}>יתרונות</div><div style={{fontSize:13,color:'#555',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{detail.benefits}</div></div>}
+                </div>}
+
+              </div>{/* end col1 */}
+
+              {/* COL 2 */}
+              <div style={{display:'flex',flexDirection:'column',gap:16}}>
+
+                {/* מועמדים */}
+                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+                    <div style={{width:32,height:32,borderRadius:8,background:'#eff6ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>👥</div>
+                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>מועמדים ({cands.length})</div>
+                  </div>
+                  {cands.map(c=><div key={c.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 12px',background:'#f8f7f4',borderRadius:8,marginBottom:6}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}><Avatar name={c.name} size={28}/><div><div style={{fontWeight:600,fontSize:13}}>{c.name}</div><div style={{fontSize:11,color:MUT}}>{c.domain?`${c.domain} › ${c.role}`:c.role}</div></div></div>
+                    <Tag label={c.status}/>
+                  </div>)}
+                  {!cands.length&&<div style={{color:MUT,fontSize:13,padding:'8px 0'}}>אין מועמדים עדיין</div>}
+                </div>
+
+                {/* כפתורי פעולה */}
+                <div style={{display:'flex',gap:10}}>
+                  <button onClick={()=>{setDetail(null);openEdit(detail);}} style={{flex:1,padding:'11px 0',background:'#1a1a2e',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+                    ✏️ ערוך משרה
+                  </button>
+                  <button onClick={()=>{if(confirm('למחוק משרה?')){del(detail.id);setDetail(null);}}} style={{padding:'11px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+                    🗑
+                  </button>
+                </div>
+
+              </div>{/* end col2 */}
+            </div>{/* end grid */}
+          </div>{/* end body */}
+        </div>
+      </div>;
     })()}
 
     {(modal==='add'||modal==='edit')&&<Modal title={modal==='add'?`משרה חדשה – ${form.jobNumber}`:`עריכת משרה – ${form.jobNumber}`} onClose={()=>setModal(null)}>
@@ -965,6 +1403,7 @@ function Candidates({data,setData}){
   const [modal,setModal]=React.useState(null);
   const [form,setForm]=React.useState({});
   const [detail,setDetail]=React.useState(null);
+  const [msgTarget,setMsgTarget]=React.useState(null);
   const stages=['חדש','בתהליך','ראיון נקבע','הוצב'];
   const pendingIds=new Set(data.pendingCandidates||[]);
   const filtered=data.candidates.filter(c=>!pendingIds.has(c.id)&&(c.name.includes(search)||c.role.includes(search)||(c.city||'').includes(search))&&(stFilter==='הכל'||c.status===stFilter));
@@ -1099,160 +1538,186 @@ function Candidates({data,setData}){
       </table>
     </div>
 
-        {detail&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={()=>setDetail(null)}>
-      <div style={{background:'#f8f7f4',borderRadius:20,width:'100%',maxWidth:580,maxHeight:'90vh',overflow:'auto',boxShadow:'0 24px 80px rgba(0,0,0,0.25)'}} onClick={e=>e.stopPropagation()}>
-        
-        {/* Header with avatar */}
-        <div style={{background:'#1a1a2e',borderRadius:'20px 20px 0 0',padding:'28px 28px 24px',position:'relative'}}>
-          <button onClick={()=>setDetail(null)} style={{position:'absolute',top:16,left:16,background:'rgba(255,255,255,0.1)',border:'none',color:'white',width:32,height:32,borderRadius:16,cursor:'pointer',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+        {detail&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(4px)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px'}} onClick={()=>setDetail(null)}>
+      <div style={{background:'#f8f7f4',borderRadius:20,width:'90vw',maxWidth:1100,maxHeight:'92vh',overflow:'hidden',boxShadow:'0 32px 100px rgba(0,0,0,0.35)',display:'flex',flexDirection:'column'}} onClick={e=>e.stopPropagation()}>
+
+        {/* Header */}
+        <div style={{background:'#1a1a2e',borderRadius:'20px 20px 0 0',padding:'22px 32px',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
           <div style={{display:'flex',gap:16,alignItems:'center'}}>
-            <div style={{width:64,height:64,borderRadius:32,background:'#e85d26',color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontSize:26,flexShrink:0,boxShadow:'0 4px 12px rgba(232,93,38,0.4)'}}>
+            <div style={{width:60,height:60,borderRadius:30,background:'#e85d26',color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontSize:24,flexShrink:0,boxShadow:'0 4px 12px rgba(232,93,38,0.4)'}}>
               {detail.name.charAt(0)}
             </div>
             <div>
-              <div style={{color:'white',fontWeight:800,fontSize:22,marginBottom:4}}>{detail.name}</div>
-              <div style={{color:'rgba(255,255,255,0.6)',fontSize:14}}>{detail.domain&&detail.role?`${detail.domain} › ${detail.role}`:detail.role||detail.domain||'—'}</div>
-              <div style={{marginTop:8}}><Tag label={detail.status}/></div>
+              <div style={{color:'white',fontWeight:800,fontSize:22}}>{detail.name}</div>
+              <div style={{color:'rgba(255,255,255,0.6)',fontSize:14,marginTop:2}}>{detail.domain&&detail.role?`${detail.domain} › ${detail.role}`:detail.role||detail.domain||'—'}</div>
             </div>
+            <div style={{marginRight:8}}><Tag label={detail.status}/></div>
           </div>
+          <button onClick={()=>setDetail(null)} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'white',width:36,height:36,borderRadius:18,cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
         </div>
 
-        <div style={{padding:'20px 24px'}}>
+        {/* Body — 2 columns */}
+        <div style={{overflow:'auto',flex:1,padding:'24px 32px'}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
 
-          {/* Contact section */}
-          <div style={{background:'white',borderRadius:14,padding:'18px 20px',marginBottom:14,boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
-              <div style={{width:32,height:32,borderRadius:8,background:'#fff5f0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📞</div>
-              <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>פרטי קשר</div>
-            </div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-              {[
-                {icon:'📞',label:'טלפון',val:detail.phone},
-                {icon:'✉️',label:'אימייל',val:detail.email},
-                {icon:'📍',label:'עיר',val:detail.city},
-                {icon:'🏷',label:'תחום',val:detail.domain},
-              ].map(({icon,label,val})=>val?<div key={label} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
-                <div style={{fontSize:11,color:'#9ca3af',fontWeight:600,marginBottom:3}}>{icon} {label}</div>
-                <div style={{fontSize:14,fontWeight:600,color:'#1a1a2e'}}>{val}</div>
-              </div>:null)}
-            </div>
-          </div>
+            {/* COL 1 */}
+            <div style={{display:'flex',flexDirection:'column',gap:16}}>
 
-          {/* Professional section */}
-          <div style={{background:'white',borderRadius:14,padding:'18px 20px',marginBottom:14,boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
-              <div style={{width:32,height:32,borderRadius:8,background:'#eff6ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>💼</div>
-              <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>פרופיל מקצועי</div>
-            </div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-              {[
-                {icon:'👤',label:'תפקיד',val:detail.role},
-                {icon:'⏱',label:'ניסיון',val:detail.experience},
-                {icon:'🎓',label:'השכלה',val:detail.education},
-                {icon:'📅',label:'תאריך הגשה',val:detail.appliedAt?new Date(detail.appliedAt).toLocaleDateString('he-IL'):'—'},
-              ].map(({icon,label,val})=>val&&val!=='—'?<div key={label} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
-                <div style={{fontSize:11,color:'#9ca3af',fontWeight:600,marginBottom:3}}>{icon} {label}</div>
-                <div style={{fontSize:14,fontWeight:600,color:'#1a1a2e'}}>{val}</div>
-              </div>:null)}
-            </div>
-          </div>
-
-          {/* CV section */}
-          <div style={{background:'white',borderRadius:14,padding:'18px 20px',marginBottom:14,boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
-              <div style={{width:32,height:32,borderRadius:8,background:'#f0fdf4',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📄</div>
-              <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>קורות חיים</div>
-            </div>
-            {detail.cvUrl
-              ?<div style={{display:'flex',gap:10,alignItems:'center'}}>
-                  <a href={detail.cvUrl} target="_blank" rel="noreferrer" style={{flex:1,padding:'10px 16px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14,textAlign:'center',display:'block'}}>
-                    📂 פתח קורות חיים
-                  </a>
-                  <a href={detail.cvUrl} download style={{padding:'10px 14px',background:'#1a1a2e',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14}}>
-                    ⬇️
-                  </a>
+              {/* פרטי קשר */}
+              <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
+                  <div style={{width:32,height:32,borderRadius:8,background:'#fff5f0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📞</div>
+                  <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>פרטי קשר</div>
                 </div>
-              :<div>
-                {detail.cv
-                  ?<div style={{background:'#fff5f0',border:'1px solid #fcd5c0',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#c94d1a',marginBottom:10}}>
-                    ⚠️ המועמד העלה CV אך הקובץ לא נשמר. בקש ממנו לשלוח שוב.
-                  </div>
-                  :<div style={{background:'#f3f4f6',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#9ca3af'}}>
-                    לא צורף קובץ CV
-                  </div>}
-                <div style={{marginTop:10}}>
-                  <label style={{display:'block',fontSize:13,fontWeight:700,marginBottom:6,color:'#374151'}}>העלה CV ידנית</label>
-                  <input type="file" accept=".pdf,.doc,.docx" onChange={async(e)=>{
-                    const file=e.target.files[0]; if(!file) return;
-                    const ext=file.name.split('.').pop();
-                    const fname=`cv-${detail.id}.${ext}`;
-                    const {error}=await sb.storage.from('job-images').upload(fname,file,{upsert:true,contentType:file.type});
-                    if(!error){
-                      const {data:urlData}=sb.storage.from('job-images').getPublicUrl(fname);
-                      setData(d=>({...d,candidates:d.candidates.map(c=>c.id===detail.id?{...c,cv:true,cvUrl:urlData.publicUrl}:c)}));
-                      setDetail(prev=>({...prev,cv:true,cvUrl:urlData.publicUrl}));
-                    }
-                  }} style={{width:'100%',padding:'8px',border:'1.5px dashed #d1d5db',borderRadius:8,fontSize:13,cursor:'pointer',background:'#fafafa'}}/>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                  {[
+                    {icon:'📞',label:'טלפון',val:detail.phone},
+                    {icon:'✉️',label:'אימייל',val:detail.email},
+                    {icon:'📍',label:'עיר',val:detail.city},
+                    {icon:'🏷',label:'תחום',val:detail.domain},
+                  ].map(({icon,label,val})=>val?<div key={label} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
+                    <div style={{fontSize:11,color:'#9ca3af',fontWeight:600,marginBottom:3}}>{icon} {label}</div>
+                    <div style={{fontSize:13,fontWeight:600,color:'#1a1a2e'}}>{val}</div>
+                  </div>:null)}
                 </div>
               </div>
-            }
-          </div>
 
-          {/* Jobs section */}
-          {data.jobs.filter(j=>detail.appliedJobs?.includes(j.id)).length>0&&<div style={{background:'white',borderRadius:14,padding:'18px 20px',marginBottom:14,boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
-              <div style={{width:32,height:32,borderRadius:8,background:'#faf5ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🔗</div>
-              <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>משרות</div>
-            </div>
-            {data.jobs.filter(j=>detail.appliedJobs?.includes(j.id)).map(j=>{
-              const emp=data.employers.find(x=>x.id===j.employerId);
-              return <div key={j.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 12px',background:'#f8f7f4',borderRadius:8,marginBottom:6}}>
-                <div>
-                  <div style={{fontWeight:600,fontSize:14}}>{j.publishTitle||j.title}</div>
-                  {emp&&<div style={{fontSize:12,color:'#9ca3af'}}>{emp.name}</div>}
+              {/* פרופיל מקצועי */}
+              <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
+                  <div style={{width:32,height:32,borderRadius:8,background:'#eff6ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>💼</div>
+                  <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>פרופיל מקצועי</div>
                 </div>
-                <Tag label={j.status}/>
-              </div>;
-            })}
-          </div>}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                  {[
+                    {icon:'👤',label:'תפקיד',val:detail.role},
+                    {icon:'⏱',label:'ניסיון',val:detail.experience},
+                    {icon:'🎓',label:'השכלה',val:detail.education},
+                    {icon:'📅',label:'תאריך הגשה',val:detail.appliedAt?new Date(detail.appliedAt).toLocaleDateString('he-IL'):'—'},
+                  ].map(({icon,label,val})=>val&&val!=='—'?<div key={label} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
+                    <div style={{fontSize:11,color:'#9ca3af',fontWeight:600,marginBottom:3}}>{icon} {label}</div>
+                    <div style={{fontSize:13,fontWeight:600,color:'#1a1a2e'}}>{val}</div>
+                  </div>:null)}
+                </div>
+              </div>
 
-          {/* Notes section */}
-          {detail.notes&&<div style={{background:'white',borderRadius:14,padding:'18px 20px',marginBottom:14,boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-              <div style={{width:32,height:32,borderRadius:8,background:'#fffbeb',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📝</div>
-              <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>הערות</div>
-            </div>
-            <div style={{fontSize:14,color:'#374151',lineHeight:1.7,background:'#fffbeb',borderRadius:8,padding:'12px 14px',fontStyle:'italic'}}>"{detail.notes}"</div>
-          </div>}
+              {/* משרות */}
+              {data.jobs.filter(j=>detail.appliedJobs?.includes(j.id)).length>0&&
+              <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+                  <div style={{width:32,height:32,borderRadius:8,background:'#faf5ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🔗</div>
+                  <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>משרות</div>
+                </div>
+                {data.jobs.filter(j=>detail.appliedJobs?.includes(j.id)).map(j=>{
+                  const emp=data.employers.find(x=>x.id===j.employerId);
+                  return <div key={j.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 12px',background:'#f8f7f4',borderRadius:8,marginBottom:6}}>
+                    <div>
+                      <div style={{fontWeight:600,fontSize:13}}>{j.publishTitle||j.title}</div>
+                      {emp&&<div style={{fontSize:11,color:'#9ca3af'}}>{emp.name}</div>}
+                    </div>
+                    <Tag label={j.status}/>
+                  </div>;
+                })}
+              </div>}
 
-          {/* Add Task Button */}
-          <div style={{marginBottom:12}}>
-            <button onClick={()=>{
-              const title=prompt('כותרת המשימה:');
-              if(!title) return;
-              const t={id:'t'+Date.now(),title,description:'',dueDate:'',priority:'בינוני',status:'פתוח',candidateId:detail.id,employerId:'',createdAt:new Date().toISOString()};
-              setData(d=>({...d,tasks:[t,...(d.tasks||[])]}));
-              alert('✅ משימה נוספה!');
-            }} style={{width:'100%',padding:'10px 0',background:'#eff6ff',border:'1.5px solid #bfdbfe',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer',color:'#1d4ed8'}}>
-              + הוסף משימה למועמד זה
-            </button>
-          </div>
+            </div>{/* end col1 */}
 
-          {/* Actions */}
-          {pendingIds.has(detail.id)&&<div style={{background:'#f0fdf4',border:'1.5px solid #86efac',borderRadius:12,padding:'14px 16px',marginBottom:12,display:'flex',gap:10,alignItems:'center'}}>
-            <span style={{flex:1,fontSize:14,color:'#15803d',fontWeight:600}}>מועמד זה ממתין לאישורך</span>
-            <button onClick={()=>{approvePendingLocal(detail.id);setDetail(null);}} style={{padding:'9px 18px',background:'#16a34a',color:'white',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>✅ אשר והוסף</button>
-            <button onClick={()=>{rejectPendingLocal(detail.id);setDetail(null);}} style={{padding:'9px 14px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>✕ דחה</button>
-          </div>}
-          <div style={{display:'flex',gap:10}}>
-            <button onClick={()=>{setDetail(null);openEdit(detail);}} style={{flex:1,padding:'11px 0',background:'#1a1a2e',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
-              ✏️ ערוך פרטים
-            </button>
-            <button onClick={()=>{if(confirm('למחוק מועמד?')){del(detail.id);setDetail(null);}}} style={{padding:'11px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
-              🗑
-            </button>
-          </div>
-        </div>
+            {/* COL 2 */}
+            <div style={{display:'flex',flexDirection:'column',gap:16}}>
+
+              {/* CV */}
+              <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
+                  <div style={{width:32,height:32,borderRadius:8,background:'#f0fdf4',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📄</div>
+                  <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>קורות חיים</div>
+                </div>
+                {detail.cvUrl
+                  ?<div style={{display:'flex',gap:10,alignItems:'center'}}>
+                      <a href={detail.cvUrl} target="_blank" rel="noreferrer" style={{flex:1,padding:'10px 16px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14,textAlign:'center',display:'block'}}>📂 פתח קורות חיים</a>
+                      <a href={detail.cvUrl} download style={{padding:'10px 14px',background:'#1a1a2e',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14}}>⬇️</a>
+                    </div>
+                  :<div>
+                    {detail.cv
+                      ?<div style={{background:'#fff5f0',border:'1px solid #fcd5c0',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#c94d1a',marginBottom:10}}>⚠️ המועמד העלה CV אך הקובץ לא נשמר.</div>
+                      :<div style={{background:'#f3f4f6',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#9ca3af',marginBottom:10}}>לא צורף קובץ CV</div>}
+                    <label style={{display:'block',fontSize:13,fontWeight:700,marginBottom:6,color:'#374151'}}>העלה CV ידנית</label>
+                    <input type="file" accept=".pdf,.doc,.docx" onChange={async(e)=>{
+                      const file=e.target.files[0]; if(!file) return;
+                      const ext=file.name.split('.').pop();
+                      const fname=`cv-${detail.id}.${ext}`;
+                      const {error}=await sb.storage.from('job-images').upload(fname,file,{upsert:true,contentType:file.type});
+                      if(!error){
+                        const {data:urlData}=sb.storage.from('job-images').getPublicUrl(fname);
+                        setData(d=>({...d,candidates:d.candidates.map(c=>c.id===detail.id?{...c,cv:true,cvUrl:urlData.publicUrl}:c)}));
+                        setDetail(prev=>({...prev,cv:true,cvUrl:urlData.publicUrl}));
+                      }
+                    }} style={{width:'100%',padding:'8px',border:'1.5px dashed #d1d5db',borderRadius:8,fontSize:13,cursor:'pointer',background:'#fafafa'}}/>
+                  </div>
+                }
+              </div>
+
+              {/* הערות */}
+              {detail.notes&&<div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+                  <div style={{width:32,height:32,borderRadius:8,background:'#fffbeb',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📝</div>
+                  <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>הערות</div>
+                </div>
+                <div style={{fontSize:14,color:'#374151',lineHeight:1.7,background:'#fffbeb',borderRadius:8,padding:'12px 14px',fontStyle:'italic'}}>"{detail.notes}"</div>
+              </div>}
+
+              {/* אישור ממתין */}
+              {pendingIds.has(detail.id)&&<div style={{background:'#f0fdf4',border:'1.5px solid #86efac',borderRadius:12,padding:'14px 16px',display:'flex',gap:10,alignItems:'center'}}>
+                <span style={{flex:1,fontSize:14,color:'#15803d',fontWeight:600}}>מועמד זה ממתין לאישורך</span>
+                <button onClick={()=>{approvePendingLocal(detail.id);setDetail(null);}} style={{padding:'9px 18px',background:'#16a34a',color:'white',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>✅ אשר</button>
+                <button onClick={()=>{rejectPendingLocal(detail.id);setDetail(null);}} style={{padding:'9px 14px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>✕ דחה</button>
+              </div>}
+
+              {/* כפתורי תקשורת */}
+              <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
+                  <div style={{width:32,height:32,borderRadius:8,background:'#f0f9ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>✉️</div>
+                  <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>יצירת קשר</div>
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                  {detail.email&&<button onClick={()=>setMsgTarget({c:detail})}
+                    style={{width:'100%',padding:'10px 0',background:'#eff6ff',border:'1.5px solid #bfdbfe',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#1d4ed8'}}>
+                    📧 שלח מייל
+                  </button>}
+                  {detail.phone&&<button onClick={()=>{const phone=(detail.phone||'').replace(/[-\s]/g,'').replace(/^0/,'972');window.open(`https://wa.me/${phone}`,'_blank');}}
+                    style={{width:'100%',padding:'10px 0',background:'#f0fdf4',border:'1.5px solid #86efac',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#15803d'}}>
+                    💬 WhatsApp
+                  </button>}
+                  {(detail.email||detail.phone)&&<button onClick={()=>setMsgTarget({c:detail})}
+                    style={{width:'100%',padding:'10px 0',background:'#fff5f0',border:'1.5px solid #fcd5c0',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#c94d1a'}}>
+                    ✉️ הודעה עם תבנית
+                  </button>}
+                </div>
+              </div>
+
+              {/* הוסף משימה */}
+              <button onClick={()=>{
+                const title=prompt('כותרת המשימה:');
+                if(!title) return;
+                const t={id:'t'+Date.now(),title,description:'',dueDate:'',priority:'בינוני',status:'פתוח',candidateId:detail.id,employerId:'',createdAt:new Date().toISOString()};
+                setData(d=>({...d,tasks:[t,...(d.tasks||[])]}));
+                alert('✅ משימה נוספה!');
+              }} style={{width:'100%',padding:'10px 0',background:'#eff6ff',border:'1.5px solid #bfdbfe',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer',color:'#1d4ed8'}}>
+                + הוסף משימה למועמד זה
+              </button>
+
+              {/* עריכה / מחיקה */}
+              <div style={{display:'flex',gap:10}}>
+                <button onClick={()=>{setDetail(null);openEdit(detail);}} style={{flex:1,padding:'11px 0',background:'#1a1a2e',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+                  ✏️ ערוך פרטים
+                </button>
+                <button onClick={()=>{if(confirm('למחוק מועמד?')){del(detail.id);setDetail(null);}}} style={{padding:'11px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+                  🗑
+                </button>
+              </div>
+
+            </div>{/* end col2 */}
+          </div>{/* end grid */}
+        </div>{/* end body */}
       </div>
     </div>}
 
@@ -1297,6 +1762,14 @@ function Candidates({data,setData}){
         <Btn variant="primary" onClick={save}>שמירה</Btn>
       </div>
     </Modal>}
+
+    {msgTarget&&<MessageModal
+      type="candidate"
+      person={msgTarget.c}
+      job={data.jobs.find(j=>msgTarget.c.appliedJobs?.includes(j.id))}
+      employer={data.employers.find(e=>e.id===data.jobs.find(j=>msgTarget.c.appliedJobs?.includes(j.id))?.employerId)}
+      onClose={()=>setMsgTarget(null)}
+    />}
   </div>;
 }
 
@@ -1516,7 +1989,7 @@ function Tasks({data,setData}){
 function Settings({data,setData}){
   const [tab,setTab]=React.useState('general');
   // General tab state
-  const [company,setCompany]=React.useState(()=>data.company||{name:'טופ גרופ גיוס והשמה',email:'info@topgroup4u.com',phone:''});
+  const [company,setCompany]=React.useState(()=>data.company||{name:'טופ גרופ גיוס והשמה',email:'hr@topgroup4u.com',phone:''});
   const saveCompany=()=>{setData(d=>({...d,company}));alert('✅ פרטי החברה נשמרו!');};
   // Users tab state
   const [users,setUsers]=React.useState(()=>data.users||[{id:'u1',name:'מנהל מערכת',email:'admin@topgroup4u.com',role:'מנהל',status:'פעיל'}]);
