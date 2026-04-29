@@ -36,13 +36,14 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dark); direction: rtl; }
 
-.hero { position: relative; width: 100%; height: 420px; overflow: hidden; background: var(--dark); }
-.hero-img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.55; }
+.hero-wrap { max-width: 780px; margin: 28px auto 0; padding: 0 20px; }
+.hero { position: relative; width: 100%; height: 360px; overflow: hidden; background: var(--dark); border-radius: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.18); }
+.hero-img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.6; }
 .hero-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 50%, #e85d26 100%); }
-.hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(26,26,46,0.95) 0%, rgba(26,26,46,0.3) 60%, transparent 100%); }
-.hero-content { position: absolute; bottom: 0; right: 0; left: 0; padding: 32px 40px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(26,26,46,0.92) 0%, rgba(26,26,46,0.2) 60%, transparent 100%); border-radius: 20px; }
+.hero-content { position: absolute; bottom: 0; right: 0; left: 0; padding: 28px 32px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
 .hero-brand-name { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
-.hero-job-title { color: white; font-size: 36px; font-weight: 900; line-height: 1.15; max-width: 520px; }
+.hero-job-title { color: white; font-size: 32px; font-weight: 900; line-height: 1.15; max-width: 480px; }
 .hero-job-number { color: rgba(255,255,255,0.45); font-size: 13px; margin-top: 8px; }
 .hero-badge { background: var(--accent); color: white; font-size: 13px; font-weight: 700; padding: 10px 22px; border-radius: 30px; white-space: nowrap; flex-shrink: 0; }
 
@@ -102,9 +103,10 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 600px) {
-  .hero { height: 300px; }
-  .hero-content { padding: 20px; flex-direction: column; align-items: flex-start; gap: 10px; }
-  .hero-job-title { font-size: 24px; }
+  .hero { height: 260px; border-radius: 14px; }
+  .hero-wrap { padding: 0 12px; margin-top: 16px; }
+  .hero-content { padding: 16px 18px; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .hero-job-title { font-size: 22px; }
   .tags-bar { padding: 0 16px; }
   .form-grid { grid-template-columns: 1fr; }
   .section-header { padding: 18px 20px 0; }
@@ -155,15 +157,12 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
     const jobId = getJobId();
     if (jobId) {
       try {
-        const res = await fetch(`${SB_URL}/rest/v1/crm_state?select=data&id=eq.main`, {
-          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json' }
-        });
-        const rows = await res.json();
-        if (rows?.[0]?.data?.jobs) {
-          const job = rows[0].data.jobs.find(j => j.id === jobId);
+        const { data, error } = await sb.from('crm_state').select('data').eq('id','main').single();
+        if (!error && data?.data?.jobs) {
+          const job = data.data.jobs.find(j => j.id === jobId);
           if (job) { renderJob(job); return; }
         }
-      } catch(e) { console.error(e); }
+      } catch(e) {}
       showError(); return;
     }
     const job = getJobFromBase64();
@@ -212,6 +211,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
       </div>`).join('');
 
     root.innerHTML = `
+      <div class="hero-wrap">
       <div class="hero">
         ${heroMedia}
         <div class="hero-overlay"></div>
@@ -224,8 +224,9 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
           <div class="hero-badge">דרושים</div>
         </div>
       </div>
+      </div>
 
-      <div class="tags-bar">${tags}</div>
+      <div class="tags-bar" style="max-width:780px;margin:0 auto;border-radius:0;padding:0 20px">${tags}</div>
 
       <div class="page">
         ${sections}
@@ -323,11 +324,8 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
           }
         }
 
-        const getRes = await fetch(`${SB_URL}/rest/v1/crm_state?select=data&id=eq.main`, {
-          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json' }
-        });
-        const rows = await getRes.json();
-        const existing = rows?.[0]?.data || {};
+        const { data: rows } = await sb.from('crm_state').select('data').eq('id','main').single();
+        const existing = rows?.data || {};
         const candidates = existing.candidates || [];
 
         if (candidates.some(c => c.phone===phone && c.appliedJobs?.includes(job.id))) {
@@ -339,18 +337,15 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
           j.id===job.id ? {...j, candidates:[...(j.candidates||[]),candidate.id]} : j
         );
 
-        await fetch(`${SB_URL}/rest/v1/crm_state?id=eq.main`, {
-          method: 'PATCH',
-          headers: {
-            'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`,
-            'Accept': 'application/json', 'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
+        await sb.from('crm_state').update({
+          data: {
+            ...existing,
+            candidates: [...candidates, candidate],
+            jobs: updatedJobs,
+            pendingCandidates: [...(existing.pendingCandidates||[]), candidate.id],
           },
-          body: JSON.stringify({
-            data: { ...existing, candidates: [...candidates, candidate], jobs: updatedJobs, pendingCandidates: [...(existing.pendingCandidates||[]), candidate.id] },
-            updated_at: new Date().toISOString()
-          })
-        });
+          updated_at: new Date().toISOString()
+        }).eq('id','main');
 
       } catch(err) { console.error(err); }
 
