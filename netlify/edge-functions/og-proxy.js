@@ -3,7 +3,7 @@
 
 const SB_URL = 'https://rdzmwtixtfenmojeugyx.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkem13dGl4dGZlbm1vamV1Z3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjcxODUsImV4cCI6MjA5MjM0MzE4NX0.FUHtMO-wRs0B0weWGuDxSbXflx7RsVOGVYbC7kUrn0M';
-const SITE_URL = 'https://crm-hr.topgroup4u.com';
+const SITE_URL = 'https://jobs.topgroup4u.com';
 
 export default async (request, context) => {
   const url = new URL(request.url);
@@ -18,7 +18,7 @@ export default async (request, context) => {
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/crm_state?select=data&id=eq.main`,
-      { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` } }
+      { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json' } }
     );
     const rows = await res.json();
     if (rows?.[0]?.data?.jobs) {
