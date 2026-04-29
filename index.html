@@ -1454,6 +1454,7 @@ function Candidates({data,setData}){
   const [form,setForm]=React.useState({});
   const [detail,setDetail]=React.useState(null);
   const [msgTarget,setMsgTarget]=React.useState(null);
+  const [jobSearch,setJobSearch]=React.useState('');
   const stages=['חדש','בתהליך','ראיון נקבע','הוצב'];
   const pendingIds=new Set(data.pendingCandidates||[]);
   const filtered=data.candidates.filter(c=>!pendingIds.has(c.id)&&(c.name.includes(search)||c.role.includes(search)||(c.city||'').includes(search))&&(stFilter==='הכל'||c.status===stFilter));
@@ -1815,7 +1816,6 @@ function Candidates({data,setData}){
         <div>
           <FormCard title="הקצאת משרות" icon="🔗" color="#faf5ff">
             {(()=>{
-              const [jobSearch,setJobSearch]=React.useState('');
               const filtered=data.jobs.filter(j=>{
                 const q=jobSearch.toLowerCase();
                 return !q||(j.title||'').toLowerCase().includes(q)||(j.publishTitle||'').toLowerCase().includes(q)||(j.jobNumber||'').toLowerCase().includes(q);

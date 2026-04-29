@@ -65,7 +65,11 @@ export default async (request, context) => {
   const title = `${job.publishTitle || job.title} | טופ גרופ גיוס והשמה`;
   const description = `📍 ${job.location || ''} | 💼 ${job.type || ''} | ${job.domain || ''} – הגש מועמדות עכשיו דרך טופ גרופ גיוס והשמה`;
   const rawImage = job.imageUrl || `${SITE_URL}/og-default.png`;
-  const image = rawImage.startsWith('http') && !rawImage.includes(SITE_URL)
+  // רק URLs חיצוניים שאינם Supabase יעברו דרך הפרוקסי
+  const needsProxy = rawImage.startsWith('http') 
+    && !rawImage.includes(SITE_URL) 
+    && !rawImage.includes('supabase.co');
+  const image = needsProxy
     ? `${SITE_URL}/job/img?url=${encodeURIComponent(rawImage)}`
     : rawImage;
   const pageUrl = request.url;
