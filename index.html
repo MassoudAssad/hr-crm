@@ -1652,23 +1652,84 @@ function Candidates({data,setData}){
               </div>
 
               {/* משרות */}
-              {data.jobs.filter(j=>detail.appliedJobs?.includes(j.id)).length>0&&
               <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
-                  <div style={{width:32,height:32,borderRadius:8,background:'#faf5ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🔗</div>
-                  <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>משרות</div>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <div style={{width:32,height:32,borderRadius:8,background:'#faf5ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🔗</div>
+                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>משרות מוקצות</div>
+                  </div>
+                  <button onClick={()=>{
+                    const jobIds=data.jobs.map(j=>j.id);
+                    const current=detail.appliedJobs||[];
+                    // toggle popup for job assignment
+                    setDetail(d=>({...d,_assignOpen:!d._assignOpen}));
+                  }} style={{padding:'6px 12px',background:'#1a1a2e',color:'white',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer'}}>
+                    + הקצה משרה
+                  </button>
                 </div>
-                {data.jobs.filter(j=>detail.appliedJobs?.includes(j.id)).map(j=>{
-                  const emp=data.employers.find(x=>x.id===j.employerId);
-                  return <div key={j.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 12px',background:'#f8f7f4',borderRadius:8,marginBottom:6}}>
-                    <div>
-                      <div style={{fontWeight:600,fontSize:13}}>{j.publishTitle||j.title}</div>
-                      {emp&&<div style={{fontSize:11,color:'#9ca3af'}}>{emp.name}</div>}
-                    </div>
-                    <Tag label={j.status}/>
-                  </div>;
-                })}
-              </div>}
+
+                {/* Job assignment picker */}
+                {detail._assignOpen&&<div style={{background:'#f8f7f4',borderRadius:10,padding:12,marginBottom:12,border:'1.5px solid #e5e7eb'}}>
+                  <div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:8}}>בחר משרות לשיוך:</div>
+                  <div style={{display:'flex',flexDirection:'column',gap:6,maxHeight:200,overflowY:'auto'}}>
+                    {data.jobs.map(j=>{
+                      const emp=data.employers.find(x=>x.id===j.employerId);
+                      const checked=(detail.appliedJobs||[]).includes(j.id);
+                      return <label key={j.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',background:checked?'#eff6ff':'white',borderRadius:8,border:`1.5px solid ${checked?'#bfdbfe':'#e5e7eb'}`,cursor:'pointer'}}>
+                        <input type="checkbox" checked={checked} onChange={()=>{
+                          const newJobs=checked
+                            ?(detail.appliedJobs||[]).filter(id=>id!==j.id)
+                            :[...(detail.appliedJobs||[]),j.id];
+                          // update detail and data
+                          setDetail(d=>({...d,appliedJobs:newJobs}));
+                          setData(d=>({...d,
+                            candidates:d.candidates.map(c=>c.id===detail.id?{...c,appliedJobs:newJobs}:c),
+                            jobs:d.jobs.map(jj=>jj.id===j.id
+                              ?{...jj,candidates:checked?(jj.candidates||[]).filter(id=>id!==detail.id):[...(jj.candidates||[]),detail.id]}
+                              :jj)
+                          }));
+                        }}/>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:700,fontSize:13,color:'#1a1a2e'}}>{j.publishTitle||j.title}</div>
+                          <div style={{fontSize:11,color:'#9ca3af'}}>{emp?.name||''}{j.location?` · ${j.location}`:''} · {j.jobNumber}</div>
+                        </div>
+                        <Tag label={j.status}/>
+                      </label>;
+                    })}
+                  </div>
+                  <button onClick={()=>setDetail(d=>({...d,_assignOpen:false}))} style={{marginTop:10,width:'100%',padding:'8px 0',background:'#e85d26',color:'white',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>
+                    ✅ סגור
+                  </button>
+                </div>}
+
+                {/* Assigned jobs list */}
+                {(detail.appliedJobs||[]).length===0
+                  ?<div style={{color:'#9ca3af',fontSize:13,padding:'8px 0'}}>לא שויך למשרות עדיין</div>
+                  :data.jobs.filter(j=>(detail.appliedJobs||[]).includes(j.id)).map(j=>{
+                    const emp=data.employers.find(x=>x.id===j.employerId);
+                    return <div key={j.id} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:'#f8f7f4',borderRadius:10,marginBottom:8,border:'1px solid #e5e7eb'}}>
+                      <div style={{flex:1}}>
+                        <div style={{fontWeight:700,fontSize:14,color:'#1a1a2e'}}>{j.publishTitle||j.title}</div>
+                        <div style={{fontSize:12,color:'#9ca3af',marginTop:2}}>{emp?.name||''}{j.location?` · 📍${j.location}`:''}</div>
+                        <div style={{fontSize:11,color:'#9ca3af',marginTop:1}}>{j.jobNumber} · שכר: {j.salary?`₪${j.salary}`:'—'}</div>
+                      </div>
+                      <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4}}>
+                        <Tag label={j.status}/>
+                        <button onClick={()=>{
+                          const newJobs=(detail.appliedJobs||[]).filter(id=>id!==j.id);
+                          setDetail(d=>({...d,appliedJobs:newJobs}));
+                          setData(d=>({...d,
+                            candidates:d.candidates.map(c=>c.id===detail.id?{...c,appliedJobs:newJobs}:c),
+                            jobs:d.jobs.map(jj=>jj.id===j.id?{...jj,candidates:(jj.candidates||[]).filter(id=>id!==detail.id)}:jj)
+                          }));
+                        }} style={{fontSize:11,color:'#c94d1a',background:'none',border:'none',cursor:'pointer',padding:0,fontFamily:'Heebo'}}>
+                          ✕ הסר
+                        </button>
+                      </div>
+                    </div>;
+                  })
+                }
+              </div>
 
             </div>{/* end col1 */}
 

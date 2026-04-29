@@ -8,6 +8,25 @@ const SITE_URL = 'https://jobs.topgroup4u.com';
 export default async (request, context) => {
   const url = new URL(request.url);
 
+  // Image proxy: /job/img?url=...
+  if (url.searchParams.get('url')) {
+    try {
+      const imgUrl = decodeURIComponent(url.searchParams.get('url'));
+      const imgRes = await fetch(imgUrl);
+      const buf = await imgRes.arrayBuffer();
+      const ct = imgRes.headers.get('content-type') || 'image/jpeg';
+      return new Response(buf, {
+        headers: {
+          'content-type': ct,
+          'cache-control': 'public, max-age=86400',
+          'access-control-allow-origin': '*',
+        }
+      });
+    } catch(e) {
+      return new Response('', { status: 404 });
+    }
+  }
+
   // Extract job ID from path: /job/j1234567890
   const match = url.pathname.match(/^\/job\/(.+)$/);
   if (!match) return context.next();
@@ -45,7 +64,10 @@ export default async (request, context) => {
 
   const title = `${job.publishTitle || job.title} | טופ גרופ גיוס והשמה`;
   const description = `📍 ${job.location || ''} | 💼 ${job.type || ''} | ${job.domain || ''} – הגש מועמדות עכשיו דרך טופ גרופ גיוס והשמה`;
-  const image = job.imageUrl || `${SITE_URL}/og-default.png`;
+  const rawImage = job.imageUrl || `${SITE_URL}/og-default.png`;
+  const image = rawImage.startsWith('http') && !rawImage.includes(SITE_URL)
+    ? `${SITE_URL}/job/img?url=${encodeURIComponent(rawImage)}`
+    : rawImage;
   const pageUrl = request.url;
 
   const ogTags = `<meta property="og:title" content="${ea(title)}">
