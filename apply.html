@@ -36,14 +36,13 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dark); direction: rtl; }
 
-.hero-wrap { max-width: 780px; margin: 28px auto 0; padding: 0 20px; }
-.hero { position: relative; width: 100%; height: 360px; overflow: hidden; background: var(--dark); border-radius: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.18); }
-.hero-img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.6; }
+.hero { position: relative; width: 100%; height: 420px; overflow: hidden; background: var(--dark); }
+.hero-img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.55; }
 .hero-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 50%, #e85d26 100%); }
-.hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(26,26,46,0.92) 0%, rgba(26,26,46,0.2) 60%, transparent 100%); border-radius: 20px; }
-.hero-content { position: absolute; bottom: 0; right: 0; left: 0; padding: 28px 32px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(26,26,46,0.95) 0%, rgba(26,26,46,0.3) 60%, transparent 100%); }
+.hero-content { position: absolute; bottom: 0; right: 0; left: 0; padding: 32px 40px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
 .hero-brand-name { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
-.hero-job-title { color: white; font-size: 32px; font-weight: 900; line-height: 1.15; max-width: 480px; }
+.hero-job-title { color: white; font-size: 36px; font-weight: 900; line-height: 1.15; max-width: 520px; }
 .hero-job-number { color: rgba(255,255,255,0.45); font-size: 13px; margin-top: 8px; }
 .hero-badge { background: var(--accent); color: white; font-size: 13px; font-weight: 700; padding: 10px 22px; border-radius: 30px; white-space: nowrap; flex-shrink: 0; }
 
@@ -95,6 +94,30 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
 .success-title { font-size: 28px; font-weight: 900; color: var(--success); margin-bottom: 12px; }
 .success-body { font-size: 16px; color: var(--muted); line-height: 1.7; }
 
+.back-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+  background: rgba(26,26,46,0.85);
+  backdrop-filter: blur(8px);
+  border: none;
+  color: white;
+  border-radius: 50px;
+  padding: 10px 18px;
+  font-family: 'Heebo', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  text-decoration: none;
+  transition: background .2s;
+}
+.back-btn:hover { background: rgba(26,26,46,1); }
+
 .footer { text-align: center; color: #9ca3af; font-size: 13px; padding: 20px 0 40px; border-top: 1px solid var(--border); margin-top: 8px; }
 .footer strong { color: var(--accent); }
 
@@ -103,10 +126,9 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 600px) {
-  .hero { height: 260px; border-radius: 14px; }
-  .hero-wrap { padding: 0 12px; margin-top: 16px; }
-  .hero-content { padding: 16px 18px; flex-direction: column; align-items: flex-start; gap: 10px; }
-  .hero-job-title { font-size: 22px; }
+  .hero { height: 300px; }
+  .hero-content { padding: 20px; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .hero-job-title { font-size: 24px; }
   .tags-bar { padding: 0 16px; }
   .form-grid { grid-template-columns: 1fr; }
   .section-header { padding: 18px 20px 0; }
@@ -116,6 +138,10 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
 </style>
 </head>
 <body>
+
+<button class="back-btn" onclick="window.close(); setTimeout(()=>{ window.history.back(); },100);">
+  ← חזור
+</button>
 
 <div id="root">
   <div class="loading-screen">
@@ -211,7 +237,6 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
       </div>`).join('');
 
     root.innerHTML = `
-      <div class="hero-wrap">
       <div class="hero">
         ${heroMedia}
         <div class="hero-overlay"></div>
@@ -224,9 +249,8 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
           <div class="hero-badge">דרושים</div>
         </div>
       </div>
-      </div>
 
-      <div class="tags-bar" style="max-width:780px;margin:0 auto;border-radius:0;padding:0 20px">${tags}</div>
+      <div class="tags-bar">${tags}</div>
 
       <div class="page">
         ${sections}

@@ -42,9 +42,9 @@ body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; ov
   position: fixed;
   bottom: 0; left: 0; right: 0;
   background: #1a1a2e;
-  border-top: 2px solid #333;
+  border-top: 1px solid rgba(255,255,255,0.1);
   z-index: 100;
-  height: 64px;
+  height: 70px;
   align-items: center;
   justify-content: space-around;
   padding: 0 4px;
@@ -52,13 +52,14 @@ body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; ov
 }
 .mnav-btn {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  flex: 1; height: 64px; cursor: pointer;
-  color: rgba(255,255,255,0.55); border: none; background: none;
-  font-family: 'Heebo', sans-serif; font-size: 10px; gap: 2px;
+  flex: 1; height: 70px; cursor: pointer;
+  color: rgba(255,255,255,0.5); border: none; background: none;
+  font-family: 'Heebo', sans-serif; font-size: 11px; gap: 4px;
   -webkit-tap-highlight-color: transparent;
+  transition: color .15s;
 }
 .mnav-btn.active { color: #e85d26; }
-.mnav-btn span { font-size: 20px; line-height: 1; }
+.mnav-btn span { font-size: 22px; line-height: 1; }
 
 @media (max-width: 768px) {
   .modal-box { width: 95vw !important; padding: 16px !important; }
@@ -174,26 +175,44 @@ function SearchBar({placeholder,value,onChange}){
   </div>;
 }
 
-function Modal({title,onClose,children}){
-  return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-    <div className="sbox modal-box" style={{background:'#fff',width:600,maxWidth:'100%',maxHeight:'90vh',overflow:'auto',padding:24,position:'relative'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-        <h2 style={{fontSize:22,fontWeight:700}}>{title}</h2>
-        <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer'}}>✕</button>
+function Modal({title,onClose,children,wide=false}){
+  return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(4px)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16,overflowY:'auto'}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div style={{background:'#f8f7f4',borderRadius:20,width:wide?'90vw':'560px',maxWidth:wide?1100:'560px',maxHeight:'92vh',overflow:'hidden',boxShadow:'0 32px 100px rgba(0,0,0,0.3)',display:'flex',flexDirection:'column'}} onClick={e=>e.stopPropagation()}>
+      <div style={{background:'#1a1a2e',borderRadius:'20px 20px 0 0',padding:'20px 28px',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <div style={{color:'white',fontWeight:800,fontSize:18}}>{title}</div>
+        <button onClick={onClose} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'white',width:34,height:34,borderRadius:17,cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
       </div>
-      {children}
+      <div style={{overflow:'auto',flex:1,padding:'20px 28px 24px'}}>
+        {children}
+      </div>
     </div>
   </div>;
 }
 
-function FF({label,type='text',value,onChange,options,hint}){
-  const s={width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:14};
-  return <div style={{marginBottom:12}}>
-    {label && <label style={{display:'block',fontSize:14,marginBottom:4,fontWeight:600}}>{label}</label>}
-    {type==='select'?<select value={value} onChange={e=>onChange(e.target.value)} style={s}>{options.map(o=><option key={o}>{o}</option>)}</select>
-     :type==='textarea'?<textarea value={value} onChange={e=>onChange(e.target.value)} rows={3} style={{...s,resize:'vertical'}}/>
-     :<input type={type} value={value} onChange={e=>onChange(e.target.value)} style={s}/>}
-    {hint&&<div style={{fontSize:12,color:MUT,marginTop:2}}>{hint}</div>}
+function FormGrid({children}){
+  return <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px 16px',marginBottom:4}}>{children}</div>;
+}
+
+function FormCard({title,icon,color='#fff5f0',children}){
+  return <div style={{background:'white',borderRadius:14,padding:'16px 18px',marginBottom:14,boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+    {title&&<div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+      <div style={{width:30,height:30,borderRadius:7,background:color,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>{icon}</div>
+      <div style={{fontWeight:800,fontSize:14,color:'#1a1a2e'}}>{title}</div>
+    </div>}
+    {children}
+  </div>;
+}
+
+function FF({label,type='text',value,onChange,options,hint,full=false}){
+  const s={width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,color:'#1a1a2e',background:'#fafafa',outline:'none',transition:'border .15s'};
+  return <div style={{marginBottom:10,gridColumn:full?'1 / -1':'auto'}}>
+    {label&&<label style={{display:'block',fontSize:12,marginBottom:4,fontWeight:700,color:'#6b7280'}}>{label}</label>}
+    {type==='select'
+      ?<select value={value} onChange={e=>onChange(e.target.value)} style={s}>{options.map(o=><option key={o}>{o}</option>)}</select>
+      :type==='textarea'
+      ?<textarea value={value} onChange={e=>onChange(e.target.value)} rows={3} style={{...s,resize:'vertical'}}/>
+      :<input type={type} value={value} onChange={e=>onChange(e.target.value)} style={s}/>}
+    {hint&&<div style={{fontSize:11,color:'#9ca3af',marginTop:3}}>{hint}</div>}
   </div>;
 }
 
@@ -793,7 +812,7 @@ function Employers({data,setData}){
     <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
       <SearchBar placeholder="חיפוש..." value={search} onChange={setSearch}/>
       <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-        {industries.map(ind=><Btn key={ind} onClick={()=>setIndFilter(ind)} style={{background:indFilter===ind?ACC:'white',color:indFilter===ind?'white':'#333',padding:'5px 10px',fontSize:12}}>{ind}</Btn>)}
+        {industries.map(ind=><Btn key={ind} onClick={()=>setIndFilter(ind)} style={{background:indFilter===ind?ACC:'white',color:indFilter===ind?'white':'#333',padding:'8px 14px',fontSize:13}}>{ind}</Btn>)}
       </div>
     </div>
 
@@ -820,7 +839,7 @@ function Employers({data,setData}){
               <td style={{padding:'10px 12px'}}><Tag label={emp.status}/></td>
               <td style={{padding:'10px 12px'}} onClick={e=>e.stopPropagation()}>
                 <div style={{display:'flex',gap:6}}>
-                  <Btn onClick={()=>openEdit(emp)} style={{padding:'3px 10px',fontSize:12}}>עריכה</Btn>
+                  <Btn onClick={()=>openEdit(emp)} style={{padding:'8px 14px',fontSize:13}}>עריכה</Btn>
                   <Btn onClick={()=>del(emp.id)} style={{padding:'3px 10px',fontSize:12,background:'#fde8dc'}}>🗑</Btn>
                 </div>
               </td>
@@ -1008,44 +1027,57 @@ function Employers({data,setData}){
     })()}
 
     {/* Add/Edit modal */}
-    {(modal==='add'||modal==='edit')&&<Modal title={modal==='add'?'מעסיק חדש':'עריכת מעסיק'} onClose={()=>setModal(null)}>
-      <Sec title="🏢 פרטי המעסיק">
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}} className="form-grid">
-          <FF label="שם חברה" value={form.name||''} onChange={v=>setForm(f=>({...f,name:v}))}/>
-          <FF label="ענף" type="select" value={form.industry||'הייטק'} onChange={v=>setForm(f=>({...f,industry:v}))} options={['הייטק','תעשייה','פיננסים','קמעונאות','בריאות','חינוך','אחר']}/>
-          <FF label="איש קשר" value={form.contact||''} onChange={v=>setForm(f=>({...f,contact:v}))}/>
-          <FF label="טלפון" value={form.phone||''} onChange={v=>setForm(f=>({...f,phone:v}))}/>
-          <FF label="אימייל" type="email" value={form.email||''} onChange={v=>setForm(f=>({...f,email:v}))}/>
-          <FF label="עיר" value={form.city||''} onChange={v=>setForm(f=>({...f,city:v}))}/>
-          <FF label="סטטוס" type="select" value={form.status||'פעיל'} onChange={v=>setForm(f=>({...f,status:v}))} options={['פעיל','פסיבי']}/>
-        </div>
-      </Sec>
-      <Sec title="👷 צרכי כח אדם">
-        {(form.needs||[]).map((n,idx)=><NeedRow key={n.id||idx} need={n} domains={data.jobDomains} onChange={val=>updNeed(idx,val)} onDel={()=>delNeed(idx)}/>)}
-        <Btn onClick={addNeed} style={{fontSize:13}}>+ הוסף תפקיד</Btn>
-        <div style={{marginTop:12}}>
-          <FF label="ציפי הכנסות (₪) – ידני" value={form.expectedIncome||''} onChange={v=>setForm(f=>({...f,expectedIncome:v}))} hint="אם ריק, יחושב אוטומטית"/>
-        </div>
-      </Sec>
-      <Sec title="📝 הערות"><FF label="" type="textarea" value={form.notes||''} onChange={v=>setForm(f=>({...f,notes:v}))}/></Sec>
-      
-      <Sec title="📄 הסכם השמה">
-        {form.agreementUrl
-          ?<div style={{display:'flex',gap:10,alignItems:'center',background:'#f0fdf4',border:'1px solid #86efac',borderRadius:8,padding:'10px 14px',marginBottom:10}}>
-              <span style={{fontSize:20}}>📋</span>
-              <div style={{flex:1}}>
-                <div style={{fontWeight:700,fontSize:14,color:'#15803d'}}>הסכם מצורף</div>
-                <div style={{fontSize:12,color:'#6b7280'}}>{form.agreementName||'קובץ הסכם'}</div>
-              </div>
-              <a href={form.agreementUrl} target="_blank" rel="noreferrer" style={{padding:'6px 12px',background:'#16a34a',color:'white',borderRadius:6,textDecoration:'none',fontWeight:700,fontSize:12}}>פתח</a>
-              <button onClick={()=>setForm(f=>({...f,agreementUrl:'',agreementName:''}))} style={{padding:'6px 10px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:6,cursor:'pointer',fontWeight:700,fontSize:12}}>הסר</button>
-            </div>
-          :<div style={{color:'#9ca3af',fontSize:13,marginBottom:10}}>לא צורף הסכם עדיין</div>
-        }
-        <AgreementUpload form={form} setForm={setForm}/>
-      </Sec>
+    {(modal==='add'||modal==='edit')&&<Modal title={modal==='add'?'מעסיק חדש':'עריכת מעסיק'} onClose={()=>setModal(null)} wide={true}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
 
-      <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+        {/* COL 1 */}
+        <div>
+          <FormCard title="פרטי המעסיק" icon="🏢" color="#fff5f0">
+            <FormGrid>
+              <FF label="שם חברה" value={form.name||''} onChange={v=>setForm(f=>({...f,name:v}))}/>
+              <FF label="ענף" type="select" value={form.industry||'הייטק'} onChange={v=>setForm(f=>({...f,industry:v}))} options={['הייטק','תעשייה','פיננסים','קמעונאות','בריאות','חינוך','אחר']}/>
+              <FF label="איש קשר" value={form.contact||''} onChange={v=>setForm(f=>({...f,contact:v}))}/>
+              <FF label="טלפון" value={form.phone||''} onChange={v=>setForm(f=>({...f,phone:v}))}/>
+              <FF label="אימייל" type="email" value={form.email||''} onChange={v=>setForm(f=>({...f,email:v}))}/>
+              <FF label="עיר" value={form.city||''} onChange={v=>setForm(f=>({...f,city:v}))}/>
+              <FF label="סטטוס" type="select" value={form.status||'פעיל'} onChange={v=>setForm(f=>({...f,status:v}))} options={['פעיל','פסיבי']}/>
+            </FormGrid>
+          </FormCard>
+
+          <FormCard title="הערות" icon="📝" color="#fffbeb">
+            <FF label="" type="textarea" value={form.notes||''} onChange={v=>setForm(f=>({...f,notes:v}))}/>
+          </FormCard>
+        </div>
+
+        {/* COL 2 */}
+        <div>
+          <FormCard title="צרכי כח אדם" icon="👷" color="#eff6ff">
+            {(form.needs||[]).map((n,idx)=><NeedRow key={n.id||idx} need={n} domains={data.jobDomains} onChange={val=>updNeed(idx,val)} onDel={()=>delNeed(idx)}/>)}
+            <Btn onClick={addNeed} style={{fontSize:13}}>+ הוסף תפקיד</Btn>
+            <div style={{marginTop:12}}>
+              <FF label="ציפי הכנסות (₪) – ידני" value={form.expectedIncome||''} onChange={v=>setForm(f=>({...f,expectedIncome:v}))} hint="אם ריק, יחושב אוטומטית"/>
+            </div>
+          </FormCard>
+
+          <FormCard title="הסכם השמה" icon="📄" color="#f0fdf4">
+            {form.agreementUrl
+              ?<div style={{display:'flex',gap:10,alignItems:'center',background:'#f0fdf4',border:'1px solid #86efac',borderRadius:8,padding:'10px 14px',marginBottom:10}}>
+                  <span style={{fontSize:20}}>📋</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,fontSize:14,color:'#15803d'}}>הסכם מצורף</div>
+                    <div style={{fontSize:12,color:'#6b7280'}}>{form.agreementName||'קובץ הסכם'}</div>
+                  </div>
+                  <a href={form.agreementUrl} target="_blank" rel="noreferrer" style={{padding:'6px 12px',background:'#16a34a',color:'white',borderRadius:6,textDecoration:'none',fontWeight:700,fontSize:12}}>פתח</a>
+                  <button onClick={()=>setForm(f=>({...f,agreementUrl:'',agreementName:''}))} style={{padding:'6px 10px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:6,cursor:'pointer',fontWeight:700,fontSize:12}}>הסר</button>
+                </div>
+              :<div style={{color:'#9ca3af',fontSize:13,marginBottom:10}}>לא צורף הסכם עדיין</div>
+            }
+            <AgreementUpload form={form} setForm={setForm}/>
+          </FormCard>
+        </div>
+      </div>
+
+      <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:4}}>
         <Btn onClick={()=>setModal(null)}>ביטול</Btn>
         <Btn variant="primary" onClick={save}>שמירה</Btn>
       </div>
@@ -1152,7 +1184,7 @@ function Jobs({data,setData}){
     <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
       <SearchBar placeholder="חיפוש..." value={search} onChange={setSearch}/>
       <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-        {['הכל','פתוח','ממתין','סגור'].map(s=><Btn key={s} onClick={()=>setStFilter(s)} style={{background:stFilter===s?ACC:'white',color:stFilter===s?'white':'#333',padding:'5px 10px',fontSize:12}}>{s}</Btn>)}
+        {['הכל','פתוח','ממתין','סגור'].map(s=><Btn key={s} onClick={()=>setStFilter(s)} style={{background:stFilter===s?ACC:'white',color:stFilter===s?'white':'#333',padding:'8px 14px',fontSize:13}}>{s}</Btn>)}
       </div>
     </div>
     {/* Desktop table */}
@@ -1194,7 +1226,7 @@ function Jobs({data,setData}){
               <td style={{padding:'10px 12px'}} onClick={e=>e.stopPropagation()}>
                 <div style={{display:'flex',gap:4}}>
                   <Btn onClick={()=>setPubJob(job)} style={{padding:'3px 8px',fontSize:11,background:'#e8f5e9',color:'#2e7d32'}}>🔗</Btn>
-                  <Btn onClick={()=>openEdit(job)} style={{padding:'3px 8px',fontSize:11}}>עריכה</Btn>
+                  <Btn onClick={()=>openEdit(job)} style={{padding:'8px 12px',fontSize:13}}>עריכה</Btn>
                   <Btn onClick={()=>del(job.id)} style={{padding:'3px 8px',fontSize:11,background:'#fde8dc'}}>🗑</Btn>
                 </div>
               </td>
@@ -1225,7 +1257,7 @@ function Jobs({data,setData}){
               <div style={{display:'flex',gap:4}}>{cands.slice(0,3).map(c=><Avatar key={c.id} name={c.name} size={24}/>)}{!cands.length&&<span style={{fontSize:12,color:MUT}}>אין מועמדים</span>}</div>
               <div style={{display:'flex',gap:4}}>
                 <Btn onClick={()=>setPubJob(job)} style={{padding:'5px 10px',fontSize:12,background:'#e8f5e9',color:'#2e7d32'}}>🔗</Btn>
-                <Btn onClick={()=>openEdit(job)} style={{padding:'5px 10px',fontSize:12}}>עריכה</Btn>
+                <Btn onClick={()=>openEdit(job)} style={{padding:'8px 14px',fontSize:13}}>עריכה</Btn>
                 <Btn onClick={()=>del(job.id)} style={{padding:'5px 10px',fontSize:12,background:'#fde8dc'}}>🗑</Btn>
               </div>
             </div>
@@ -1350,45 +1382,63 @@ function Jobs({data,setData}){
       </div>;
     })()}
 
-    {(modal==='add'||modal==='edit')&&<Modal title={modal==='add'?`משרה חדשה – ${form.jobNumber}`:`עריכת משרה – ${form.jobNumber}`} onClose={()=>setModal(null)}>
-      <ImgUpload form={form} setForm={setForm}/>
-      <Sec title="🔖 זיהוי משרה">
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}} className="form-grid">
-          <div><label style={{display:'block',fontSize:14,fontWeight:600,marginBottom:4}}>מספר משרה</label><input value={form.jobNumber} readOnly style={{width:'100%',padding:'7px 10px',border:'2px solid #ccc',borderRadius:3,fontFamily:'Heebo',fontSize:14,background:'#f5f0e8',color:ACC,fontWeight:700}}/></div>
-          <FF label="שם המשרה" value={form.title||''} onChange={v=>setForm(f=>({...f,title:v}))}/>
-          <div style={{gridColumn:'1 / -1'}}><FF label="כותרת פרסום" value={form.publishTitle||''} onChange={v=>setForm(f=>({...f,publishTitle:v}))} hint="הכותרת שתופיע בדף הנחיתה"/></div>
+    {(modal==='add'||modal==='edit')&&<Modal title={modal==='add'?`משרה חדשה – ${form.jobNumber}`:`עריכת משרה – ${form.jobNumber}`} onClose={()=>setModal(null)} wide={true}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+
+        {/* COL 1 */}
+        <div>
+          <FormCard title="תמונה ומיתוג" icon="🖼" color="#faf5ff">
+            <ImgUpload form={form} setForm={setForm}/>
+          </FormCard>
+
+          <FormCard title="זיהוי משרה" icon="🔖" color="#fff5f0">
+            <FormGrid>
+              <div>
+                <label style={{display:'block',fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>מספר משרה</label>
+                <input value={form.jobNumber} readOnly style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,background:'#f5f0e8',color:ACC,fontWeight:700}}/>
+              </div>
+              <FF label="שם המשרה" value={form.title||''} onChange={v=>setForm(f=>({...f,title:v}))}/>
+              <FF label="כותרת פרסום" value={form.publishTitle||''} onChange={v=>setForm(f=>({...f,publishTitle:v}))} hint="הכותרת שתופיע בדף הנחיתה" full={true}/>
+            </FormGrid>
+          </FormCard>
+
+          <FormCard title="פרטי המשרה" icon="📋" color="#eff6ff">
+            <FormGrid>
+              <div>
+                <label style={{display:'block',fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תחום</label>
+                <select value={form.domain||''} onChange={e=>setForm(f=>({...f,domain:e.target.value,role:''}))} style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14}}>
+                  <option value="">-- בחר תחום --</option>
+                  {(data.jobDomains||[]).map(d=><option key={d.id} value={d.name}>{d.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{display:'block',fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תפקיד</label>
+                <select value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))} disabled={!form.domain} style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,background:!form.domain?'#f5f5f5':'white'}}>
+                  <option value="">{form.domain?'-- בחר תפקיד --':'בחר תחום תחילה'}</option>
+                  {(data.jobDomains||[]).find(d=>d.name===form.domain)?.roles.map(r=><option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+              <FF label="מעסיק" type="select" value={data.employers.find(e=>e.id===form.employerId)?.name||''} onChange={v=>setForm(f=>({...f,employerId:data.employers.find(e=>e.name===v)?.id||f.employerId}))} options={data.employers.map(e=>e.name)}/>
+              <FF label="סוג משרה" type="select" value={form.type||'משרה מלאה'} onChange={v=>setForm(f=>({...f,type:v}))} options={['משרה מלאה','חצי משרה','משמרות','פרילנס','זמני']}/>
+              <FF label="מיקום" value={form.location||''} onChange={v=>setForm(f=>({...f,location:v}))}/>
+              <FF label="טווח שכר (₪)" value={form.salary||''} onChange={v=>setForm(f=>({...f,salary:v}))}/>
+              <FF label="תאריך דדליין" type="date" value={form.deadline||''} onChange={v=>setForm(f=>({...f,deadline:v}))}/>
+              <FF label="סטטוס" type="select" value={form.status||'פתוח'} onChange={v=>setForm(f=>({...f,status:v}))} options={['פתוח','ממתין','סגור']}/>
+            </FormGrid>
+          </FormCard>
         </div>
-      </Sec>
-      <Sec title="📋 פרטי המשרה">
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}} className="form-grid">
-          <div>
-            <label style={{display:'block',fontSize:14,fontWeight:600,marginBottom:4}}>תחום</label>
-            <select value={form.domain||''} onChange={e=>setForm(f=>({...f,domain:e.target.value,role:''}))} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:14}}>
-              <option value="">-- בחר תחום --</option>
-              {(data.jobDomains||[]).map(d=><option key={d.id} value={d.name}>{d.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{display:'block',fontSize:14,fontWeight:600,marginBottom:4}}>תפקיד</label>
-            <select value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))} disabled={!form.domain} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:14,background:!form.domain?'#f5f5f5':'white'}}>
-              <option value="">{form.domain?'-- בחר תפקיד --':'בחר תחום תחילה'}</option>
-              {(data.jobDomains||[]).find(d=>d.name===form.domain)?.roles.map(r=><option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
-          <FF label="מעסיק" type="select" value={data.employers.find(e=>e.id===form.employerId)?.name||''} onChange={v=>setForm(f=>({...f,employerId:data.employers.find(e=>e.name===v)?.id||f.employerId}))} options={data.employers.map(e=>e.name)}/>
-          <FF label="סוג משרה" type="select" value={form.type||'משרה מלאה'} onChange={v=>setForm(f=>({...f,type:v}))} options={['משרה מלאה','חצי משרה','משמרות','פרילנס','זמני']}/>
-          <FF label="מיקום" value={form.location||''} onChange={v=>setForm(f=>({...f,location:v}))}/>
-          <FF label="טווח שכר (₪)" value={form.salary||''} onChange={v=>setForm(f=>({...f,salary:v}))}/>
-          <FF label="תאריך דדליין" type="date" value={form.deadline||''} onChange={v=>setForm(f=>({...f,deadline:v}))}/>
-          <FF label="סטטוס" type="select" value={form.status||'פתוח'} onChange={v=>setForm(f=>({...f,status:v}))} options={['פתוח','ממתין','סגור']}/>
+
+        {/* COL 2 */}
+        <div>
+          <FormCard title="תוכן המשרה" icon="📝" color="#fffbeb">
+            <FF label="תיאור המשרה" type="textarea" value={form.description||''} onChange={v=>setForm(f=>({...f,description:v}))}/>
+            <FF label="דרישות המשרה" type="textarea" value={form.requirements||''} onChange={v=>setForm(f=>({...f,requirements:v}))}/>
+            <FF label="יתרונות" type="textarea" value={form.benefits||''} onChange={v=>setForm(f=>({...f,benefits:v}))}/>
+          </FormCard>
         </div>
-      </Sec>
-      <Sec title="📝 תוכן המשרה">
-        <FF label="תיאור המשרה" type="textarea" value={form.description||''} onChange={v=>setForm(f=>({...f,description:v}))}/>
-        <FF label="דרישות המשרה" type="textarea" value={form.requirements||''} onChange={v=>setForm(f=>({...f,requirements:v}))}/>
-        <FF label="יתרונות" type="textarea" value={form.benefits||''} onChange={v=>setForm(f=>({...f,benefits:v}))}/>
-      </Sec>
-      <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+      </div>
+
+      <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:4}}>
         <Btn onClick={()=>setModal(null)}>ביטול</Btn>
         <Btn variant="primary" onClick={save}>שמירה</Btn>
       </div>
@@ -1528,7 +1578,7 @@ function Candidates({data,setData}){
               <td style={{padding:'10px 12px'}}><Tag label={c.status}/></td>
               <td style={{padding:'10px 12px'}} onClick={e=>e.stopPropagation()}>
                 <div style={{display:'flex',gap:4}}>
-                  <Btn onClick={()=>openEdit(c)} style={{padding:'3px 10px',fontSize:12}}>עריכה</Btn>
+                  <Btn onClick={()=>openEdit(c)} style={{padding:'8px 14px',fontSize:13}}>עריכה</Btn>
                   <Btn onClick={()=>del(c.id)} style={{padding:'3px 10px',fontSize:12,background:'#fde8dc'}}>🗑</Btn>
                 </div>
               </td>
@@ -1721,43 +1771,63 @@ function Candidates({data,setData}){
       </div>
     </div>}
 
-    {(modal==='add'||modal==='edit')&&<Modal title={modal==='add'?'מועמד חדש':'עריכת מועמד'} onClose={()=>setModal(null)}>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}} className="form-grid">
-        <FF label="שם מלא" value={form.name||''} onChange={v=>setForm(f=>({...f,name:v}))}/>
+    {(modal==='add'||modal==='edit')&&<Modal title={modal==='add'?'מועמד חדש':'עריכת מועמד'} onClose={()=>setModal(null)} wide={true}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+
+        {/* COL 1 */}
         <div>
-          <label style={{display:'block',fontSize:14,fontWeight:600,marginBottom:4}}>תחום</label>
-          <select value={form.domain||''} onChange={e=>setForm(f=>({...f,domain:e.target.value,role:''}))} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:14}}>
-            <option value="">-- בחר תחום --</option>
-            {(data.jobDomains||[]).map(d=><option key={d.id} value={d.name}>{d.name}</option>)}
-          </select>
+          <FormCard title="פרטים אישיים" icon="👤" color="#fff5f0">
+            <FormGrid>
+              <FF label="שם מלא" value={form.name||''} onChange={v=>setForm(f=>({...f,name:v}))} full={true}/>
+              <FF label="טלפון" value={form.phone||''} onChange={v=>setForm(f=>({...f,phone:v}))}/>
+              <FF label="אימייל" type="email" value={form.email||''} onChange={v=>setForm(f=>({...f,email:v}))}/>
+              <FF label="עיר" value={form.city||''} onChange={v=>setForm(f=>({...f,city:v}))}/>
+            </FormGrid>
+          </FormCard>
+
+          <FormCard title="פרופיל מקצועי" icon="💼" color="#eff6ff">
+            <FormGrid>
+              <div>
+                <label style={{display:'block',fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תחום</label>
+                <select value={form.domain||''} onChange={e=>setForm(f=>({...f,domain:e.target.value,role:''}))} style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14}}>
+                  <option value="">-- בחר תחום --</option>
+                  {(data.jobDomains||[]).map(d=><option key={d.id} value={d.name}>{d.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{display:'block',fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תפקיד</label>
+                <select value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))} disabled={!form.domain} style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,background:!form.domain?'#f5f5f5':'white'}}>
+                  <option value="">{form.domain?'-- בחר תפקיד --':'בחר תחום תחילה'}</option>
+                  {(data.jobDomains||[]).find(d=>d.name===form.domain)?.roles.map(r=><option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+              <FF label="ניסיון" value={form.experience||''} onChange={v=>setForm(f=>({...f,experience:v}))}/>
+              <FF label="השכלה" value={form.education||''} onChange={v=>setForm(f=>({...f,education:v}))}/>
+              <FF label="סטטוס" type="select" value={form.status||'חדש'} onChange={v=>setForm(f=>({...f,status:v}))} options={['חדש','בתהליך','ראיון נקבע','הוצב']}/>
+            </FormGrid>
+          </FormCard>
         </div>
+
+        {/* COL 2 */}
         <div>
-          <label style={{display:'block',fontSize:14,fontWeight:600,marginBottom:4}}>תפקיד</label>
-          <select value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))} disabled={!form.domain} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:14,background:!form.domain?'#f5f5f5':'white'}}>
-            <option value="">{form.domain?'-- בחר תפקיד --':'בחר תחום תחילה'}</option>
-            {(data.jobDomains||[]).find(d=>d.name===form.domain)?.roles.map(r=><option key={r} value={r}>{r}</option>)}
-          </select>
-        </div>
-        <FF label="טלפון" value={form.phone||''} onChange={v=>setForm(f=>({...f,phone:v}))}/>
-        <FF label="אימייל" type="email" value={form.email||''} onChange={v=>setForm(f=>({...f,email:v}))}/>
-        <FF label="עיר" value={form.city||''} onChange={v=>setForm(f=>({...f,city:v}))}/>
-        <FF label="ניסיון" value={form.experience||''} onChange={v=>setForm(f=>({...f,experience:v}))}/>
-        <FF label="השכלה" value={form.education||''} onChange={v=>setForm(f=>({...f,education:v}))}/>
-        <FF label="סטטוס" type="select" value={form.status||'חדש'} onChange={v=>setForm(f=>({...f,status:v}))} options={['חדש','בתהליך','ראיון נקבע','הוצב']}/>
-      </div>
-      <div style={{marginBottom:12}}>
-        <div style={{fontSize:14,fontWeight:600,marginBottom:6}}>שייך למשרות</div>
-        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-          {data.jobs.map(j=>{const chk=form.appliedJobs?.includes(j.id);return(
-            <label key={j.id} style={{display:'flex',alignItems:'center',gap:4,cursor:'pointer',background:chk?'#cce5ff':'#f0ede6',border:'1.5px solid #333',borderRadius:3,padding:'3px 8px',fontSize:13}}>
-              <input type="checkbox" checked={!!chk} onChange={()=>setForm(f=>({...f,appliedJobs:chk?f.appliedJobs.filter(id=>id!==j.id):[...(f.appliedJobs||[]),j.id]}))}/>
-              {j.title}
-            </label>
-          );})}
+          <FormCard title="שייך למשרות" icon="🔗" color="#faf5ff">
+            <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+              {data.jobs.map(j=>{const chk=form.appliedJobs?.includes(j.id);return(
+                <label key={j.id} style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',background:chk?'#eff6ff':'#f8f7f4',border:`1.5px solid ${chk?'#bfdbfe':'#e5e7eb'}`,borderRadius:8,padding:'6px 12px',fontSize:13,fontWeight:chk?700:500,color:chk?'#1d4ed8':'#374151'}}>
+                  <input type="checkbox" checked={!!chk} onChange={()=>setForm(f=>({...f,appliedJobs:chk?f.appliedJobs.filter(id=>id!==j.id):[...(f.appliedJobs||[]),j.id]}))}/>
+                  {j.title}
+                </label>
+              );})}
+            </div>
+          </FormCard>
+
+          <FormCard title="הערות" icon="📝" color="#fffbeb">
+            <FF label="" type="textarea" value={form.notes||''} onChange={v=>setForm(f=>({...f,notes:v}))}/>
+          </FormCard>
         </div>
       </div>
-      <FF label="הערות" type="textarea" value={form.notes||''} onChange={v=>setForm(f=>({...f,notes:v}))}/>
-      <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+
+      <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:4}}>
         <Btn onClick={()=>setModal(null)}>ביטול</Btn>
         <Btn variant="primary" onClick={save}>שמירה</Btn>
       </div>
@@ -2072,7 +2142,7 @@ function Settings({data,setData}){
               <td style={{padding:'10px 12px'}}><Tag label={u.status}/></td>
               <td style={{padding:'10px 12px'}}>
                 <div style={{display:'flex',gap:4}}>
-                  <Btn onClick={()=>openEditUser(u)} style={{padding:'3px 10px',fontSize:12}}>עריכה</Btn>
+                  <Btn onClick={()=>openEditUser(u)} style={{padding:'8px 14px',fontSize:13}}>עריכה</Btn>
                   <Btn onClick={()=>delUser(u.id)} style={{padding:'3px 10px',fontSize:12,background:'#fde8dc'}}>🗑</Btn>
                 </div>
               </td>
