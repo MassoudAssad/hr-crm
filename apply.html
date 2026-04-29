@@ -155,12 +155,15 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
     const jobId = getJobId();
     if (jobId) {
       try {
-        const { data, error } = await sb.from('crm_state').select('data').eq('id','main').single();
-        if (!error && data?.data?.jobs) {
-          const job = data.data.jobs.find(j => j.id === jobId);
+        const res = await fetch(`${SB_URL}/rest/v1/crm_state?select=data&id=eq.main`, {
+          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json' }
+        });
+        const rows = await res.json();
+        if (rows?.[0]?.data?.jobs) {
+          const job = rows[0].data.jobs.find(j => j.id === jobId);
           if (job) { renderJob(job); return; }
         }
-      } catch(e) {}
+      } catch(e) { console.error(e); }
       showError(); return;
     }
     const job = getJobFromBase64();
@@ -320,8 +323,11 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
           }
         }
 
-        const { data: rows } = await sb.from('crm_state').select('data').eq('id','main').single();
-        const existing = rows?.data || {};
+        const getRes = await fetch(`${SB_URL}/rest/v1/crm_state?select=data&id=eq.main`, {
+          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json' }
+        });
+        const rows = await getRes.json();
+        const existing = rows?.[0]?.data || {};
         const candidates = existing.candidates || [];
 
         if (candidates.some(c => c.phone===phone && c.appliedJobs?.includes(job.id))) {
@@ -333,15 +339,18 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
           j.id===job.id ? {...j, candidates:[...(j.candidates||[]),candidate.id]} : j
         );
 
-        await sb.from('crm_state').update({
-          data: {
-            ...existing,
-            candidates: [...candidates, candidate],
-            jobs: updatedJobs,
-            pendingCandidates: [...(existing.pendingCandidates||[]), candidate.id],
+        await fetch(`${SB_URL}/rest/v1/crm_state?id=eq.main`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`,
+            'Accept': 'application/json', 'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
           },
-          updated_at: new Date().toISOString()
-        }).eq('id','main');
+          body: JSON.stringify({
+            data: { ...existing, candidates: [...candidates, candidate], jobs: updatedJobs, pendingCandidates: [...(existing.pendingCandidates||[]), candidate.id] },
+            updated_at: new Date().toISOString()
+          })
+        });
 
       } catch(err) { console.error(err); }
 
