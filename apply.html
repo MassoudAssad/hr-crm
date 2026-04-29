@@ -139,10 +139,6 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
 </head>
 <body>
 
-<button class="back-btn" onclick="window.close(); setTimeout(()=>{ window.history.back(); },100);">
-  ← חזור
-</button>
-
 <div id="root">
   <div class="loading-screen">
     <div class="spinner"></div>
@@ -246,7 +242,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
             <div class="hero-job-title">${job.publishTitle||job.title}</div>
             <div class="hero-job-number">${job.jobNumber||''}</div>
           </div>
-          <div class="hero-badge">דרושים</div>
+          <div class="hero-badge" style="display:none">דרושים</div>
         </div>
       </div>
 
