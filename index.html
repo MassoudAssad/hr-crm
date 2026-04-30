@@ -147,6 +147,9 @@ const INIT = {
 };
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
+const mkLog=(type,action,label)=>({id:'l'+Date.now()+Math.random().toString(36).slice(2),type,action,label,timestamp:new Date().toISOString()});
+const LOG_ICONS={candidate:'👤',job:'📋',employer:'🏢',pending:'🔔'};
+const LOG_ACTIONS={added:'נוסף',updated:'עודכן',deleted:'נמחק',approved:'אושר',rejected:'נדחה'};
 const fmtNum = s => (s||'').toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');
 
 function Tag({label}){
@@ -1510,10 +1513,59 @@ function Candidates({data,setData}){
     }));
   };
 
+  const [showAdvanced,setShowAdvanced]=React.useState(false);
+  const [fDomain,setFDomain]=React.useState('');
+  const [fCity,setFCity]=React.useState('');
+  const [fCv,setFCv]=React.useState('הכל');
+  const [fSource,setFSource]=React.useState('הכל');
+  const [fDateFrom,setFDateFrom]=React.useState('');
+  const [fDateTo,setFDateTo]=React.useState('');
+  const [showExportMenu,setShowExportMenu]=React.useState(false);
+  const allCities=[...new Set(data.candidates.map(c=>c.city).filter(Boolean))].sort();
+  const allDomains=(data.jobDomains||[]).map(d=>d.name);
+  const activeFilters=[fDomain,fCity,fCv!=='הכל'?fCv:'',fSource!=='הכל'?fSource:'',fDateFrom,fDateTo].filter(Boolean).length;
+  const clearFilters=()=>{setFDomain('');setFCity('');setFCv('הכל');setFSource('הכל');setFDateFrom('');setFDateTo('');setStFilter('הכל');setSearch('');};
+  const filteredAdv=filtered.filter(c=>{
+    if(fDomain&&(c.domain||'')!==fDomain)return false;
+    if(fCity&&(c.city||'')!==fCity)return false;
+    if(fCv==='יש CV'&&!c.cv)return false;
+    if(fCv==='אין CV'&&c.cv)return false;
+    if(fSource==='דף נחיתה'&&c.source!=='landing_page')return false;
+    if(fSource==='ידני'&&c.source==='landing_page')return false;
+    if(fDateFrom&&c.appliedAt&&new Date(c.appliedAt)<new Date(fDateFrom))return false;
+    if(fDateTo&&c.appliedAt&&new Date(c.appliedAt)>new Date(fDateTo+'T23:59:59'))return false;
+    return true;
+  });
+  const exportCSV=()=>{
+    const headers=['שם','טלפון','אימייל','עיר','תחום','תפקיד','ניסיון','השכלה','סטטוס','CV','מקור','תאריך הגשה','משרה'];
+    const rows=filteredAdv.map(c=>{const job=data.jobs.find(j=>(c.appliedJobs||[]).includes(j.id));return [c.name||'',c.phone||'',c.email||'',c.city||'',c.domain||'',c.role||'',c.experience||'',c.education||'',c.status||'',c.cv?'כן':'לא',c.source==='landing_page'?'דף נחיתה':'ידני',c.appliedAt?new Date(c.appliedAt).toLocaleDateString('he-IL'):'',job?job.publishTitle||job.title:''].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',');});
+    const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent('﻿'+[headers.join(','),...rows].join('
+'));a.download='candidates.csv';a.click();setShowExportMenu(false);
+  };
+  const exportExcel=()=>{
+    const headers=['שם','טלפון','אימייל','עיר','תחום','תפקיד','ניסיון','השכלה','סטטוס','CV','מקור','תאריך הגשה','משרה'];
+    const rows=filteredAdv.map(c=>{const job=data.jobs.find(j=>(c.appliedJobs||[]).includes(j.id));return [c.name||'',c.phone||'',c.email||'',c.city||'',c.domain||'',c.role||'',c.experience||'',c.education||'',c.status||'',c.cv?'כן':'לא',c.source==='landing_page'?'דף נחיתה':'ידני',c.appliedAt?new Date(c.appliedAt).toLocaleDateString('he-IL'):'',job?job.publishTitle||job.title:''];});
+    const xmlRows=[headers,...rows].map(row=>'<Row>'+row.map(v=>'<Cell><Data ss:Type="String">'+String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</Data></Cell>').join('')+'</Row>').join('');
+    const xml='<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="מועמדים"><Table>'+xmlRows+'</Table></Worksheet></Workbook>';
+    const a=document.createElement('a');a.href='data:application/vnd.ms-excel;charset=utf-8,'+encodeURIComponent('﻿'+xml);a.download='candidates.xls';a.click();setShowExportMenu(false);
+  };
+  const selStyle={width:'100%',padding:'8px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,background:'white',outline:'none'};
+
   return <div style={{padding:28}} className="mobile-pad">
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
       <h1 style={{fontSize:28,fontWeight:800}}>👥 מועמדים</h1>
-      <Btn variant="primary" onClick={openAdd}>+ מועמד</Btn>
+      <div style={{display:'flex',gap:8,alignItems:'center'}}>
+        <div style={{position:'relative'}}>
+          <button onClick={()=>setShowExportMenu(v=>!v)} style={{display:'flex',alignItems:'center',gap:6,padding:'8px 14px',background:'white',color:'#1a1a2e',border:'2px solid #333',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>📥 ייצוא <span style={{fontSize:10}}>▼</span></button>
+          {showExportMenu&&<div style={{position:'absolute',top:'calc(100% + 6px)',left:0,background:'white',border:'2px solid #333',borderRadius:10,boxShadow:'0 8px 24px rgba(0,0,0,0.15)',zIndex:200,minWidth:180,overflow:'hidden'}}>
+            <div style={{padding:'8px 12px',fontSize:11,color:MUT,borderBottom:'1px solid #f0ede6',fontWeight:700}}>{filteredAdv.length} מועמדים לייצוא</div>
+            <button onClick={exportCSV} style={{width:'100%',padding:'11px 16px',background:'none',border:'none',fontFamily:'Heebo',fontSize:14,fontWeight:600,cursor:'pointer',textAlign:'right',color:'#1a1a2e'}} onMouseEnter={e=>e.currentTarget.style.background='#f5f0e8'} onMouseLeave={e=>e.currentTarget.style.background='none'}>📄 ייצוא CSV</button>
+            <button onClick={exportExcel} style={{width:'100%',padding:'11px 16px',background:'none',border:'none',fontFamily:'Heebo',fontSize:14,fontWeight:600,cursor:'pointer',textAlign:'right',color:'#1a1a2e'}} onMouseEnter={e=>e.currentTarget.style.background='#f5f0e8'} onMouseLeave={e=>e.currentTarget.style.background='none'}>📊 ייצוא Excel</button>
+          </div>}
+          {showExportMenu&&<div style={{position:'fixed',inset:0,zIndex:199}} onClick={()=>setShowExportMenu(false)}/>}
+        </div>
+        <Btn variant="primary" onClick={openAdd}>+ מועמד</Btn>
+      </div>
     </div>
 
     {/* ── PENDING CANDIDATES SECTION ── */}
@@ -1544,11 +1596,24 @@ function Candidates({data,setData}){
       </div>
     </div>}
 
-    <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
-      <SearchBar placeholder="חיפוש..." value={search} onChange={setSearch}/>
-      <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-        {['הכל','חדש','בתהליך','ראיון נקבע','הוצב'].map(s=><Btn key={s} onClick={()=>setStFilter(s)} style={{background:stFilter===s?ACC:'white',color:stFilter===s?'white':'#333',padding:'5px 8px',fontSize:11}}>{s}</Btn>)}
+    <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
+      <SearchBar placeholder="חיפוש שם, תפקיד, עיר..." value={search} onChange={setSearch}/>
+      <button onClick={()=>setShowAdvanced(v=>!v)} style={{display:'flex',alignItems:'center',gap:6,padding:'7px 14px',background:showAdvanced?'#1a1a2e':activeFilters>0?'#fff5f0':'white',color:showAdvanced?'white':activeFilters>0?ACC:'#333',border:'2px solid '+(showAdvanced?'#1a1a2e':activeFilters>0?ACC:'#333'),borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>🔍 סינון מתקדם{activeFilters>0&&<span style={{background:ACC,color:'white',borderRadius:20,padding:'0 6px',fontSize:11,fontWeight:800}}>{activeFilters}</span>}</button>
+      {(activeFilters>0||stFilter!=='הכל'||search)&&<button onClick={clearFilters} style={{padding:'7px 12px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>✕ נקה</button>}
+      <span style={{marginRight:'auto',fontSize:13,color:MUT}}>מציג <strong style={{color:ACC}}>{filteredAdv.length}</strong> מתוך {data.candidates.filter(c=>!pendingIds.has(c.id)).length}</span>
+    </div>
+    {showAdvanced&&<div style={{background:'white',border:'1.5px solid #e5e7eb',borderRadius:12,padding:'16px 20px',marginBottom:14,boxShadow:'0 4px 16px rgba(0,0,0,0.06)'}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}} className="mobile-grid-1">
+        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תחום</div><select value={fDomain} onChange={e=>setFDomain(e.target.value)} style={selStyle}><option value="">כל התחומים</option>{allDomains.map(d=><option key={d} value={d}>{d}</option>)}</select></div>
+        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>עיר</div><select value={fCity} onChange={e=>setFCity(e.target.value)} style={selStyle}><option value="">כל הערים</option>{allCities.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
+        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>CV</div><select value={fCv} onChange={e=>setFCv(e.target.value)} style={selStyle}>{['הכל','יש CV','אין CV'].map(o=><option key={o}>{o}</option>)}</select></div>
+        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>מקור</div><select value={fSource} onChange={e=>setFSource(e.target.value)} style={selStyle}>{['הכל','דף נחיתה','ידני'].map(o=><option key={o}>{o}</option>)}</select></div>
+        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>מ-תאריך</div><input type="date" value={fDateFrom} onChange={e=>setFDateFrom(e.target.value)} style={selStyle}/></div>
+        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>עד-תאריך</div><input type="date" value={fDateTo} onChange={e=>setFDateTo(e.target.value)} style={selStyle}/></div>
       </div>
+    </div>}
+    <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
+      {['הכל','חדש','בתהליך','ראיון נקבע','הוצב'].map(s=><Btn key={s} onClick={()=>setStFilter(s)} style={{background:stFilter===s?ACC:'white',color:stFilter===s?'white':'#333',padding:'5px 8px',fontSize:11}}>{s}</Btn>)}
     </div>
 
     {/* Mobile list */}
@@ -1590,7 +1655,7 @@ function Candidates({data,setData}){
           {['שם','תחום / תפקיד','טלפון','עיר','ניסיון','CV','משרות','סטטוס',''].map(h=><th key={h} style={{padding:'10px 12px',textAlign:'right',fontSize:14,fontWeight:700,whiteSpace:'nowrap'}}>{h}</th>)}
         </tr></thead>
         <tbody>
-          {filtered.map(c=>{
+          {filteredAdv.map(c=>{
             const jobs=data.jobs.filter(j=>c.appliedJobs.includes(j.id));
             return <tr key={c.id} style={{borderBottom:'1px dashed #ddd',background:'#fff',cursor:'pointer'}}
               onMouseEnter={e=>e.currentTarget.style.background='#fde8dc'}
@@ -1956,8 +2021,8 @@ const PRIORITY_TEXT={'גבוה':'#c94d1a','בינוני':'#92400e','נמוך':'#
 const STATUS_COLORS={'פתוח':'#eff6ff','בתהליך':'#fff3cd','הושלם':'#f0fdf4'};
 const STATUS_TEXT={'פתוח':'#1d4ed8','בתהליך':'#92400e','הושלם':'#15803d'};
 
-function TaskModal({task,data,onSave,onClose}){
-  const [form,setForm]=React.useState(task||{title:'',description:'',dueDate:'',priority:'בינוני',status:'פתוח',candidateId:'',employerId:''});
+function TaskModal({task,data,onSave,onClose,initialStatus}){
+  const [form,setForm]=React.useState(task||{title:'',description:'',dueDate:'',priority:'בינוני',status:initialStatus||'פתוח',candidateId:'',employerId:''});
   const set=k=>v=>setForm(f=>({...f,[k]:v}));
   const isValid=form.title.trim();
   return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={onClose}>
@@ -2018,12 +2083,66 @@ function TaskModal({task,data,onSave,onClose}){
   </div>;
 }
 
+function TaskCard({t,data,onEdit,onDel,draggable,onDragStart}){
+  const cand=t.candidateId?data.candidates.find(c=>c.id===t.candidateId):null;
+  const emp=t.employerId?data.employers.find(e=>e.id===t.employerId):null;
+  const done=t.status==='הושלם';
+  const due=(()=>{if(!t.dueDate)return null;const date=new Date(t.dueDate);const today=new Date();today.setHours(0,0,0,0);const diff=Math.ceil((date-today)/(1000*60*60*24));if(diff<0)return{text:(Math.abs(diff)+' ימים באיחור'),color:'#dc2626'};if(diff===0)return{text:'היום',color:'#e85d26'};if(diff===1)return{text:'מחר',color:'#f59e0b'};return{text:date.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'}),color:'#6b7280'};})();
+  return <div draggable={draggable} onDragStart={onDragStart}
+    style={{background:'white',borderRadius:12,padding:'14px 16px',boxShadow:'0 2px 8px rgba(0,0,0,0.07)',border:'1.5px solid #f0ede6',marginBottom:10,cursor:draggable?'grab':'default',opacity:done?0.78:1}}
+    onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,0.13)'}
+    onMouseLeave={e=>e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.07)'}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+      <div style={{fontWeight:700,fontSize:14,color:done?'#9ca3af':'#1a1a2e',textDecoration:done?'line-through':'none',flex:1,lineHeight:1.4}}>{t.title}</div>
+      <div style={{display:'flex',gap:4,flexShrink:0,marginRight:8}}>
+        <button onClick={()=>onEdit(t)} style={{padding:'3px 7px',background:'#f3f4f6',border:'none',borderRadius:5,cursor:'pointer',fontSize:12}}>✏️</button>
+        <button onClick={()=>onDel(t.id)} style={{padding:'3px 7px',background:'#fde8dc',border:'none',borderRadius:5,cursor:'pointer',fontSize:12}}>🗑</button>
+      </div>
+    </div>
+    {t.description&&<div style={{fontSize:12,color:'#6b7280',marginBottom:8,lineHeight:1.55}}>{t.description}</div>}
+    <div style={{display:'flex',gap:6,flexWrap:'wrap',alignItems:'center'}}>
+      <span style={{fontSize:11,fontWeight:700,padding:'2px 7px',borderRadius:20,background:PRIORITY_COLORS[t.priority]||'#f3f4f6',color:PRIORITY_TEXT[t.priority]||'#6b7280'}}>{t.priority}</span>
+      {due&&<span style={{fontSize:11,fontWeight:600,color:due.color}}>📅 {due.text}</span>}
+      {cand&&<span style={{fontSize:11,background:'#fff5f0',border:'1px solid #fcd5c0',borderRadius:5,padding:'1px 6px',color:'#c94d1a',fontWeight:600}}>👤 {cand.name}</span>}
+      {emp&&<span style={{fontSize:11,background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:5,padding:'1px 6px',color:'#1d4ed8',fontWeight:600}}>🏢 {emp.name}</span>}
+    </div>
+  </div>;
+}
+
+function KanbanBoard({tasks,data,onEdit,onDel,onStatusChange,onAddInCol}){
+  const cols=[{id:'פתוח',label:'פתוח',color:'#eff6ff',accent:'#3b82f6',icon:'📋'},{id:'בתהליך',label:'בתהליך',color:'#fffbeb',accent:'#f59e0b',icon:'⏳'},{id:'הושלם',label:'הושלם',color:'#f0fdf4',accent:'#16a34a',icon:'✅'}];
+  const [dragOver,setDragOver]=React.useState(null);
+  const handleDrop=(e,colId)=>{e.preventDefault();const id=e.dataTransfer.getData('taskId');if(id){const t=tasks.find(x=>x.id===id);if(t&&t.status!==colId)onStatusChange(t,colId);}setDragOver(null);};
+  return <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,alignItems:'start'}}>
+    {cols.map(col=>{
+      const colTasks=tasks.filter(t=>t.status===col.id);
+      const isOver=dragOver===col.id;
+      return <div key={col.id} onDragOver={e=>{e.preventDefault();setDragOver(col.id);}} onDragLeave={()=>setDragOver(null)} onDrop={e=>handleDrop(e,col.id)}
+        style={{background:isOver?col.color:'#f5f0e8',borderRadius:16,padding:'0 0 8px',border:'2px dashed '+(isOver?col.accent:'transparent'),transition:'border .15s',minHeight:200}}>
+        <div style={{background:col.color,borderRadius:'14px 14px 0 0',padding:'12px 16px',display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            <span style={{fontSize:16}}>{col.icon}</span>
+            <span style={{fontWeight:800,fontSize:14,color:col.accent}}>{col.label}</span>
+            <span style={{background:col.accent,color:'white',borderRadius:20,padding:'0 7px',fontSize:11,fontWeight:800}}>{colTasks.length}</span>
+          </div>
+          <button onClick={()=>onAddInCol(col.id)} style={{background:col.accent,color:'white',border:'none',borderRadius:8,width:26,height:26,cursor:'pointer',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800}}>+</button>
+        </div>
+        <div style={{padding:'0 10px'}}>
+          {colTasks.length===0&&<div style={{textAlign:'center',padding:'30px 0',color:'#bbb',fontSize:13}}>גרור לכאן או לחץ +</div>}
+          {colTasks.map(t=><TaskCard key={t.id} t={t} data={data} onEdit={onEdit} onDel={onDel} draggable={true} onDragStart={e=>e.dataTransfer.setData('taskId',t.id)}/>)}
+        </div>
+      </div>;
+    })}
+  </div>;
+}
+
 function Tasks({data,setData}){
   const [modal,setModal]=React.useState(null); // null | {task?}
   const [filter,setFilter]=React.useState('הכל');
   const [priorityFilter,setPriorityFilter]=React.useState('הכל');
   const tasks=data.tasks||[];
 
+  const [viewMode,setViewMode]=React.useState('kanban');
   const saveTask=form=>{
     const isNew=!form.id;
     const t=isNew?{...form,id:'t'+Date.now(),createdAt:new Date().toISOString()}:{...form};
@@ -2031,13 +2150,12 @@ function Tasks({data,setData}){
     setModal(null);
   };
   const delTask=id=>{if(confirm('למחוק משימה?'))setData(d=>({...d,tasks:(d.tasks||[]).filter(t=>t.id!==id)}));};
-  const toggleStatus=t=>{
-    const next=t.status==='פתוח'?'בתהליך':t.status==='בתהליך'?'הושלם':'פתוח';
-    setData(d=>({...d,tasks:(d.tasks||[]).map(x=>x.id===t.id?{...x,status:next}:x)}));
-  };
+  const changeStatus=(t,s)=>setData(d=>({...d,tasks:(d.tasks||[]).map(x=>x.id===t.id?{...x,status:s}:x)}));
+  const toggleStatus=t=>{const next=t.status==='פתוח'?'בתהליך':t.status==='בתהליך'?'הושלם':'פתוח';changeStatus(t,next);};
 
   const filtered=tasks.filter(t=>(filter==='הכל'||t.status===filter)&&(priorityFilter==='הכל'||t.priority===priorityFilter));
-  const openCount=tasks.filter(t=>t.status!=='הושלם').length;
+  const openCount=tasks.filter(t=>t.status==='פתוח').length;
+  const inProgCount=tasks.filter(t=>t.status==='בתהליך').length;
   const doneCount=tasks.filter(t=>t.status==='הושלם').length;
 
   const fmtDue=d=>{
@@ -2055,26 +2173,28 @@ function Tasks({data,setData}){
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:10}}>
       <div>
         <h1 style={{fontSize:28,fontWeight:900,color:'#1a1a2e',marginBottom:4}}>✅ משימות</h1>
-        <div style={{fontSize:13,color:'#6b7280'}}>{openCount} פתוחות · {doneCount} הושלמו</div>
+        <div style={{fontSize:13,color:'#6b7280'}}>{openCount} פתוחות · {inProgCount} בתהליך · {doneCount} הושלמו</div>
       </div>
-      <button onClick={()=>setModal({})} style={{padding:'10px 20px',background:'#e85d26',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:15,cursor:'pointer',boxShadow:'0 4px 12px rgba(232,93,38,0.3)'}}>+ משימה חדשה</button>
+      <div style={{display:'flex',gap:8,alignItems:'center'}}>
+        <div style={{display:'flex',border:'2px solid #333',borderRadius:8,overflow:'hidden'}}>
+          <button onClick={()=>setViewMode('kanban')} style={{padding:'7px 14px',background:viewMode==='kanban'?'#1a1a2e':'white',color:viewMode==='kanban'?'white':'#333',border:'none',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>🗂 Kanban</button>
+          <button onClick={()=>setViewMode('list')} style={{padding:'7px 14px',background:viewMode==='list'?'#1a1a2e':'white',color:viewMode==='list'?'white':'#333',border:'none',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>☰ רשימה</button>
+        </div>
+        <button onClick={()=>setModal({initialStatus:'פתוח'})} style={{padding:'10px 20px',background:'#e85d26',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:15,cursor:'pointer',boxShadow:'0 4px 12px rgba(232,93,38,0.3)'}}>+ משימה חדשה</button>
+      </div>
     </div>
 
-    {/* Filters */}
-    <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>
+    {viewMode==='list'&&<div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>
       {['הכל','פתוח','בתהליך','הושלם'].map(s=><button key={s} onClick={()=>setFilter(s)} style={{padding:'6px 14px',border:'2px solid',borderColor:filter===s?'#e85d26':'#e5e7eb',borderRadius:20,background:filter===s?'#e85d26':'white',color:filter===s?'white':'#374151',fontFamily:'Heebo',fontWeight:600,fontSize:13,cursor:'pointer'}}>{s}</button>)}
       <div style={{width:1,background:'#e5e7eb',margin:'0 4px'}}/>
       {['הכל','גבוה','בינוני','נמוך'].map(p=><button key={p} onClick={()=>setPriorityFilter(p)} style={{padding:'6px 14px',border:'2px solid',borderColor:priorityFilter===p?'#1a1a2e':'#e5e7eb',borderRadius:20,background:priorityFilter===p?'#1a1a2e':'white',color:priorityFilter===p?'white':'#374151',fontFamily:'Heebo',fontWeight:600,fontSize:13,cursor:'pointer'}}>{p==='הכל'?'כל עדיפות':p}</button>)}
-    </div>
-
-    {/* Task list */}
-    {filtered.length===0&&<div style={{textAlign:'center',padding:'60px 0',color:'#9ca3af'}}>
-      <div style={{fontSize:48,marginBottom:12}}>📋</div>
-      <div style={{fontSize:18,fontWeight:700}}>אין משימות</div>
-      <div style={{fontSize:14,marginTop:4}}>לחץ "+ משימה חדשה" להתחיל</div>
     </div>}
 
-    <div style={{display:'flex',flexDirection:'column',gap:10}}>
+    {viewMode==='kanban'&&(tasks.length===0
+      ?<div style={{textAlign:'center',padding:'60px 0',color:'#9ca3af'}}><div style={{fontSize:48,marginBottom:12}}>📋</div><div style={{fontSize:18,fontWeight:700}}>אין משימות</div><div style={{fontSize:14,marginTop:4}}>לחץ "+ משימה חדשה" להתחיל</div></div>
+      :<KanbanBoard tasks={tasks} data={data} onEdit={t=>setModal({task:t})} onDel={delTask} onStatusChange={changeStatus} onAddInCol={s=>setModal({initialStatus:s})}/>
+    )}
+    {viewMode==='list'&&<div style={{display:'flex',flexDirection:'column',gap:10}}>
       {filtered.map(t=>{
         const due=fmtDue(t.dueDate);
         const cand=t.candidateId?data.candidates.find(c=>c.id===t.candidateId):null;
@@ -2108,7 +2228,8 @@ function Tasks({data,setData}){
       })}
     </div>
 
-    {modal!==null&&<TaskModal task={modal.task} data={data} onSave={saveTask} onClose={()=>setModal(null)}/>}
+    </div>}
+    {modal!==null&&<TaskModal task={modal.task} initialStatus={modal.initialStatus} data={data} onSave={saveTask} onClose={()=>setModal(null)}/>}
   </div>;
 }
 
@@ -2510,12 +2631,12 @@ function AppInner(){
     }));
   };
   const rejectPending=(cid)=>{
-    const cand=data.candidates.find(c=>c.id===cid);
+    const cand2=data.candidates.find(c=>c.id===cid);
     setData(d=>({
       ...d,
       pendingCandidates:(d.pendingCandidates||[]).filter(id=>id!==cid),
       candidates:d.candidates.filter(c=>c.id!==cid),
-      activityLog:[mkLog('pending','rejected',cand?.name||cid),...(d.activityLog||[])].slice(0,50)
+      activityLog:[mkLog('pending','rejected',cand2?.name||cid),...(d.activityLog||[])].slice(0,50)
     }));
   };
 
