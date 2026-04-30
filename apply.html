@@ -178,7 +178,9 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
           const job = rows0[0].data.jobs.find(j => j.id === jobId);
           if (job) { renderJob(job); return; }
         }
-      } catch(e) {}
+      } catch(e) {
+        showNetworkError(); return;
+      }
       showError(); return;
     }
     const job = getJobFromBase64();
@@ -191,6 +193,15 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
       <div style="font-size:64px;margin-bottom:20px">😕</div>
       <div style="font-size:24px;font-weight:800;margin-bottom:10px">המשרה לא נמצאה</div>
       <div style="font-size:15px;color:#6b7280">הקישור שגוי – פנה למגייס שלך לקבלת קישור מעודכן.</div>
+    </div>`;
+  }
+
+  function showNetworkError() {
+    root.innerHTML = `<div style="max-width:500px;margin:80px auto;padding:20px;text-align:center">
+      <div style="font-size:64px;margin-bottom:20px">📡</div>
+      <div style="font-size:24px;font-weight:800;margin-bottom:10px">בעיית חיבור</div>
+      <div style="font-size:15px;color:#6b7280">לא הצלחנו לטעון את המשרה. בדוק את החיבור לאינטרנט ונסה לרענן את הדף.</div>
+      <button onclick="location.reload()" style="margin-top:20px;padding:10px 24px;background:#e85d26;color:white;border:none;border-radius:10px;font-family:Heebo;font-size:15px;font-weight:700;cursor:pointer">🔄 נסה שוב</button>
     </div>`;
   }
 

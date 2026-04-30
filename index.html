@@ -2471,6 +2471,15 @@ function AppInner(){
   const pending=(data.pendingCandidates||[]).map(id=>data.candidates.find(c=>c.id===id)).filter(Boolean);
   const [showPending,setShowPending]=React.useState(false);
 
+  // Auto-show pending modal when new candidates arrive via landing page
+  const prevPendingCount=React.useRef(0);
+  React.useEffect(()=>{
+    if(pending.length>0&&pending.length>prevPendingCount.current){
+      setShowPending(true);
+    }
+    prevPendingCount.current=pending.length;
+  },[pending.length]);
+
   const approvePending=(cid)=>{
     setData(d=>({
       ...d,
@@ -2489,7 +2498,10 @@ function AppInner(){
   return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#f5f0e8'}}>
     <div id="desktop-sidebar"><Sidebar active={page} onNav={setPage}/></div>
     <div id="main-content" style={{flex:1,overflow:'auto',minWidth:0}}>
-      <div style={{background:syncBg,padding:'3px 14px',fontSize:12,textAlign:'center',borderBottom:'1px solid #ddd'}}>{syncMsg}</div>
+      <div style={{background:syncBg,padding:'3px 14px',fontSize:12,textAlign:'center',borderBottom:'1px solid #ddd',display:'flex',alignItems:'center',justifyContent:'center',gap:12}}>
+        <span>{syncMsg}</span>
+        {pending.length>0&&<button onClick={()=>setShowPending(true)} style={{background:'#e85d26',color:'white',border:'none',borderRadius:20,padding:'2px 12px',fontSize:12,fontWeight:800,cursor:'pointer',animation:'pendingPulse 1.8s ease-in-out infinite'}}>🔔 {pending.length} ממתינים</button>}
+      </div>
       {page==='dashboard'&&<Dashboard data={data} onNav={setPage}/>}
       {page==='employers'&&<Employers data={data} setData={setData}/>}
       {page==='jobs'&&<Jobs data={data} setData={setData}/>}
