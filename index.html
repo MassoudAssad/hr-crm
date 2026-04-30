@@ -149,6 +149,10 @@ const INIT = {
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 const fmtNum = s => (s||'').toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');
 
+const mkLog=(type,action,label)=>({id:'l'+Date.now()+Math.random().toString(36).slice(2),type,action,label,timestamp:new Date().toISOString()});
+const LOG_ICONS={candidate:'👤',job:'📋',employer:'🏢',pending:'🔔'};
+const LOG_ACTIONS={added:'נוסף',updated:'עודכן',deleted:'נמחק',approved:'אושר',rejected:'נדחה'};
+
 function Tag({label}){
   return <span style={{background:TAG_COLORS[label]||'#e2e3e5',border:'1.5px solid #333',borderRadius:3,padding:'1px 8px',fontSize:13,fontWeight:600}}>{label}</span>;
 }
@@ -656,21 +660,31 @@ function Dashboard({data,onNav}){
     {/* ── Middle Row ── */}
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}} className="mobile-grid-1">
 
-      {/* Recent activity */}
-      <div style={{background:'#fff',borderRadius:16,padding:20,boxShadow:'0 4px 20px rgba(0,0,0,0.06)'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-          <h3 style={{fontSize:16,fontWeight:800,color:'#1a1a2e'}}>פעילות אחרונה</h3>
-          <span style={{fontSize:12,color:MUT}}>עדכני</span>
+      {/* Activity Log */}
+      <div style={{background:'#fff',borderRadius:16,padding:20,boxShadow:'0 4px 20px rgba(0,0,0,0.06)',display:'flex',flexDirection:'column'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+          <h3 style={{fontSize:16,fontWeight:800,color:'#1a1a2e'}}>📋 היסטוריית פעולות</h3>
+          <span style={{fontSize:11,color:MUT,fontWeight:600}}>{(data.activityLog||[]).length} פעולות</span>
         </div>
-        {recent.map((a,i)=><div key={i} style={{display:'flex',gap:10,alignItems:'center',padding:'10px 0',borderBottom:i<recent.length-1?'1px solid #f3f4f6':'none'}}>
-          <div style={{width:36,height:36,borderRadius:18,background:a.type==='candidate'?'#fff5f0':'#eff6ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>{a.icon}</div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:13,fontWeight:700,color:'#1a1a2e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.text}</div>
-            <div style={{fontSize:11,color:MUT}}>{a.sub}</div>
-          </div>
-          {a.date&&<div style={{fontSize:11,color:MUT,flexShrink:0}}>{fmtDate(a.date)}</div>}
-        </div>)}
-        {!recent.length&&<div style={{color:MUT,fontSize:13,textAlign:'center',padding:20}}>אין פעילות עדיין</div>}
+        <div style={{flex:1,overflowY:'auto',maxHeight:280}}>
+          {(data.activityLog||[]).length===0&&<div style={{color:MUT,fontSize:13,textAlign:'center',padding:20}}>אין פעילות עדיין</div>}
+          {(data.activityLog||[]).map((a,i)=>{
+            const bg=a.type==='candidate'?'#fff5f0':a.type==='job'?'#eff6ff':a.type==='pending'?'#f0fdf4':'#f5f0e8';
+            const actionColor=a.action==='deleted'?'#dc2626':a.action==='approved'?'#16a34a':a.action==='rejected'?'#6b7280':'#1a1a2e';
+            const d=new Date(a.timestamp);
+            const now2=new Date();
+            const diff=Math.floor((now2-d)/60000);
+            const timeStr=diff<1?'עכשיו':diff<60?`${diff} דק`':diff<1440?`${Math.floor(diff/60)} ש`':d.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'});
+            return <div key={a.id} style={{display:'flex',gap:10,alignItems:'center',padding:'9px 0',borderBottom:i<(data.activityLog||[]).length-1?'1px solid #f3f4f6':'none'}}>
+              <div style={{width:34,height:34,borderRadius:17,background:bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,flexShrink:0}}>{LOG_ICONS[a.type]||'📌'}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:700,color:'#1a1a2e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.label}</div>
+                <div style={{fontSize:11,color:actionColor,fontWeight:600}}>{LOG_ACTIONS[a.action]||a.action}</div>
+              </div>
+              <div style={{fontSize:11,color:MUT,flexShrink:0,textAlign:'left'}}>{timeStr}</div>
+            </div>;
+          })}
+        </div>
       </div>
 
       {/* Open jobs with bar */}
@@ -795,11 +809,16 @@ function Employers({data,setData}){
   const openAdd=()=>{setForm({name:'',industry:'הייטק',contact:'',phone:'',email:'',city:'',status:'פעיל',notes:'',expectedIncome:'',needs:[newNeed()]});setModal('add');};
   const openEdit=e=>{setForm({...e,needs:e.needs?.length?e.needs:[newNeed()]});setModal('edit');};
   const save=()=>{
-    if(modal==='add') setData(d=>({...d,employers:[...d.employers,{...form,id:'e'+Date.now(),jobs:[]}]}));
-    else setData(d=>({...d,employers:d.employers.map(e=>e.id===form.id?form:e)}));
+    const isAdd=modal==='add';
+    const entry=mkLog('employer',isAdd?'added':'updated',form.name);
+    if(isAdd) setData(d=>({...d,employers:[...d.employers,{...form,id:'e'+Date.now(),jobs:[]}],activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
+    else setData(d=>({...d,employers:d.employers.map(e=>e.id===form.id?form:e),activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
     setModal(null);
   };
-  const del=id=>{if(confirm('למחוק מעסיק?'))setData(d=>({...d,employers:d.employers.filter(e=>e.id!==id)}));};
+  const del=id=>{
+    const emp=data.employers.find(e=>e.id===id);
+    if(confirm('למחוק מעסיק?'))setData(d=>({...d,employers:d.employers.filter(e=>e.id!==id),activityLog:[mkLog('employer','deleted',emp?.name||id),...(d.activityLog||[])].slice(0,50)}));
+  };
   const updNeed=(idx,val)=>setForm(f=>({...f,needs:f.needs.map((n,i)=>i===idx?val:n)}));
   const addNeed=()=>setForm(f=>({...f,needs:[...(f.needs||[]),newNeed()]}));
   const delNeed=idx=>setForm(f=>({...f,needs:f.needs.filter((_,i)=>i!==idx)}));
@@ -1169,11 +1188,16 @@ function Jobs({data,setData}){
   const openEdit=j=>{setForm({...j});setModal('edit');};
   const save=()=>{
     const savedForm={...form, image: form.imageUrl||''};
-    if(modal==='add') setData(d=>({...d,jobs:[...d.jobs,{...savedForm,id:'j'+Date.now(),candidates:[],createdAt:new Date().toLocaleDateString('he-IL')}]}));
-    else setData(d=>({...d,jobs:d.jobs.map(j=>j.id===savedForm.id?savedForm:j)}));
+    const isAdd=modal==='add';
+    const entry=mkLog('job',isAdd?'added':'updated',savedForm.publishTitle||savedForm.title||savedForm.jobNumber);
+    if(isAdd) setData(d=>({...d,jobs:[...d.jobs,{...savedForm,id:'j'+Date.now(),candidates:[],createdAt:new Date().toLocaleDateString('he-IL')}],activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
+    else setData(d=>({...d,jobs:d.jobs.map(j=>j.id===savedForm.id?savedForm:j),activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
     setModal(null);
   };
-  const del=id=>{if(confirm('למחוק משרה?'))setData(d=>({...d,jobs:d.jobs.filter(j=>j.id!==id)}));};
+  const del=id=>{
+    const job=data.jobs.find(j=>j.id===id);
+    if(confirm('למחוק משרה?'))setData(d=>({...d,jobs:d.jobs.filter(j=>j.id!==id),activityLog:[mkLog('job','deleted',job?.publishTitle||job?.title||id),...(d.activityLog||[])].slice(0,50)}));
+  };
 
 
   return <div style={{padding:28}} className="mobile-pad">
@@ -1462,22 +1486,31 @@ function Candidates({data,setData}){
   const openAdd=()=>{setForm({name:'',domain:'',role:'',phone:'',email:'',city:'',status:'חדש',experience:'',education:'',appliedJobs:[],cv:false,notes:''});setModal('add');};
   const openEdit=c=>{setForm({...c,appliedJobs:[...c.appliedJobs]});setModal('edit');};
   const save=()=>{
-    if(modal==='add') setData(d=>({...d,candidates:[...d.candidates,{...form,id:'c'+Date.now()}]}));
-    else setData(d=>({...d,candidates:d.candidates.map(c=>c.id===form.id?form:c)}));
+    const isAdd=modal==='add';
+    const entry=mkLog('candidate',isAdd?'added':'updated',form.name);
+    if(isAdd) setData(d=>({...d,candidates:[...d.candidates,{...form,id:'c'+Date.now()}],activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
+    else setData(d=>({...d,candidates:d.candidates.map(c=>c.id===form.id?form:c),activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
     setModal(null);
   };
-  const del=id=>{if(confirm('למחוק מועמד?'))setData(d=>({...d,candidates:d.candidates.filter(c=>c.id!==id)}));};
+  const del=id=>{
+    const cand=data.candidates.find(c=>c.id===id);
+    if(confirm('למחוק מועמד?'))setData(d=>({...d,candidates:d.candidates.filter(c=>c.id!==id),activityLog:[mkLog('candidate','deleted',cand?.name||id),...(d.activityLog||[])].slice(0,50)}));
+  };
 
   const approvePendingLocal=(cid)=>{
+    const cand=data.candidates.find(c=>c.id===cid);
     setData(d=>({...d,
       pendingCandidates:(d.pendingCandidates||[]).filter(id=>id!==cid),
-      candidates:d.candidates.map(c=>c.id===cid?{...c,pendingApproval:false}:c)
+      candidates:d.candidates.map(c=>c.id===cid?{...c,pendingApproval:false}:c),
+      activityLog:[mkLog('pending','approved',cand?.name||cid),...(d.activityLog||[])].slice(0,50)
     }));
   };
   const rejectPendingLocal=(cid)=>{
+    const cand=data.candidates.find(c=>c.id===cid);
     setData(d=>({...d,
       pendingCandidates:(d.pendingCandidates||[]).filter(id=>id!==cid),
-      candidates:d.candidates.filter(c=>c.id!==cid)
+      candidates:d.candidates.filter(c=>c.id!==cid),
+      activityLog:[mkLog('pending','rejected',cand?.name||cid),...(d.activityLog||[])].slice(0,50)
     }));
   };
 
@@ -2471,37 +2504,29 @@ function AppInner(){
   const pending=(data.pendingCandidates||[]).map(id=>data.candidates.find(c=>c.id===id)).filter(Boolean);
   const [showPending,setShowPending]=React.useState(false);
 
-  // Auto-show pending modal when new candidates arrive via landing page
-  const prevPendingCount=React.useRef(0);
-  React.useEffect(()=>{
-    if(pending.length>0&&pending.length>prevPendingCount.current){
-      setShowPending(true);
-    }
-    prevPendingCount.current=pending.length;
-  },[pending.length]);
-
   const approvePending=(cid)=>{
+    const cand=data.candidates.find(c=>c.id===cid);
     setData(d=>({
       ...d,
       pendingCandidates:(d.pendingCandidates||[]).filter(id=>id!==cid),
-      candidates:d.candidates.map(c=>c.id===cid?{...c,pendingApproval:false}:c)
+      candidates:d.candidates.map(c=>c.id===cid?{...c,pendingApproval:false}:c),
+      activityLog:[mkLog('pending','approved',cand?.name||cid),...(d.activityLog||[])].slice(0,50)
     }));
   };
   const rejectPending=(cid)=>{
+    const cand=data.candidates.find(c=>c.id===cid);
     setData(d=>({
       ...d,
       pendingCandidates:(d.pendingCandidates||[]).filter(id=>id!==cid),
-      candidates:d.candidates.filter(c=>c.id!==cid)
+      candidates:d.candidates.filter(c=>c.id!==cid),
+      activityLog:[mkLog('pending','rejected',cand?.name||cid),...(d.activityLog||[])].slice(0,50)
     }));
   };
 
   return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#f5f0e8'}}>
     <div id="desktop-sidebar"><Sidebar active={page} onNav={setPage}/></div>
     <div id="main-content" style={{flex:1,overflow:'auto',minWidth:0}}>
-      <div style={{background:syncBg,padding:'3px 14px',fontSize:12,textAlign:'center',borderBottom:'1px solid #ddd',display:'flex',alignItems:'center',justifyContent:'center',gap:12}}>
-        <span>{syncMsg}</span>
-        {pending.length>0&&<button onClick={()=>setShowPending(true)} style={{background:'#e85d26',color:'white',border:'none',borderRadius:20,padding:'2px 12px',fontSize:12,fontWeight:800,cursor:'pointer',animation:'pendingPulse 1.8s ease-in-out infinite'}}>🔔 {pending.length} ממתינים</button>}
-      </div>
+      <div style={{background:syncBg,padding:'3px 14px',fontSize:12,textAlign:'center',borderBottom:'1px solid #ddd'}}>{syncMsg}</div>
       {page==='dashboard'&&<Dashboard data={data} onNav={setPage}/>}
       {page==='employers'&&<Employers data={data} setData={setData}/>}
       {page==='jobs'&&<Jobs data={data} setData={setData}/>}
