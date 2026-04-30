@@ -1538,11 +1538,18 @@ function Candidates({data,setData}){
   });
   const exportCSV=()=>{
     const headers=['שם','טלפון','אימייל','עיר','תחום','תפקיד','ניסיון','השכלה','סטטוס','CV','מקור','תאריך הגשה','משרה'];
-    const rows=filteredAdv.map(c=>{const job=data.jobs.find(j=>(c.appliedJobs||[]).includes(j.id));return [c.name||'',c.phone||'',c.email||'',c.city||'',c.domain||'',c.role||'',c.experience||'',c.education||'',c.status||'',c.cv?'כן':'לא',c.source==='landing_page'?'דף נחיתה':'ידני',c.appliedAt?new Date(c.appliedAt).toLocaleDateString('he-IL'):'',job?job.publishTitle||job.title:''].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',');});
-    const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent('﻿'+[headers.join(','),...rows].join('
-'));a.download='candidates.csv';a.click();setShowExportMenu(false);
+    const rows=filteredAdv.map(c=>{
+      const job=data.jobs.find(j=>(c.appliedJobs||[]).includes(j.id));
+      const vals=[c.name||'',c.phone||'',c.email||'',c.city||'',c.domain||'',c.role||'',c.experience||'',c.education||'',c.status||'',c.cv?'כן':'לא',c.source==='landing_page'?'נחיתה':'ידני',c.appliedAt?new Date(c.appliedAt).toLocaleDateString('he-IL'):'',job?job.publishTitle||job.title:''];
+      return vals.map(v=>['"',String(v).split('"').join('""'),'"'].join('')).join(',');
+    });
+    const csvContent=[headers.join(','),...rows].join('\n');
+    const blob=new Blob(['\uFEFF'+csvContent],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='candidates.csv';a.click();
+    URL.revokeObjectURL(url);setShowExportMenu(false);
   };
-  const exportExcel=()=>{
+    const exportExcel=()=>{
     const headers=['שם','טלפון','אימייל','עיר','תחום','תפקיד','ניסיון','השכלה','סטטוס','CV','מקור','תאריך הגשה','משרה'];
     const rows=filteredAdv.map(c=>{const job=data.jobs.find(j=>(c.appliedJobs||[]).includes(j.id));return [c.name||'',c.phone||'',c.email||'',c.city||'',c.domain||'',c.role||'',c.experience||'',c.education||'',c.status||'',c.cv?'כן':'לא',c.source==='landing_page'?'דף נחיתה':'ידני',c.appliedAt?new Date(c.appliedAt).toLocaleDateString('he-IL'):'',job?job.publishTitle||job.title:''];});
     const xmlRows=[headers,...rows].map(row=>'<Row>'+row.map(v=>'<Cell><Data ss:Type="String">'+String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</Data></Cell>').join('')+'</Row>').join('');
@@ -2194,7 +2201,7 @@ function Tasks({data,setData}){
       ?<div style={{textAlign:'center',padding:'60px 0',color:'#9ca3af'}}><div style={{fontSize:48,marginBottom:12}}>📋</div><div style={{fontSize:18,fontWeight:700}}>אין משימות</div><div style={{fontSize:14,marginTop:4}}>לחץ "+ משימה חדשה" להתחיל</div></div>
       :<KanbanBoard tasks={tasks} data={data} onEdit={t=>setModal({task:t})} onDel={delTask} onStatusChange={changeStatus} onAddInCol={s=>setModal({initialStatus:s})}/>
     )}
-    {viewMode==='list'&&<div style={{display:'flex',flexDirection:'column',gap:10}}>
+    {viewMode==='list'&&(<div style={{display:'flex',flexDirection:'column',gap:10}}>
       {filtered.map(t=>{
         const due=fmtDue(t.dueDate);
         const cand=t.candidateId?data.candidates.find(c=>c.id===t.candidateId):null;
@@ -2224,13 +2231,11 @@ function Tasks({data,setData}){
             <button onClick={()=>setModal({task:t})} style={{padding:'6px 10px',background:'#f3f4f6',border:'none',borderRadius:6,cursor:'pointer',fontSize:13}}>✏️</button>
             <button onClick={()=>delTask(t.id)} style={{padding:'6px 10px',background:'#fde8dc',border:'none',borderRadius:6,cursor:'pointer',fontSize:13}}>🗑</button>
           </div>
-        </div>;
+        </div>
       })}
-    </div>
-
-    </div>}
-    {modal!==null&&<TaskModal task={modal.task} initialStatus={modal.initialStatus} data={data} onSave={saveTask} onClose={()=>setModal(null)}/>}
-  </div>;
+    </div>)}
+  {modal!==null&&<TaskModal task={modal.task} initialStatus={modal.initialStatus} data={data} onSave={saveTask} onClose={()=>setModal(null)}/>}
+  </div>
 }
 
 function Settings({data,setData}){
