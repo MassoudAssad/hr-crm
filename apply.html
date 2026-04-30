@@ -384,6 +384,17 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
             updated_at: new Date().toISOString()
           })
         });
+        // שליחת התראה למייל
+      fetch('/.netlify/functions/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: candidate.name,
+          phone: candidate.phone,
+          email: candidate.email,
+          jobTitle: job.publishTitle || job.title
+        })
+      }).catch(() => {});
 
       } catch(err) { console.error(err); }
 
