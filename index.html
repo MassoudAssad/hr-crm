@@ -149,10 +149,6 @@ const INIT = {
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 const fmtNum = s => (s||'').toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');
 
-const mkLog=(type,action,label)=>({id:'l'+Date.now()+Math.random().toString(36).slice(2),type,action,label,timestamp:new Date().toISOString()});
-const LOG_ICONS={candidate:'👤',job:'📋',employer:'🏢',pending:'🔔'};
-const LOG_ACTIONS={added:'נוסף',updated:'עודכן',deleted:'נמחק',approved:'אושר',rejected:'נדחה'};
-
 function Tag({label}){
   return <span style={{background:TAG_COLORS[label]||'#e2e3e5',border:'1.5px solid #333',borderRadius:3,padding:'1px 8px',fontSize:13,fontWeight:600}}>{label}</span>;
 }
@@ -666,22 +662,22 @@ function Dashboard({data,onNav}){
           <h3 style={{fontSize:16,fontWeight:800,color:'#1a1a2e'}}>📋 היסטוריית פעולות</h3>
           <span style={{fontSize:11,color:MUT,fontWeight:600}}>{(data.activityLog||[]).length} פעולות</span>
         </div>
-        <div style={{flex:1,overflowY:'auto',maxHeight:280}}>
+        <div style={{overflowY:'auto',maxHeight:280}}>
           {(data.activityLog||[]).length===0&&<div style={{color:MUT,fontSize:13,textAlign:'center',padding:20}}>אין פעילות עדיין</div>}
           {(data.activityLog||[]).map((a,i)=>{
             const bg=a.type==='candidate'?'#fff5f0':a.type==='job'?'#eff6ff':a.type==='pending'?'#f0fdf4':'#f5f0e8';
             const actionColor=a.action==='deleted'?'#dc2626':a.action==='approved'?'#16a34a':a.action==='rejected'?'#6b7280':'#1a1a2e';
             const d=new Date(a.timestamp);
             const now2=new Date();
-            const diff=Math.floor((now2-d)/60000);
-            const timeStr=diff<1?'עכשיו':diff<60?`${diff} דק`':diff<1440?`${Math.floor(diff/60)} ש`':d.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'});
+            const diffMin=Math.floor((now2-d)/60000);
+            const timeStr=diffMin<1?'עכשיו':diffMin<60?(diffMin+' דק'):diffMin<1440?(Math.floor(diffMin/60)+' ש'):d.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'});
             return <div key={a.id} style={{display:'flex',gap:10,alignItems:'center',padding:'9px 0',borderBottom:i<(data.activityLog||[]).length-1?'1px solid #f3f4f6':'none'}}>
               <div style={{width:34,height:34,borderRadius:17,background:bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,flexShrink:0}}>{LOG_ICONS[a.type]||'📌'}</div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:13,fontWeight:700,color:'#1a1a2e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.label}</div>
                 <div style={{fontSize:11,color:actionColor,fontWeight:600}}>{LOG_ACTIONS[a.action]||a.action}</div>
               </div>
-              <div style={{fontSize:11,color:MUT,flexShrink:0,textAlign:'left'}}>{timeStr}</div>
+              <div style={{fontSize:11,color:MUT,flexShrink:0}}>{timeStr}</div>
             </div>;
           })}
         </div>
