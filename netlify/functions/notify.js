@@ -10,7 +10,7 @@ exports.handler = async (event) => {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      from: 'onboarding@resend.dev',
+      from: 'hr@topgroup4u.com',
       to: 'hr@topgroup4u.com',
       subject: `מועמדות חדשה: ${jobTitle || 'משרה'}`,
       html: `
