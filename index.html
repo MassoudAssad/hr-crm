@@ -801,33 +801,8 @@ function Employers({data,setData}){
   const [form,setForm]=React.useState({});
   const [detail,setDetail]=React.useState(null);
   const [msgTarget,setMsgTarget]=React.useState(null);
-  const [showAdvanced,setShowAdvanced]=React.useState(false);
-  const [fEmpDomain,setFEmpDomain]=React.useState('');
-  const [fEmpRole,setFEmpRole]=React.useState('');
-  const [fEmpCity,setFEmpCity]=React.useState('');
-  const [fEmpStatus,setFEmpStatus]=React.useState('');
-
-  const allEmpDomains=[...new Set(data.employers.map(e=>e.industry).filter(Boolean))].sort();
-  const allEmpCities=[...new Set(data.employers.map(e=>e.city).filter(Boolean))].sort();
-  const allEmpRoles=[...new Set((data.jobs||[]).map(j=>j.role).filter(Boolean))].sort();
-
-  const activeEmpFilters=[fEmpDomain,fEmpRole,fEmpCity,fEmpStatus].filter(Boolean).length;
-  const clearEmpFilters=()=>{setFEmpDomain('');setFEmpRole('');setFEmpCity('');setFEmpStatus('');setIndFilter('הכל');setSearch('');};
-
   const industries=['הכל',...new Set(data.employers.map(e=>e.industry).filter(Boolean))];
-  const filtered=data.employers.filter(e=>{
-    const matchBase=(e.name.includes(search)||e.contact.includes(search)||e.city.includes(search))&&(indFilter==='הכל'||e.industry===indFilter);
-    if(!matchBase)return false;
-    if(fEmpDomain&&(e.industry||'')!==fEmpDomain)return false;
-    if(fEmpCity&&(e.city||'')!==fEmpCity)return false;
-    if(fEmpStatus&&(e.status||'')!==fEmpStatus)return false;
-    if(fEmpRole){
-      const empJobs=(data.jobs||[]).filter(j=>j.employerId===e.id&&j.status==='פתוח');
-      const roles=empJobs.map(j=>j.role).filter(Boolean);
-      if(!roles.includes(fEmpRole))return false;
-    }
-    return true;
-  });
+  const filtered=data.employers.filter(e=>(e.name.includes(search)||e.contact.includes(search)||e.city.includes(search))&&(indFilter==='הכל'||e.industry===indFilter));
   const newNeed=()=>({id:Date.now(),domain:'',role:'',count:1,fee:''});
   const totals=emp=>{const n=emp.needs||[];const tc=n.reduce((s,x)=>s+(parseInt(x.count)||0),0);const tf=n.reduce((s,x)=>s+(parseFloat((x.fee||'0').replace(/,/g,''))||0)*(parseInt(x.count||1)||1),0);return{tc,tf};};
   const openAdd=()=>{setForm({name:'',industry:'הייטק',contact:'',phone:'',email:'',city:'',status:'פעיל',notes:'',expectedIncome:'',needs:[newNeed()]});setModal('add');};
@@ -852,22 +827,11 @@ function Employers({data,setData}){
       <h1 style={{fontSize:28,fontWeight:800}}>🏢 מעסיקים</h1>
       <Btn variant="primary" onClick={openAdd}>+ מעסיק</Btn>
     </div>
-    <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
-      <SearchBar placeholder="חיפוש חברה, איש קשר, עיר..." value={search} onChange={setSearch}/>
-      <button onClick={()=>setShowAdvanced(v=>!v)} style={{display:'flex',alignItems:'center',gap:6,padding:'7px 14px',background:showAdvanced?'#1a1a2e':activeEmpFilters>0?'#fff5f0':'white',color:showAdvanced?'white':activeEmpFilters>0?ACC:'#333',border:'2px solid '+(showAdvanced?'#1a1a2e':activeEmpFilters>0?ACC:'#333'),borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>🔍 סינון מתקדם{activeEmpFilters>0&&<span style={{background:ACC,color:'white',borderRadius:20,padding:'0 6px',fontSize:11,fontWeight:800}}>{activeEmpFilters}</span>}</button>
-      {(activeEmpFilters>0||indFilter!=='הכל'||search)&&<button onClick={clearEmpFilters} style={{padding:'7px 12px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>✕ נקה</button>}
-      <span style={{marginRight:'auto',fontSize:13,color:MUT}}>מציג <strong style={{color:ACC}}>{filtered.length}</strong> מתוך {data.employers.length}</span>
-    </div>
-    {showAdvanced&&<div style={{background:'white',border:'1.5px solid #e5e7eb',borderRadius:12,padding:'16px 20px',marginBottom:8,boxShadow:'0 4px 16px rgba(0,0,0,0.06)'}}>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}} className="mobile-grid-1">
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תחום / ענף</div><select value={fEmpDomain} onChange={e=>setFEmpDomain(e.target.value)} style={{width:'100%',padding:'8px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,background:'white',outline:'none'}}><option value="">כל התחומים</option>{allEmpDomains.map(d=><option key={d} value={d}>{d}</option>)}</select></div>
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תפקיד מבוקש</div><select value={fEmpRole} onChange={e=>setFEmpRole(e.target.value)} style={{width:'100%',padding:'8px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,background:'white',outline:'none'}}><option value="">כל התפקידים</option>{allEmpRoles.map(r=><option key={r} value={r}>{r}</option>)}</select></div>
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>עיר</div><select value={fEmpCity} onChange={e=>setFEmpCity(e.target.value)} style={{width:'100%',padding:'8px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,background:'white',outline:'none'}}><option value="">כל הערים</option>{allEmpCities.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>סטטוס</div><select value={fEmpStatus} onChange={e=>setFEmpStatus(e.target.value)} style={{width:'100%',padding:'8px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,background:'white',outline:'none'}}><option value="">כל הסטטוסים</option>{['פעיל','לא פעיל'].map(s=><option key={s} value={s}>{s}</option>)}</select></div>
+    <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
+      <SearchBar placeholder="חיפוש..." value={search} onChange={setSearch}/>
+      <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+        {industries.map(ind=><Btn key={ind} onClick={()=>setIndFilter(ind)} style={{background:indFilter===ind?ACC:'white',color:indFilter===ind?'white':'#333',padding:'8px 14px',fontSize:13}}>{ind}</Btn>)}
       </div>
-    </div>}
-    <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
-      {industries.map(ind=><Btn key={ind} onClick={()=>setIndFilter(ind)} style={{background:indFilter===ind?ACC:'white',color:indFilter===ind?'white':'#333',padding:'8px 14px',fontSize:13}}>{ind}</Btn>)}
     </div>
 
     {/* Desktop table */}
@@ -1204,31 +1168,10 @@ function Jobs({data,setData}){
   const [form,setForm]=React.useState({});
   const [detail,setDetail]=React.useState(null);
   const [pubJob,setPubJob]=React.useState(null);
-  const [showAdvanced,setShowAdvanced]=React.useState(false);
-  const [fDomain,setFDomain]=React.useState('');
-  const [fRole,setFRole]=React.useState('');
-  const [fEmployer,setFEmployer]=React.useState('');
-  const [fType,setFType]=React.useState('');
-  const [fLocation,setFLocation]=React.useState('');
-
-  const allJobDomains=[...new Set(data.jobs.map(j=>j.domain).filter(Boolean))].sort();
-  const allJobRoles=[...new Set(data.jobs.map(j=>j.role).filter(Boolean))].sort();
-  const allJobLocations=[...new Set(data.jobs.map(j=>j.location).filter(Boolean))].sort();
-  const allJobTypes=[...new Set(data.jobs.map(j=>j.type).filter(Boolean))].sort();
-
-  const activeJobFilters=[fDomain,fRole,fEmployer,fType,fLocation].filter(Boolean).length;
-  const clearJobFilters=()=>{setFDomain('');setFRole('');setFEmployer('');setFType('');setFLocation('');setStFilter('הכל');setSearch('');};
 
   const filtered=data.jobs.filter(j=>{
     const emp=data.employers.find(e=>e.id===j.employerId);
-    const matchBase=(j.title.includes(search)||(j.publishTitle||'').includes(search)||(emp?.name||'').includes(search)||(j.role||'').includes(search)||j.location.includes(search))&&(stFilter==='הכל'||j.status===stFilter);
-    if(!matchBase)return false;
-    if(fDomain&&(j.domain||'')!==fDomain)return false;
-    if(fRole&&(j.role||'')!==fRole)return false;
-    if(fEmployer&&j.employerId!==fEmployer)return false;
-    if(fType&&(j.type||'')!==fType)return false;
-    if(fLocation&&(j.location||'')!==fLocation)return false;
-    return true;
+    return (j.title.includes(search)||(emp?.name||'').includes(search)||j.location.includes(search))&&(stFilter==='הכל'||j.status===stFilter);
   });
 
   const nextNum=()=>{
@@ -1261,23 +1204,11 @@ function Jobs({data,setData}){
       <h1 style={{fontSize:28,fontWeight:800}}>📋 משרות</h1>
       <Btn variant="primary" onClick={openAdd}>+ משרה</Btn>
     </div>
-    <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
-      <SearchBar placeholder="חיפוש משרה, תפקיד, מיקום..." value={search} onChange={setSearch}/>
-      <button onClick={()=>setShowAdvanced(v=>!v)} style={{display:'flex',alignItems:'center',gap:6,padding:'7px 14px',background:showAdvanced?'#1a1a2e':activeJobFilters>0?'#fff5f0':'white',color:showAdvanced?'white':activeJobFilters>0?ACC:'#333',border:'2px solid '+(showAdvanced?'#1a1a2e':activeJobFilters>0?ACC:'#333'),borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>🔍 סינון מתקדם{activeJobFilters>0&&<span style={{background:ACC,color:'white',borderRadius:20,padding:'0 6px',fontSize:11,fontWeight:800}}>{activeJobFilters}</span>}</button>
-      {(activeJobFilters>0||stFilter!=='הכל'||search)&&<button onClick={clearJobFilters} style={{padding:'7px 12px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>✕ נקה</button>}
-      <span style={{marginRight:'auto',fontSize:13,color:MUT}}>מציג <strong style={{color:ACC}}>{filtered.length}</strong> מתוך {data.jobs.length}</span>
-    </div>
-    {showAdvanced&&<div style={{background:'white',border:'1.5px solid #e5e7eb',borderRadius:12,padding:'16px 20px',marginBottom:8,boxShadow:'0 4px 16px rgba(0,0,0,0.06)'}}>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}} className="mobile-grid-1">
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תחום</div><select value={fDomain} onChange={e=>setFDomain(e.target.value)} style={{width:'100%',padding:'8px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,background:'white',outline:'none'}}><option value="">כל התחומים</option>{allJobDomains.map(d=><option key={d} value={d}>{d}</option>)}</select></div>
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תפקיד</div><select value={fRole} onChange={e=>setFRole(e.target.value)} style={{width:'100%',padding:'8px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,background:'white',outline:'none'}}><option value="">כל התפקידים</option>{allJobRoles.map(r=><option key={r} value={r}>{r}</option>)}</select></div>
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>מעסיק</div><select value={fEmployer} onChange={e=>setFEmployer(e.target.value)} style={{width:'100%',padding:'8px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,background:'white',outline:'none'}}><option value="">כל המעסיקים</option>{data.employers.map(emp=><option key={emp.id} value={emp.id}>{emp.name}</option>)}</select></div>
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>סוג משרה</div><select value={fType} onChange={e=>setFType(e.target.value)} style={{width:'100%',padding:'8px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,background:'white',outline:'none'}}><option value="">כל הסוגים</option>{allJobTypes.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>מיקום</div><select value={fLocation} onChange={e=>setFLocation(e.target.value)} style={{width:'100%',padding:'8px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,background:'white',outline:'none'}}><option value="">כל המיקומים</option>{allJobLocations.map(l=><option key={l} value={l}>{l}</option>)}</select></div>
+    <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
+      <SearchBar placeholder="חיפוש..." value={search} onChange={setSearch}/>
+      <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+        {['הכל','פתוח','ממתין','סגור'].map(s=><Btn key={s} onClick={()=>setStFilter(s)} style={{background:stFilter===s?ACC:'white',color:stFilter===s?'white':'#333',padding:'8px 14px',fontSize:13}}>{s}</Btn>)}
       </div>
-    </div>}
-    <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
-      {['הכל','פתוח','ממתין','סגור'].map(s=><Btn key={s} onClick={()=>setStFilter(s)} style={{background:stFilter===s?ACC:'white',color:stFilter===s?'white':'#333',padding:'8px 14px',fontSize:13}}>{s}</Btn>)}
     </div>
     {/* Desktop table */}
     <div className="sbox desktop-only" style={{background:'#fff',overflowX:'auto'}}>
@@ -2623,7 +2554,7 @@ function App(){
 }
 
 function AppInner(){
-  const [page,setPage]=React.useState(()=>localStorage.getItem('crm_page')||'dashboard');
+  const [page,setPage]=React.useState('dashboard');
   const [syncStatus,setSyncStatus]=React.useState('syncing');
   const [data,setData]=React.useState(()=>{
     try{
@@ -2686,7 +2617,7 @@ function AppInner(){
     },1000);
   },[data]);
 
-  React.useEffect(()=>{localStorage.setItem('crm_page',page);},[page]);
+
 
   const syncBg=syncStatus==='ok'?'#d4edda':syncStatus==='error'?'#fde8dc':'#fff3cd';
   const syncMsg=syncStatus==='syncing'?'🔄 מסנכרן...':syncStatus==='ok'?'☁️ מסונכרן עם Supabase':'⚠️ שגיאת סנכרון';
