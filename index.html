@@ -2381,6 +2381,14 @@ function CandidateHunter({data}){
   const [searched,setSearched]=React.useState(false);
 
   const allCities=[...new Set(data.candidates.map(c=>c.city).filter(Boolean))].sort();
+  const allDomains=[...new Set([
+    ...(data.jobDomains||[]).map(d=>d.name),
+    ...data.candidates.map(c=>c.domain).filter(Boolean)
+  ])].sort();
+  const allRoles=[...new Set([
+    ...(data.jobDomains||[]).flatMap(d=>d.roles||[]),
+    ...data.candidates.map(c=>c.role).filter(Boolean)
+  ])].filter(r=>!domain||(data.jobDomains||[]).find(d=>d.name===domain)?.roles.includes(r)||data.candidates.some(c=>c.domain===domain&&c.role===r)).sort();
   const domainObj=(data.jobDomains||[]).find(d=>d.name===domain);
 
   // Load from job
@@ -2460,7 +2468,7 @@ function CandidateHunter({data}){
           <select value={domain} onChange={e=>{setDomain(e.target.value);setRole('');}}
             style={{width:'100%',padding:'9px 12px',borderRadius:9,border:'1.5px solid rgba(255,255,255,0.2)',background:'rgba(255,255,255,0.08)',color:'white',fontFamily:'Heebo',fontSize:14}}>
             <option value="">-- כל התחומים --</option>
-            {(data.jobDomains||[]).map(d=><option key={d.name} value={d.name}>{d.name}</option>)}
+            {allDomains.map(d=><option key={d} value={d}>{d}</option>)}
           </select>
         </div>
         {/* Role */}
@@ -2469,7 +2477,7 @@ function CandidateHunter({data}){
           <select value={role} onChange={e=>setRole(e.target.value)} disabled={!domain}
             style={{width:'100%',padding:'9px 12px',borderRadius:9,border:'1.5px solid rgba(255,255,255,0.2)',background:domain?'rgba(255,255,255,0.08)':'rgba(255,255,255,0.04)',color:'white',fontFamily:'Heebo',fontSize:14}}>
             <option value="">{domain?'-- כל התפקידים --':'בחר תחום תחילה'}</option>
-            {(domainObj?.roles||[]).map(r=><option key={r} value={r}>{r}</option>)}
+            {allRoles.map(r=><option key={r} value={r}>{r}</option>)}
           </select>
         </div>
         {/* City */}
