@@ -1167,7 +1167,7 @@ function Employers({data,setData}){
                   <FF label="תפקיד / מחלקה" value={c.role||''} onChange={v=>updContact(idx,{...c,role:v})}/>
                   <FF label="טלפון קווי" value={c.phone||''} onChange={v=>updContact(idx,{...c,phone:v})}/>
                   <FF label="טלפון נייד" value={c.mobile||''} onChange={v=>updContact(idx,{...c,mobile:v})}/>
-                  <FF label="דוא\"ל" type="email" value={c.email||''} onChange={v=>updContact(idx,{...c,email:v})}/>
+                  <FF label="דואל" type="email" value={c.email||''} onChange={v=>updContact(idx,{...c,email:v})}/>
                 </div>
                 <div style={{display:'flex',gap:8,marginTop:4}}>
                   {!c.isPrimary&&<button onClick={()=>setPrimaryContact(idx)}
