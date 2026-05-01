@@ -1159,7 +1159,7 @@ function Employers({data,setData}){
               <FF label="שם חברה" value={form.name||''} onChange={v=>setForm(f=>({...f,name:v}))}/>
               <FF label="ענף" type="select" value={form.industry||'הייטק'} onChange={v=>setForm(f=>({...f,industry:v}))} options={['הייטק','תעשייה','פיננסים','קמעונאות','בריאות','חינוך','אחר']}/>
               <FF label="עיר" value={form.city||''} onChange={v=>setForm(f=>({...f,city:v}))}/>
-              <FF label="סטטוס" type="select" value={form.status||'פעיל'} onChange={v=>setForm(f=>({...f,status:v}))} options={['פעיל','פסיבי']}/>
+              <FF label="סטטוס" type="select" value={form.status||'פעיל'} onChange={v=>setForm(f=>({...f,status:v}))} options={data.statuses?.employers?.length?data.statuses.employers:['פעיל','פסיבי']}/>
             </FormGrid>
           </FormCard>
 
@@ -1577,7 +1577,7 @@ function Jobs({data,setData}){
               <FF label="מיקום" value={form.location||''} onChange={v=>setForm(f=>({...f,location:v}))}/>
               <FF label="טווח שכר (₪)" value={form.salary||''} onChange={v=>setForm(f=>({...f,salary:v}))}/>
               <FF label="תאריך דדליין" type="date" value={form.deadline||''} onChange={v=>setForm(f=>({...f,deadline:v}))}/>
-              <FF label="סטטוס" type="select" value={form.status||'פתוח'} onChange={v=>setForm(f=>({...f,status:v}))} options={['פתוח','ממתין','סגור']}/>
+              <FF label="סטטוס" type="select" value={form.status||'פתוח'} onChange={v=>setForm(f=>({...f,status:v}))} options={data.statuses?.jobs?.length?data.statuses.jobs:['פתוח','ממתין','סגור']}/>
             </FormGrid>
           </FormCard>
         </div>
@@ -2039,7 +2039,7 @@ function Candidates({data,setData}){
               </div>
               <FF label="ניסיון" value={form.experience||''} onChange={v=>setForm(f=>({...f,experience:v}))}/>
               <FF label="השכלה" value={form.education||''} onChange={v=>setForm(f=>({...f,education:v}))}/>
-              <FF label="סטטוס" type="select" value={form.status||'חדש'} onChange={v=>setForm(f=>({...f,status:v}))} options={['חדש','בתהליך','ראיון נקבע','הוצב']}/>
+              <FF label="סטטוס" type="select" value={form.status||'חדש'} onChange={v=>setForm(f=>({...f,status:v}))} options={data.statuses?.candidates?.length?data.statuses.candidates:['חדש','בתהליך','ראיון נקבע','הוצב']}/>
             </FormGrid>
           </FormCard>
         </div>
