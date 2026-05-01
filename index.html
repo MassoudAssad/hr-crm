@@ -352,8 +352,30 @@ const MSG_TEMPLATES = {
   ],
 };
 
-function MessageModal({ type, person, job, employer, candidate, onClose }) {
+function MessageModal({ type, person, job, employer, candidate, onClose, initialContactId }) {
   // type: 'candidate' | 'employer'
+  // Build contacts list: if employer has contacts array use it, else build from legacy fields
+  const contacts = React.useMemo(() => {
+    if (type === 'employer') {
+      if (person.contacts && person.contacts.length > 0) return person.contacts;
+      // fallback: build single contact from legacy fields
+      return [{
+        id: 'legacy',
+        name: person.contact || person.name || '',
+        role: '',
+        phone: person.phone || '',
+        mobile: person.phone || '',
+        email: person.email || '',
+        isPrimary: true
+      }];
+    }
+    return [];
+  }, [person, type]);
+
+  const defaultContactId = initialContactId || contacts.find(c=>c.isPrimary)?.id || contacts[0]?.id || '';
+  const [selContactId, setSelContactId] = React.useState(defaultContactId);
+  const selContact = type === 'employer' ? (contacts.find(c=>c.id===selContactId) || contacts[0]) : null;
+
   const templates = MSG_TEMPLATES[type] || [];
   const [selTpl, setSelTpl] = React.useState(templates[0]?.id || '');
   const [channel, setChannel] = React.useState('email'); // 'email' | 'whatsapp'
@@ -364,32 +386,31 @@ function MessageModal({ type, person, job, employer, candidate, onClose }) {
 
   const tpl = templates.find(t => t.id === selTpl);
 
-  React.useEffect(() => {
-    if (!tpl) return;
+  // Effective person for templates (merge contact fields for employer)
+  const effectivePerson = React.useMemo(() => {
+    if (type === 'employer' && selContact) {
+      return { ...person, contact: selContact.name, email: selContact.email, phone: selContact.mobile || selContact.phone };
+    }
+    return person;
+  }, [person, selContact, type]);
+
+  const refreshTemplate = (tplObj, ep) => {
+    if (!tplObj) return;
     if (type === 'candidate') {
-      setSubject(tpl.subject(person, job));
-      setBody(tpl.body(person, job, employer));
+      setSubject(tplObj.subject(ep, job));
+      setBody(tplObj.body(ep, job, employer));
     } else {
-      setSubject(tpl.subject(person, candidate));
-      setBody(tpl.body(person, candidate));
+      setSubject(tplObj.subject(ep, candidate));
+      setBody(tplObj.body(ep, candidate));
     }
-  }, [selTpl]);
+  };
 
-  // Init on mount
-  React.useEffect(() => {
-    if (tpl) {
-      if (type === 'candidate') {
-        setSubject(tpl.subject(person, job));
-        setBody(tpl.body(person, job, employer));
-      } else {
-        setSubject(tpl.subject(person, candidate));
-        setBody(tpl.body(person, candidate));
-      }
-    }
-  }, []);
+  React.useEffect(() => { if (tpl) refreshTemplate(tpl, effectivePerson); }, [selTpl]);
+  React.useEffect(() => { if (tpl) refreshTemplate(tpl, effectivePerson); }, [selContactId]);
+  React.useEffect(() => { if (tpl) refreshTemplate(tpl, effectivePerson); }, []);
 
-  const phone = (person.phone||'').replace(/[-\s]/g,'').replace(/^0/,'972');
-  const email = person.email || '';
+  const phone = ((selContact ? (selContact.mobile||selContact.phone) : person.phone)||'').replace(/[-\s]/g,'').replace(/^0/,'972');
+  const email = (selContact ? selContact.email : person.email) || '';
 
   const handleSend = () => {
     if (channel === 'email') {
@@ -421,7 +442,51 @@ function MessageModal({ type, person, job, employer, candidate, onClose }) {
         </div>
 
         <div style={{padding:'20px 24px'}}>
-          {/* Channel selector */}
+          {/* Contact selector — employer only, more than one contact */}
+          {type==='employer' && contacts.length > 1 && (
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#374151',marginBottom:8}}>👤 בחר איש קשר</div>
+              <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                {contacts.map(c=>{
+                  const hasEmail=!!c.email;
+                  const hasMobile=!!(c.mobile||c.phone);
+                  const isSelected=selContactId===c.id;
+                  return <button key={c.id} onClick={()=>setSelContactId(c.id)}
+                    style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',
+                      border:`2px solid ${isSelected?'#e85d26':'#e5e7eb'}`,borderRadius:10,
+                      background:isSelected?'#fff5f0':'white',cursor:'pointer',textAlign:'right',
+                      fontFamily:'Heebo',transition:'all .15s'}}>
+                    <div style={{width:36,height:36,borderRadius:18,background:isSelected?'#e85d26':'#e5e7eb',
+                      display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+                      color:isSelected?'white':'#6b7280',fontWeight:800,fontSize:14}}>
+                      {c.name?c.name[0]:'?'}
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6}}>
+                        <span style={{fontWeight:700,fontSize:14,color:isSelected?'#e85d26':'#1a1a2e'}}>{c.name}</span>
+                        {c.isPrimary&&<span style={{fontSize:10,background:'#fef3c7',color:'#92400e',border:'1px solid #fcd34d',borderRadius:4,padding:'1px 6px',fontWeight:700}}>ראשי</span>}
+                      </div>
+                      {c.role&&<div style={{fontSize:12,color:'#6b7280',marginTop:1}}>{c.role}</div>}
+                    </div>
+                    <div style={{display:'flex',gap:6,flexShrink:0}}>
+                      <span style={{fontSize:12,padding:'3px 7px',borderRadius:6,
+                        background:hasEmail?'#eff6ff':'#f3f4f6',
+                        color:hasEmail?'#1d4ed8':'#9ca3af',
+                        border:`1px solid ${hasEmail?'#bfdbfe':'#e5e7eb'}`}}>
+                        📧 {hasEmail?c.email:'אין מייל'}
+                      </span>
+                      <span style={{fontSize:12,padding:'3px 7px',borderRadius:6,
+                        background:hasMobile?'#f0fdf4':'#f3f4f6',
+                        color:hasMobile?'#15803d':'#9ca3af',
+                        border:`1px solid ${hasMobile?'#86efac':'#e5e7eb'}`}}>
+                        📱 {hasMobile?(c.mobile||c.phone):'אין נייד'}
+                      </span>
+                    </div>
+                  </button>;
+                })}
+              </div>
+            </div>
+          )}
           <div style={{display:'flex',gap:8,marginBottom:channel==='email'?8:18}}>
             {[{id:'email',icon:'📧',label:'מייל'},{id:'whatsapp',icon:'💬',label:'WhatsApp'}].map(ch=>(
               <button key={ch.id} onClick={()=>setChannel(ch.id)}
@@ -431,8 +496,8 @@ function MessageModal({ type, person, job, employer, candidate, onClose }) {
                 {ch.icon} {ch.label}
                 {ch.id==='email'&&email&&<span style={{display:'block',fontSize:11,color:'#9ca3af',fontWeight:400,marginTop:2}}>{email}</span>}
                 {ch.id==='email'&&!email&&<span style={{display:'block',fontSize:11,color:'#fca5a5',fontWeight:400,marginTop:2}}>אין מייל</span>}
-                {ch.id==='whatsapp'&&person.phone&&<span style={{display:'block',fontSize:11,color:'#9ca3af',fontWeight:400,marginTop:2}}>{person.phone}</span>}
-                {ch.id==='whatsapp'&&!person.phone&&<span style={{display:'block',fontSize:11,color:'#fca5a5',fontWeight:400,marginTop:2}}>אין טלפון</span>}
+                {ch.id==='whatsapp'&&(selContact?selContact.mobile||selContact.phone:person.phone)&&<span style={{display:'block',fontSize:11,color:'#9ca3af',fontWeight:400,marginTop:2}}>{selContact?selContact.mobile||selContact.phone:person.phone}</span>}
+                {ch.id==='whatsapp'&&!(selContact?selContact.mobile||selContact.phone:person.phone)&&<span style={{display:'block',fontSize:11,color:'#fca5a5',fontWeight:400,marginTop:2}}>אין טלפון</span>}
               </button>
             ))}
           </div>
@@ -803,8 +868,16 @@ function Employers({data,setData}){
   const filtered=data.employers.filter(e=>(e.name.includes(search)||e.contact.includes(search)||e.city.includes(search))&&(indFilter==='הכל'||e.industry===indFilter));
   const newNeed=()=>({id:Date.now(),domain:'',role:'',count:1,fee:''});
   const totals=emp=>{const n=emp.needs||[];const tc=n.reduce((s,x)=>s+(parseInt(x.count)||0),0);const tf=n.reduce((s,x)=>s+(parseFloat((x.fee||'0').replace(/,/g,''))||0)*(parseInt(x.count||1)||1),0);return{tc,tf};};
-  const openAdd=()=>{setForm({name:'',industry:'הייטק',contact:'',phone:'',email:'',city:'',status:'פעיל',notes:'',expectedIncome:'',needs:[newNeed()]});setModal('add');};
-  const openEdit=e=>{setForm({...e,needs:e.needs?.length?e.needs:[newNeed()]});setModal('edit');};
+  const openAdd=()=>{setForm({name:'',industry:'הייטק',contact:'',phone:'',email:'',city:'',status:'פעיל',notes:'',expectedIncome:'',needs:[newNeed()],contacts:[]});setModal('add');};
+  const openEdit=e=>{
+    // migrate legacy contact fields into contacts array if needed
+    let contacts=e.contacts||[];
+    if(contacts.length===0 && (e.contact||e.email||e.phone)){
+      contacts=[{id:'c_legacy',name:e.contact||'',role:'',phone:e.phone||'',mobile:e.phone||'',email:e.email||'',isPrimary:true}];
+    }
+    setForm({...e,needs:e.needs?.length?e.needs:[newNeed()],contacts});
+    setModal('edit');
+  };
   const save=()=>{
     const isAdd=modal==='add';
     const entry=mkLog('employer',isAdd?'added':'updated',form.name);
@@ -816,7 +889,15 @@ function Employers({data,setData}){
     const emp=data.employers.find(e=>e.id===id);
     if(confirm('למחוק מעסיק?'))setData(d=>({...d,employers:d.employers.filter(e=>e.id!==id),activityLog:[mkLog('employer','deleted',emp?.name||id),...(d.activityLog||[])].slice(0,50)}));
   };
-  const updNeed=(idx,val)=>setForm(f=>({...f,needs:f.needs.map((n,i)=>i===idx?val:n)}));
+  const newContact=()=>({id:'c'+Date.now(),name:'',role:'',phone:'',mobile:'',email:'',isPrimary:false});
+  const addContact=()=>setForm(f=>{
+    const contacts=f.contacts||[];
+    const isFirst=contacts.length===0;
+    return {...f,contacts:[...contacts,{...newContact(),isPrimary:isFirst}]};
+  });
+  const updContact=(idx,val)=>setForm(f=>({...f,contacts:(f.contacts||[]).map((c,i)=>i===idx?val:c)}));
+  const delContact=idx=>setForm(f=>({...f,contacts:(f.contacts||[]).filter((_,i)=>i!==idx)}));
+  const setPrimaryContact=idx=>setForm(f=>({...f,contacts:(f.contacts||[]).map((c,i)=>({...c,isPrimary:i===idx}))}));
   const addNeed=()=>setForm(f=>({...f,needs:[...(f.needs||[]),newNeed()]}));
   const delNeed=idx=>setForm(f=>({...f,needs:f.needs.filter((_,i)=>i!==idx)}));
 
@@ -1000,20 +1081,40 @@ function Employers({data,setData}){
                     <div style={{width:32,height:32,borderRadius:8,background:'#f0f9ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>✉️</div>
                     <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>יצירת קשר</div>
                   </div>
-                  <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                    {detail.email&&<button onClick={()=>setMsgTarget({emp:detail})}
-                      style={{width:'100%',padding:'10px 0',background:'#eff6ff',border:'1.5px solid #bfdbfe',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#1d4ed8'}}>
-                      📧 שלח מייל
-                    </button>}
-                    {detail.phone&&<button onClick={()=>{const phone=(detail.phone||'').replace(/[-\s]/g,'').replace(/^0/,'972');window.open(`https://wa.me/${phone}`,'_blank');}}
-                      style={{width:'100%',padding:'10px 0',background:'#f0fdf4',border:'1.5px solid #86efac',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#15803d'}}>
-                      💬 WhatsApp
-                    </button>}
-                    <button onClick={()=>setMsgTarget({emp:detail})}
-                      style={{width:'100%',padding:'10px 0',background:'#fff5f0',border:'1.5px solid #fcd5c0',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#c94d1a'}}>
-                      ✉️ הודעה עם תבנית
-                    </button>
-                  </div>
+                  {(()=>{
+                    const contacts=(detail.contacts&&detail.contacts.length>0)?detail.contacts
+                      :[{id:'legacy',name:detail.contact||'',role:'',phone:detail.phone||'',mobile:detail.phone||'',email:detail.email||'',isPrimary:true}];
+                    return contacts.map(c=>(
+                      <div key={c.id} style={{background:'#f8fafc',border:`1.5px solid ${c.isPrimary?'#fcd5c0':'#e5e7eb'}`,borderRadius:10,padding:'12px 14px',marginBottom:10}}>
+                        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+                          <div style={{width:30,height:30,borderRadius:15,background:c.isPrimary?'#e85d26':'#6b7280',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontWeight:800,fontSize:13,flexShrink:0}}>
+                            {c.name?c.name[0]:'?'}
+                          </div>
+                          <div>
+                            <div style={{display:'flex',alignItems:'center',gap:6}}>
+                              <span style={{fontWeight:700,fontSize:13,color:'#1a1a2e'}}>{c.name||'—'}</span>
+                              {c.isPrimary&&<span style={{fontSize:10,background:'#fff5f0',color:'#c94d1a',border:'1px solid #fcd5c0',borderRadius:4,padding:'1px 5px',fontWeight:700}}>ראשי</span>}
+                            </div>
+                            {c.role&&<div style={{fontSize:11,color:'#6b7280'}}>{c.role}</div>}
+                          </div>
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                          {c.email&&<button onClick={()=>setMsgTarget({emp:detail,contactId:c.id})}
+                            style={{width:'100%',padding:'8px 0',background:'#eff6ff',border:'1.5px solid #bfdbfe',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer',color:'#1d4ed8'}}>
+                            📧 {c.email}
+                          </button>}
+                          {(c.mobile||c.phone)&&<button onClick={()=>{const p=(c.mobile||c.phone||'').replace(/[-\s]/g,'').replace(/^0/,'972');window.open(`https://wa.me/${p}`,'_blank');}}
+                            style={{width:'100%',padding:'8px 0',background:'#f0fdf4',border:'1.5px solid #86efac',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer',color:'#15803d'}}>
+                            💬 {c.mobile||c.phone}
+                          </button>}
+                          <button onClick={()=>setMsgTarget({emp:detail,contactId:c.id})}
+                            style={{width:'100%',padding:'8px 0',background:'#fff5f0',border:'1.5px solid #fcd5c0',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer',color:'#c94d1a'}}>
+                            ✉️ הודעה עם תבנית
+                          </button>
+                        </div>
+                      </div>
+                    ));
+                  })()}
                 </div>
 
                 {/* כפתורי פעולה */}
@@ -1052,12 +1153,38 @@ function Employers({data,setData}){
             <FormGrid>
               <FF label="שם חברה" value={form.name||''} onChange={v=>setForm(f=>({...f,name:v}))}/>
               <FF label="ענף" type="select" value={form.industry||'הייטק'} onChange={v=>setForm(f=>({...f,industry:v}))} options={['הייטק','תעשייה','פיננסים','קמעונאות','בריאות','חינוך','אחר']}/>
-              <FF label="איש קשר" value={form.contact||''} onChange={v=>setForm(f=>({...f,contact:v}))}/>
-              <FF label="טלפון" value={form.phone||''} onChange={v=>setForm(f=>({...f,phone:v}))}/>
-              <FF label="אימייל" type="email" value={form.email||''} onChange={v=>setForm(f=>({...f,email:v}))}/>
               <FF label="עיר" value={form.city||''} onChange={v=>setForm(f=>({...f,city:v}))}/>
               <FF label="סטטוס" type="select" value={form.status||'פעיל'} onChange={v=>setForm(f=>({...f,status:v}))} options={['פעיל','פסיבי']}/>
             </FormGrid>
+          </FormCard>
+
+          <FormCard title="אנשי קשר" icon="👤" color="#f0f9ff">
+            {(form.contacts||[]).map((c,idx)=>(
+              <div key={c.id||idx} style={{background:'#f8fafc',border:`2px solid ${c.isPrimary?'#e85d26':'#e5e7eb'}`,borderRadius:12,padding:'14px 16px',marginBottom:10,position:'relative'}}>
+                {c.isPrimary&&<span style={{position:'absolute',top:10,left:14,fontSize:10,background:'#fff5f0',color:'#c94d1a',border:'1px solid #fcd5c0',borderRadius:4,padding:'2px 7px',fontWeight:700}}>ראשי ★</span>}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+                  <FF label="שם מלא" value={c.name||''} onChange={v=>updContact(idx,{...c,name:v})}/>
+                  <FF label="תפקיד / מחלקה" value={c.role||''} onChange={v=>updContact(idx,{...c,role:v})}/>
+                  <FF label="טלפון קווי" value={c.phone||''} onChange={v=>updContact(idx,{...c,phone:v})}/>
+                  <FF label="טלפון נייד" value={c.mobile||''} onChange={v=>updContact(idx,{...c,mobile:v})}/>
+                  <FF label="דוא\"ל" type="email" value={c.email||''} onChange={v=>updContact(idx,{...c,email:v})}/>
+                </div>
+                <div style={{display:'flex',gap:8,marginTop:4}}>
+                  {!c.isPrimary&&<button onClick={()=>setPrimaryContact(idx)}
+                    style={{padding:'5px 12px',background:'#fff5f0',border:'1.5px solid #fcd5c0',borderRadius:7,fontFamily:'Heebo',fontSize:12,fontWeight:700,cursor:'pointer',color:'#c94d1a'}}>
+                    ★ הגדר כראשי
+                  </button>}
+                  <button onClick={()=>delContact(idx)}
+                    style={{padding:'5px 10px',background:'#fde8dc',border:'none',borderRadius:7,fontFamily:'Heebo',fontSize:12,fontWeight:700,cursor:'pointer',color:'#c94d1a',marginRight:'auto'}}>
+                    🗑 הסר
+                  </button>
+                </div>
+              </div>
+            ))}
+            {(!form.contacts||form.contacts.length===0)&&(
+              <div style={{color:'#9ca3af',fontSize:13,padding:'10px 0',textAlign:'center'}}>טרם הוספו אנשי קשר</div>
+            )}
+            <Btn onClick={addContact} style={{fontSize:13,marginTop:4}}>+ הוסף איש קשר</Btn>
           </FormCard>
 
           <FormCard title="הערות" icon="📝" color="#fffbeb">
@@ -1103,6 +1230,7 @@ function Employers({data,setData}){
       type="employer"
       person={msgTarget.emp}
       candidate={null}
+      initialContactId={msgTarget.contactId||null}
       onClose={()=>setMsgTarget(null)}
     />}
   </div>;
