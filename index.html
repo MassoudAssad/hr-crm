@@ -2375,6 +2375,7 @@ function CandidateHunter({data}){
   const [domain,setDomain]=React.useState('');
   const [role,setRole]=React.useState('');
   const [city,setCity]=React.useState('');
+  const [freeText,setFreeText]=React.useState('');
   const [includeHired,setIncludeHired]=React.useState(true);
   const [selJob,setSelJob]=React.useState('');
   const [results,setResults]=React.useState(null);
@@ -2389,7 +2390,6 @@ function CandidateHunter({data}){
     ...(data.jobDomains||[]).flatMap(d=>d.roles||[]),
     ...data.candidates.map(c=>c.role).filter(Boolean)
   ])].filter(r=>!domain||(data.jobDomains||[]).find(d=>d.name===domain)?.roles.includes(r)||data.candidates.some(c=>c.domain===domain&&c.role===r)).sort();
-  const domainObj=(data.jobDomains||[]).find(d=>d.name===domain);
 
   // Load from job
   const loadFromJob=()=>{
@@ -2398,35 +2398,43 @@ function CandidateHunter({data}){
     setDomain(job.domain||'');
     setRole(job.role||'');
     setCity('');
+    setFreeText('');
   };
 
   // Scoring
-  const score=(c)=>{
+  const score=(c,ft)=>{
     let s=0;
     if(domain && c.domain===domain) s+=35;
     else if(domain && c.domain&&c.domain.includes(domain)) s+=15;
     if(role && c.role===role) s+=25;
     else if(role && c.role&&c.role.includes(role)) s+=12;
     if(city && c.city&&(c.city===city||c.city.includes(city)||city.includes(c.city))) s+=20;
-    else if(!city) s+=20; // no city filter = full points
+    else if(!city) s+=20;
+    // free text bonus
+    if(ft){
+      const hay=[c.name,c.role,c.domain,c.city,c.experience,c.education,c.notes].join(' ').toLowerCase();
+      if(hay.includes(ft.toLowerCase())) s+=15;
+    }
     return s;
   };
 
   const hunt=()=>{
-    if(!domain&&!role&&!city){alert('יש להזין לפחות קריטריון אחד');return;}
+    const ft=freeText.trim();
+    if(!domain&&!role&&!city&&!ft){alert('יש להזין לפחות קריטריון אחד');return;}
     const candidates=data.candidates.filter(c=>{
       if(!includeHired && c.status==='הוצב') return false;
       return true;
     });
+    const ft=freeText.trim();
     const scored=candidates
-      .map(c=>({...c,_score:score(c)}))
+      .map(c=>({...c,_score:score(c,ft)}))
       .filter(c=>c._score>0)
       .sort((a,b)=>b._score-a._score);
     setResults(scored);
     setSearched(true);
   };
 
-  const reset=()=>{setDomain('');setRole('');setCity('');setSelJob('');setResults(null);setSearched(false);};
+  const reset=()=>{setDomain('');setRole('');setCity('');setFreeText('');setSelJob('');setResults(null);setSearched(false);};
 
   const tier=(s)=>s>=70?'high':s>=40?'mid':'low';
   const tierLabel={high:{label:'התאמה גבוהה',color:'#16a34a',bg:'#f0fdf4',border:'#86efac'},mid:{label:'התאמה חלקית',color:'#d97706',bg:'#fffbeb',border:'#fcd34d'},low:{label:'התאמה חלשה',color:'#6b7280',bg:'#f9fafb',border:'#e5e7eb'}};
@@ -2497,12 +2505,21 @@ function CandidateHunter({data}){
       </div>
 
       {/* Include hired toggle */}
-      <div style={{marginTop:14,display:'flex',alignItems:'center',gap:10}}>
-        <button onClick={()=>setIncludeHired(v=>!v)}
-          style={{width:40,height:22,borderRadius:11,background:includeHired?'#e85d26':'rgba(255,255,255,0.2)',border:'none',cursor:'pointer',position:'relative',transition:'background .2s',flexShrink:0}}>
-          <div style={{position:'absolute',top:3,right:includeHired?3:19,width:16,height:16,borderRadius:8,background:'white',transition:'right .2s'}}/>
-        </button>
-        <span style={{fontSize:13,color:'rgba(255,255,255,0.8)'}}>כלול מועמדים שהוצבו בעבר 🏅</span>
+      <div style={{marginTop:14,display:'flex',alignItems:'center',gap:16,flexWrap:'wrap'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10,flex:1}}>
+          <div style={{fontSize:12,color:'rgba(255,255,255,0.6)',fontWeight:600,whiteSpace:'nowrap'}}>🔎 חיפוש חופשי:</div>
+          <input value={freeText} onChange={e=>setFreeText(e.target.value)}
+            placeholder="שם, תפקיד, השכלה, הערות..."
+            onKeyDown={e=>e.key==='Enter'&&hunt()}
+            style={{flex:1,padding:'8px 12px',borderRadius:8,border:'1px solid rgba(255,255,255,0.2)',background:'rgba(255,255,255,0.08)',color:'white',fontFamily:'Heebo',fontSize:13}}/>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <button onClick={()=>setIncludeHired(v=>!v)}
+            style={{width:40,height:22,borderRadius:11,background:includeHired?'#e85d26':'rgba(255,255,255,0.2)',border:'none',cursor:'pointer',position:'relative',transition:'background .2s',flexShrink:0}}>
+            <div style={{position:'absolute',top:3,right:includeHired?3:19,width:16,height:16,borderRadius:8,background:'white',transition:'right .2s'}}/>
+          </button>
+          <span style={{fontSize:13,color:'rgba(255,255,255,0.8)',whiteSpace:'nowrap'}}>כולל מוצבים בעבר 🏅</span>
+        </div>
       </div>
     </div>
 
