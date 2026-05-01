@@ -2443,6 +2443,13 @@ function CandidateHunter({data}){
 
   const [msgTarget,setMsgTarget]=React.useState(null);
 
+  // Chip style helper
+  const chip=(active)=>({
+    padding:'7px 14px',borderRadius:20,border:`2px solid ${active?'#e85d26':'rgba(255,255,255,0.25)'}`,
+    background:active?'#e85d26':'rgba(255,255,255,0.07)',color:'white',fontFamily:'Heebo',
+    fontWeight:active?700:500,fontSize:13,cursor:'pointer',whiteSpace:'nowrap',transition:'all .15s'
+  });
+
   return <div style={{padding:28}} className="mobile-pad">
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
       <h1 style={{fontSize:28,fontWeight:800}}>🎯 צייד מועמדים</h1>
@@ -2451,74 +2458,78 @@ function CandidateHunter({data}){
 
     {/* Search panel */}
     <div className="sbox" style={{background:'#1a1a2e',borderRadius:16,padding:'22px 24px',marginBottom:24,color:'white'}}>
-      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:18}}>
-        <div style={{fontWeight:800,fontSize:16}}>🔍 הגדר דרישות לציד</div>
-        <div style={{flex:1}}/>
-        {/* Load from job */}
-        <div style={{display:'flex',gap:8,alignItems:'center'}}>
-          <select value={selJob} onChange={e=>setSelJob(e.target.value)}
-            style={{padding:'7px 10px',borderRadius:8,border:'1px solid rgba(255,255,255,0.2)',background:'rgba(255,255,255,0.1)',color:'white',fontFamily:'Heebo',fontSize:13}}>
-            <option value="">טען ממשרה קיימת...</option>
-            {data.jobs.filter(j=>j.status==='פתוח').map(j=><option key={j.id} value={j.id}>{j.jobNumber} — {j.title}</option>)}
-          </select>
-          <button onClick={loadFromJob} disabled={!selJob}
-            style={{padding:'7px 14px',background:selJob?'#e85d26':'rgba(255,255,255,0.1)',color:'white',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:selJob?'pointer':'not-allowed'}}>
-            טען
-          </button>
-        </div>
-      </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:14,alignItems:'end'}}>
-        {/* Domain */}
-        <div>
-          <div style={{fontSize:12,color:'rgba(255,255,255,0.6)',marginBottom:6,fontWeight:600}}>תחום מקצועי</div>
-          <select value={domain} onChange={e=>{setDomain(e.target.value);setRole('');}}
-            style={{width:'100%',padding:'9px 12px',borderRadius:9,border:'1.5px solid rgba(255,255,255,0.2)',background:'rgba(255,255,255,0.08)',color:'white',fontFamily:'Heebo',fontSize:14}}>
-            <option value="">-- כל התחומים --</option>
-            {allDomains.map(d=><option key={d} value={d}>{d}</option>)}
-          </select>
-        </div>
-        {/* Role */}
-        <div>
-          <div style={{fontSize:12,color:'rgba(255,255,255,0.6)',marginBottom:6,fontWeight:600}}>תפקיד</div>
-          <select value={role} onChange={e=>setRole(e.target.value)} disabled={!domain}
-            style={{width:'100%',padding:'9px 12px',borderRadius:9,border:'1.5px solid rgba(255,255,255,0.2)',background:domain?'rgba(255,255,255,0.08)':'rgba(255,255,255,0.04)',color:'white',fontFamily:'Heebo',fontSize:14}}>
-            <option value="">{domain?'-- כל התפקידים --':'בחר תחום תחילה'}</option>
-            {allRoles.map(r=><option key={r} value={r}>{r}</option>)}
-          </select>
-        </div>
-        {/* City */}
-        <div>
-          <div style={{fontSize:12,color:'rgba(255,255,255,0.6)',marginBottom:6,fontWeight:600}}>אזור / עיר</div>
-          <select value={city} onChange={e=>setCity(e.target.value)}
-            style={{width:'100%',padding:'9px 12px',borderRadius:9,border:'1.5px solid rgba(255,255,255,0.2)',background:'rgba(255,255,255,0.08)',color:'white',fontFamily:'Heebo',fontSize:14}}>
-            <option value="">-- כל האזורים --</option>
-            {allCities.map(c=><option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-        {/* Hunt button */}
-        <button onClick={hunt}
-          style={{padding:'10px 28px',background:'#e85d26',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:800,fontSize:16,cursor:'pointer',boxShadow:'0 4px 16px rgba(232,93,38,0.4)',whiteSpace:'nowrap'}}>
-          🎯 צייד!
+      {/* Row 1: Load from job */}
+      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:18,flexWrap:'wrap'}}>
+        <div style={{fontWeight:800,fontSize:15}}>🔍 הגדר דרישות לציד</div>
+        <div style={{flex:1}}/>
+        <div style={{fontSize:12,color:'rgba(255,255,255,0.6)',fontWeight:600}}>טען ממשרה קיימת:</div>
+        <select value={selJob} onChange={e=>{setSelJob(e.target.value);}}
+          style={{padding:'7px 12px',borderRadius:8,border:'1px solid rgba(255,255,255,0.25)',background:'rgba(255,255,255,0.08)',color:'white',fontFamily:'Heebo',fontSize:13,minWidth:200}}>
+          <option value="">-- בחר משרה --</option>
+          {data.jobs.map(j=><option key={j.id} value={j.id}>{j.jobNumber} — {j.title} ({j.status})</option>)}
+        </select>
+        <button onClick={loadFromJob} disabled={!selJob}
+          style={{padding:'7px 16px',background:selJob?'#e85d26':'rgba(255,255,255,0.1)',color:'white',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:selJob?'pointer':'not-allowed'}}>
+          טען
         </button>
       </div>
 
-      {/* Include hired toggle */}
-      <div style={{marginTop:14,display:'flex',alignItems:'center',gap:16,flexWrap:'wrap'}}>
-        <div style={{display:'flex',alignItems:'center',gap:10,flex:1}}>
-          <div style={{fontSize:12,color:'rgba(255,255,255,0.6)',fontWeight:600,whiteSpace:'nowrap'}}>🔎 חיפוש חופשי:</div>
+      {/* Row 2: Domain chips */}
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:12,color:'rgba(255,255,255,0.55)',fontWeight:600,marginBottom:8}}>תחום מקצועי</div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+          <button onClick={()=>{setDomain('');setRole('');}} style={chip(!domain)}>הכל</button>
+          {allDomains.map(d=>(
+            <button key={d} onClick={()=>{setDomain(d);setRole('');}} style={chip(domain===d)}>{d}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Row 3: Role chips — only if domain selected */}
+      {domain&&(
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:12,color:'rgba(255,255,255,0.55)',fontWeight:600,marginBottom:8}}>תפקיד</div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+            <button onClick={()=>setRole('')} style={chip(!role)}>כל התפקידים</button>
+            {allRoles.map(r=>(
+              <button key={r} onClick={()=>setRole(r)} style={chip(role===r)}>{r}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Row 4: City chips */}
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:12,color:'rgba(255,255,255,0.55)',fontWeight:600,marginBottom:8}}>אזור / עיר</div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+          <button onClick={()=>setCity('')} style={chip(!city)}>כל האזורים</button>
+          {allCities.map(c=>(
+            <button key={c} onClick={()=>setCity(c)} style={chip(city===c)}>{c}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Row 5: Free text + toggle + hunt */}
+      <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap',marginTop:4}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,flex:1,minWidth:200}}>
+          <div style={{fontSize:12,color:'rgba(255,255,255,0.55)',fontWeight:600,whiteSpace:'nowrap'}}>🔎 חיפוש חופשי:</div>
           <input value={freeText} onChange={e=>setFreeText(e.target.value)}
-            placeholder="שם, תפקיד, השכלה, הערות..."
+            placeholder="שם, השכלה, הערות..."
             onKeyDown={e=>e.key==='Enter'&&hunt()}
             style={{flex:1,padding:'8px 12px',borderRadius:8,border:'1px solid rgba(255,255,255,0.2)',background:'rgba(255,255,255,0.08)',color:'white',fontFamily:'Heebo',fontSize:13}}/>
         </div>
-        <div style={{display:'flex',alignItems:'center',gap:10}}>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
           <button onClick={()=>setIncludeHired(v=>!v)}
             style={{width:40,height:22,borderRadius:11,background:includeHired?'#e85d26':'rgba(255,255,255,0.2)',border:'none',cursor:'pointer',position:'relative',transition:'background .2s',flexShrink:0}}>
             <div style={{position:'absolute',top:3,right:includeHired?3:19,width:16,height:16,borderRadius:8,background:'white',transition:'right .2s'}}/>
           </button>
-          <span style={{fontSize:13,color:'rgba(255,255,255,0.8)',whiteSpace:'nowrap'}}>כולל מוצבים בעבר 🏅</span>
+          <span style={{fontSize:13,color:'rgba(255,255,255,0.75)',whiteSpace:'nowrap'}}>כולל מוצבים 🏅</span>
         </div>
+        <button onClick={hunt}
+          style={{padding:'10px 28px',background:'#e85d26',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:800,fontSize:16,cursor:'pointer',boxShadow:'0 4px 16px rgba(232,93,38,0.4)',whiteSpace:'nowrap'}}>
+          🎯 צייד!
+        </button>
       </div>
     </div>
 
