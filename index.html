@@ -2425,7 +2425,6 @@ function CandidateHunter({data}){
       if(!includeHired && c.status==='הוצב') return false;
       return true;
     });
-    const ft=freeText.trim();
     const scored=candidates
       .map(c=>({...c,_score:score(c,ft)}))
       .filter(c=>c._score>0)
