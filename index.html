@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --acc: #e85d26; --acc-light: #fde8dc; --acc-dark: #c94d1a; }
 body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; overflow-x: hidden; }
 .sbox { border: 2px solid #333; border-radius: 2px; position: relative; }
 .sbox::before { content:''; position:absolute; inset:2px; border:1px solid rgba(0,0,0,0.07); border-radius:1px; pointer-events:none; }
@@ -32,8 +33,8 @@ body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; ov
 }
 .mobile-only { display: none; }
 @keyframes pendingPulse {
-  0%,100% { box-shadow: 0 0 0 0 rgba(232,93,38,0.0), 0 0 0 0 rgba(232,93,38,0.0); border-color: #e85d26; }
-  50% { box-shadow: 0 0 0 6px rgba(232,93,38,0.15), 0 0 20px rgba(232,93,38,0.2); border-color: #c94d1a; }
+  0%,100% { box-shadow: 0 0 0 0 rgba(232,93,38,0.0), 0 0 0 0 rgba(232,93,38,0.0); border-color: var(--acc); }
+  50% { box-shadow: 0 0 0 6px rgba(232,93,38,0.15), 0 0 20px rgba(232,93,38,0.2); border-color: var(--acc-dark); }
 }
 .pending-blink { animation: pendingPulse 1.8s ease-in-out infinite; }
 
@@ -58,7 +59,7 @@ body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; ov
   -webkit-tap-highlight-color: transparent;
   transition: color .15s;
 }
-.mnav-btn.active { color: #e85d26; }
+.mnav-btn.active { color: var(--acc); }
 .mnav-btn span { font-size: 22px; line-height: 1; }
 
 @media (max-width: 768px) {
@@ -236,7 +237,7 @@ function FF({label,type='text',value,onChange,options,hint,full=false}){
       :type==='textarea'
       ?<textarea value={value} onChange={e=>onChange(e.target.value)} rows={3} style={{...s,resize:'vertical'}}/>
       :<input type={type} value={value} onChange={e=>onChange(e.target.value)} style={s}/>}
-    {hint&&<div style={{fontSize:11,color:'#9ca3af',marginTop:3}}>{hint}</div>}
+    {hint&&<div style={{fontSize:12,color:'#555',marginTop:3}}>{hint}</div>}
   </div>;
 }
 
@@ -635,6 +636,31 @@ function Dashboard({data,onNav}){
   const curYear=now.getFullYear();
   const [selYear,setSelYear]=React.useState(curYear);
   const [selMonth,setSelMonth]=React.useState(0); // 0 = כל השנה
+  const defaultKpiColors=['#1a1a2e','linear-gradient(135deg,#3b82f6,#1d4ed8)','linear-gradient(135deg,#8b5cf6,#6d28d9)','linear-gradient(135deg,#e85d26,#c94d1a)'];
+  const [kpiColors,setKpiColors]=React.useState(()=>data.kpiColors||defaultKpiColors);
+  React.useEffect(()=>{if(data.kpiColors)setKpiColors(data.kpiColors);},[data.kpiColors]);
+  const [kpiColorPicker,setKpiColorPicker]=React.useState(null);
+  const saveKpiColor=(idx,color)=>{
+    const updated=[...kpiColors];
+    updated[idx]=color;
+    setKpiColors(updated);
+    setData(d=>({...d,kpiColors:updated}));
+    setKpiColorPicker(null);
+  };
+  const KPI_PRESETS=['#1a1a2e','#e85d26','#3b82f6','#8b5cf6','#16a34a','#f59e0b','#ec4899','#0891b2','#dc2626','#065f46'];
+
+  // Commission bar color
+  const [commissionBg,setCommissionBg]=React.useState(()=>data.commissionBg||'linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)');
+  const [showCommissionPicker,setShowCommissionPicker]=React.useState(false);
+  const saveCommissionBg=(color)=>{setCommissionBg(color);setData(d=>({...d,commissionBg:color}));setShowCommissionPicker(false);};
+  React.useEffect(()=>{if(data.commissionBg)setCommissionBg(data.commissionBg);},[data.commissionBg]);
+
+  // Pipeline colors
+  const defaultPipelineColors=['linear-gradient(135deg,#f3f4f6,#e5e7eb)','linear-gradient(135deg,#dbeafe,#bfdbfe)','linear-gradient(135deg,#fef3c7,#fde68a)','linear-gradient(135deg,#dcfce7,#bbf7d0)'];
+  const [pipelineColors,setPipelineColors]=React.useState(()=>data.pipelineColors||defaultPipelineColors);
+  const [pipelineColorPicker,setPipelineColorPicker]=React.useState(null);
+  const savePipelineColor=(idx,color)=>{const updated=[...pipelineColors];updated[idx]=color;setPipelineColors(updated);setData(d=>({...d,pipelineColors:updated}));setPipelineColorPicker(null);};
+  React.useEffect(()=>{if(data.pipelineColors)setPipelineColors(data.pipelineColors);},[data.pipelineColors]);
   const MONTHS=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
   const availableYears=[...new Set([curYear,curYear-1,...data.candidates.filter(c=>c.placedAt).map(c=>new Date(c.placedAt).getFullYear())])].sort((a,b)=>b-a);
 
@@ -703,47 +729,94 @@ function Dashboard({data,onNav}){
     {label:'הוצבו',count:placedInPeriod,accent:'#16a34a',grad:'linear-gradient(135deg,#dcfce7,#bbf7d0)'},
   ];
   const openJobsList=data.jobs.filter(j=>j.status==='פתוח').map(j=>{const emp=data.employers.find(e=>e.id===j.employerId);const cCount=data.candidates.filter(c=>(c.appliedJobs||[]).includes(j.id)).length;const maxC=Math.max(...data.jobs.filter(x=>x.status==='פתוח').map(x=>data.candidates.filter(c=>(c.appliedJobs||[]).includes(x.id)).length),1);return{...j,empName:emp?.name||'',cCount,barPct:Math.round((cCount/maxC)*100)};});
-  const soon7=data.jobs.filter(j=>{if(j.status==='סגור'||!j.deadline)return false;const parts=j.deadline.split('/');if(parts.length!==3)return false;const d=new Date(parts[2],parts[1]-1,parts[0]);const diff=(d-now)/(1000*60*60*24);return diff>=0&&diff<=7;});
+  const deadlineDays=parseInt(data.defaults?.deadlineDays||7);
+  const soon7=data.jobs.filter(j=>{if(j.status==='סגור'||!j.deadline)return false;const parts=j.deadline.split('/');if(parts.length!==3)return false;const d=new Date(parts[2],parts[1]-1,parts[0]);const diff=(d-now)/(1000*60*60*24);return diff>=0&&diff<=deadlineDays;});
   const fmtMoney=n=>n>=1000000?`₪${(n/1000000).toFixed(1)}M`:n>=1000?`₪${Math.round(n/1000)}K`:`₪${Math.round(n)}`;
   const pctColor=p=>p>=80?'#16a34a':p>=40?'#f59e0b':'#e85d26';
   return <div style={{padding:28,maxWidth:1280}} className="mobile-pad">
     <div style={{marginBottom:20,display:'flex',justifyContent:'space-between',alignItems:'flex-end',flexWrap:'wrap',gap:8}}>
-      <div><h1 style={{fontSize:32,fontWeight:900,color:'#1a1a2e',marginBottom:4}}>שלום 👋</h1><div style={{color:MUT,fontSize:14}}>{now.toLocaleDateString('he-IL',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></div>
+      <div><h1 style={{fontSize:32,fontWeight:900,color:'#1a1a2e',marginBottom:4}}>שלום {data.displaySettings?.userName||'👋'}</h1><div style={{color:MUT,fontSize:14}}>{now.toLocaleDateString('he-IL',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></div>
       {pendingCount>0&&<div onClick={()=>onNav('candidates')} style={{cursor:'pointer',background:'#fff5f0',border:'2px solid #e85d26',borderRadius:12,padding:'10px 18px',display:'flex',alignItems:'center',gap:10,animation:'pendingPulse 1.8s ease-in-out infinite'}}><span style={{fontSize:20}}>🔔</span><div><div style={{fontWeight:800,fontSize:15,color:'#e85d26'}}>{pendingCount} מועמדים ממתינים</div><div style={{fontSize:12,color:MUT}}>לחץ לאישור</div></div></div>}
     </div>
 
-    {/* Year / Month selector */}
+    {/* Year / Month selector — dropdowns */}
     <div style={{background:'#fff',border:'2px solid #333',borderRadius:6,padding:'12px 18px',marginBottom:20,display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
       <span style={{fontSize:13,fontWeight:800,color:'#1a1a2e'}}>📅 תקופה:</span>
-      <div style={{display:'flex',gap:6,flexWrap:'wrap',alignItems:'center'}}>
-        {availableYears.map(y=><button key={y} onClick={()=>{setSelYear(y);setSelMonth(0);}}
-          style={{padding:'5px 14px',border:'2px solid #333',borderRadius:4,background:selYear===y?'#1a1a2e':'white',color:selYear===y?'white':'#333',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>{y}</button>)}
-      </div>
-      <div style={{width:1,height:24,background:'#ddd'}}/>
-      <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-        <button onClick={()=>setSelMonth(0)} style={{padding:'5px 10px',border:'2px solid #333',borderRadius:4,background:selMonth===0?'#e85d26':'white',color:selMonth===0?'white':'#333',fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer'}}>כל השנה</button>
-        {MONTHS.map((m,i)=><button key={i} onClick={()=>setSelMonth(i+1)}
-          style={{padding:'5px 8px',border:'2px solid #333',borderRadius:4,background:selMonth===i+1?'#e85d26':'white',color:selMonth===i+1?'white':'#333',fontFamily:'Heebo',fontWeight:700,fontSize:11,cursor:'pointer'}}>{m.slice(0,3)}</button>)}
-      </div>
-      <span style={{marginRight:'auto',fontSize:12,color:MUT,fontWeight:600}}>
-        {selMonth===0?`שנת ${selYear}`:`${MONTHS[selMonth-1]} ${selYear}`}
+      <select value={selYear} onChange={e=>{setSelYear(parseInt(e.target.value));setSelMonth(0);}}
+        style={{padding:'7px 12px',border:'2px solid #333',borderRadius:6,fontFamily:'Heebo',fontWeight:700,fontSize:14,background:'white',cursor:'pointer',minWidth:90}}>
+        {availableYears.map(y=><option key={y} value={y}>{y}</option>)}
+      </select>
+      <select value={selMonth} onChange={e=>setSelMonth(parseInt(e.target.value))}
+        style={{padding:'7px 12px',border:'2px solid #333',borderRadius:6,fontFamily:'Heebo',fontWeight:700,fontSize:14,background:'white',cursor:'pointer',minWidth:130}}>
+        <option value={0}>כל השנה</option>
+        {MONTHS.map((m,i)=><option key={i} value={i+1}>{m}</option>)}
+      </select>
+      <span style={{fontSize:13,color:ACC,fontWeight:700,background:'#fff5f0',padding:'6px 14px',borderRadius:6,border:`1.5px solid ${ACC}`}}>
+        📊 {selMonth===0?`שנת ${selYear}`:`${MONTHS[selMonth-1]} ${selYear}`}
       </span>
     </div>
 
     <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,marginBottom:24}} className="mobile-grid-2">
       {[
-        {label:'משרות פתוחות',value:openJobs,icon:'📋',bg:'#1a1a2e',fg:'white',sub:`מתוך ${data.jobs.length} סה"כ`,link:'jobs'},
-        {label:'מעסיקים פעילים',value:activeEmp,icon:'🏢',bg:'linear-gradient(135deg,#3b82f6,#1d4ed8)',fg:'white',sub:`מתוך ${data.employers.length} סה"כ`,link:'employers'},
-        {label:'מועמדים',value:data.candidates.filter(c=>!(data.pendingCandidates||[]).includes(c.id)).length,icon:'👥',bg:'linear-gradient(135deg,#8b5cf6,#6d28d9)',fg:'white',sub:`${pendingCount} ממתינים לאישור`,link:'candidates'},
-        {label:'הוצבו בתקופה',value:placedInPeriod,icon:'🏆',bg:'linear-gradient(135deg,#e85d26,#c94d1a)',fg:'white',sub:`${placedTotal} סה"כ כל הזמן`,link:'candidates'},
-      ].map(s=><div key={s.label} onClick={()=>onNav(s.link)} style={{background:s.bg,borderRadius:16,padding:'20px 18px',cursor:'pointer',boxShadow:'0 4px 20px rgba(0,0,0,0.12)',transition:'transform .15s,box-shadow .15s'}} onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 10px 32px rgba(0,0,0,0.18)';}} onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 4px 20px rgba(0,0,0,0.12)';}}>
-        <div style={{fontSize:26,marginBottom:8}}>{s.icon}</div>
-        <div style={{fontSize:38,fontWeight:900,lineHeight:1,color:s.fg}}>{s.value}</div>
-        <div style={{fontSize:14,fontWeight:700,color:s.fg,marginTop:4,opacity:.9}}>{s.label}</div>
-        <div style={{fontSize:12,color:s.fg,marginTop:3,opacity:.6}}>{s.sub}</div>
+        {label:'משרות פתוחות',value:openJobs,icon:'📋',fg:'white',sub:`מתוך ${data.jobs.length} סה"כ`,link:'jobs'},
+        {label:'מעסיקים פעילים',value:activeEmp,icon:'🏢',fg:'white',sub:`מתוך ${data.employers.length} סה"כ`,link:'employers'},
+        {label:'מועמדים',value:data.candidates.filter(c=>!(data.pendingCandidates||[]).includes(c.id)).length,icon:'👥',fg:'white',sub:`${pendingCount} ממתינים לאישור`,link:'candidates'},
+        {label:'הוצבו בתקופה',value:placedInPeriod,icon:'🏆',fg:'white',sub:`${placedTotal} סה"כ כל הזמן`,link:'candidates'},
+      ].map((s,idx)=><div key={s.label} style={{position:'relative',borderRadius:16,boxShadow:'0 4px 20px rgba(0,0,0,0.12)',background:kpiColors[idx]||defaultKpiColors[idx],transition:'transform .15s,box-shadow .15s',cursor:'pointer'}}
+        onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 10px 32px rgba(0,0,0,0.18)';}}
+        onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 4px 20px rgba(0,0,0,0.12)';}}>
+        {/* 🎨 button inside card */}
+        <button onClick={e=>{e.stopPropagation();setKpiColorPicker(kpiColorPicker===idx?null:idx);}}
+          style={{position:'absolute',top:8,left:8,zIndex:20,background:'rgba(0,0,0,0.35)',border:'2px solid rgba(255,255,255,0.5)',borderRadius:6,width:30,height:30,cursor:'pointer',fontSize:15,lineHeight:'1',padding:0,color:'white',fontFamily:'Heebo'}}>
+          🎨
+        </button>
+        {/* Color picker dropdown */}
+        {kpiColorPicker===idx&&<div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:44,left:8,zIndex:100,background:'white',border:'2px solid #333',borderRadius:10,padding:12,boxShadow:'0 8px 32px rgba(0,0,0,0.3)',minWidth:200}}>
+          <div style={{fontSize:11,fontWeight:700,color:'#444',marginBottom:8}}>בחר צבע</div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:10}}>
+            {KPI_PRESETS.map(c=><button key={c} onClick={()=>saveKpiColor(idx,c)}
+              style={{width:28,height:28,borderRadius:6,background:c,border:`2px solid ${kpiColors[idx]===c?'#333':'transparent'}`,cursor:'pointer',transition:'transform .1s',transform:kpiColors[idx]===c?'scale(1.2)':'scale(1)'}}/>)}
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:6}}>
+            <span style={{fontSize:11,color:'#555',fontWeight:600}}>מותאם:</span>
+            <input type="color" value={(kpiColors[idx]||'#1a1a2e').replace(/linear-gradient[^)]+\)/,'#1a1a2e')} onChange={e=>saveKpiColor(idx,e.target.value)}
+              style={{width:36,height:28,border:'2px solid #333',borderRadius:4,cursor:'pointer',padding:1}}/>
+          </div>
+          <button onClick={()=>saveKpiColor(idx,defaultKpiColors[idx])}
+            style={{marginTop:8,width:'100%',padding:'5px',border:'1px dashed #ccc',borderRadius:4,background:'none',fontFamily:'Heebo',fontSize:11,color:'#888',cursor:'pointer'}}>↩ ברירת מחדל</button>
+        </div>}
+        {/* Card content */}
+        <div onClick={()=>{setKpiColorPicker(null);onNav(s.link);}} style={{padding:'20px 18px',borderRadius:16}}>
+          <div style={{fontSize:26,marginBottom:8}}>{s.icon}</div>
+          <div style={{fontSize:38,fontWeight:900,lineHeight:1,color:s.fg}}>{s.value}</div>
+          <div style={{fontSize:14,fontWeight:700,color:s.fg,marginTop:4,opacity:.9}}>{s.label}</div>
+          <div style={{fontSize:12,color:s.fg,marginTop:3,opacity:.6}}>{s.sub}</div>
+        </div>
       </div>)}
     </div>
-    <div style={{background:'linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)',borderRadius:20,padding:'24px 28px',marginBottom:24,display:'grid',gridTemplateColumns:'auto 1fr 1fr 1fr',gap:24,alignItems:'center'}} className="mobile-grid-1">
+    {(kpiColorPicker!==null||showCommissionPicker||pipelineColorPicker!==null)&&<div onClick={()=>{setKpiColorPicker(null);setShowCommissionPicker(false);setPipelineColorPicker(null);}} style={{position:'fixed',inset:0,zIndex:9}}/>}
+    <div style={{position:'relative',background:commissionBg,borderRadius:20,padding:'24px 28px',marginBottom:24,display:'grid',gridTemplateColumns:'auto 1fr 1fr 1fr',gap:24,alignItems:'center'}} className="mobile-grid-1">
+      {/* Commission bar color picker */}
+      <button onClick={e=>{e.stopPropagation();setShowCommissionPicker(v=>!v);}}
+        style={{position:'absolute',top:10,left:10,zIndex:20,background:'rgba(0,0,0,0.35)',border:'2px solid rgba(255,255,255,0.5)',borderRadius:6,width:30,height:30,cursor:'pointer',fontSize:15,lineHeight:'1',padding:0,color:'white',fontFamily:'Heebo'}}>
+        🎨
+      </button>
+      {showCommissionPicker&&<div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:46,left:8,zIndex:100,background:'white',border:'2px solid #333',borderRadius:10,padding:12,boxShadow:'0 8px 32px rgba(0,0,0,0.3)',minWidth:220}}>
+        <div style={{fontSize:11,fontWeight:700,color:'#444',marginBottom:8}}>בחר צבע רקע</div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:10}}>
+          {['linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)','linear-gradient(135deg,#1e3a5f,#0f2444)','linear-gradient(135deg,#1a1a2e,#2d1b69)','linear-gradient(135deg,#064e3b,#065f46)','linear-gradient(135deg,#1e1b4b,#312e81)','#1a1a2e','#0f172a','#1e293b'].map((c,ci)=>(
+            <button key={ci} onClick={()=>saveCommissionBg(c)}
+              style={{width:32,height:32,borderRadius:6,background:c,border:`2px solid ${commissionBg===c?'white':'transparent'}`,cursor:'pointer'}}/>
+          ))}
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:6}}>
+          <span style={{fontSize:11,color:'#555',fontWeight:600}}>צבע מותאם:</span>
+          <input type="color" value={'#1a1a2e'} onChange={e=>saveCommissionBg(e.target.value)}
+            style={{width:36,height:28,border:'2px solid #333',borderRadius:4,cursor:'pointer',padding:1}}/>
+        </div>
+        <button onClick={()=>saveCommissionBg('linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)')}
+          style={{marginTop:8,width:'100%',padding:'5px',border:'1px dashed #ccc',borderRadius:4,background:'none',fontFamily:'Heebo',fontSize:11,color:'#888',cursor:'pointer'}}>↩ ברירת מחדל</button>
+      </div>}
       <div style={{position:'relative',width:110,height:110,flexShrink:0}}>
         <ProgressRing pct={commissionPct} color={pctColor(commissionPct)}/>
         <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
@@ -763,7 +836,7 @@ function Dashboard({data,onNav}){
       </div>
       <div>
         <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',fontWeight:700,marginBottom:6,letterSpacing:1}}>נותר ליעד</div>
-        <div style={{fontSize:30,fontWeight:900,color:expectedCommission>earnedInPeriod?'#f59e0b':'#16a34a'}}>{fmtMoney(Math.max(0,expectedCommission-earnedInPeriod))}</div>
+        {(()=>{const target=data.defaults?.yearlyTarget?parseFloat(data.defaults.yearlyTarget):expectedCommission;const remaining=Math.max(0,target-earnedInPeriod);return <div style={{fontSize:30,fontWeight:900,color:target>earnedInPeriod?'#f59e0b':'#16a34a'}}>{fmtMoney(remaining)}</div>;})()}
         <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginTop:3}}>{commissionPct>=100?'🎉 יעד הושג!':commissionPct>=80?'🚀 כמעט שם':'💪 יאללה קדימה'}</div>
       </div>
     </div>
@@ -801,7 +874,28 @@ function Dashboard({data,onNav}){
       <h3 style={{fontSize:16,fontWeight:800,color:'#1a1a2e',marginBottom:16}}>🔄 פייפליין מועמדים</h3>
       <div style={{display:'flex',gap:12,alignItems:'stretch'}}>
         {pipeline.map((s,i)=><React.Fragment key={s.label}>
-          <div style={{flex:1,background:s.grad,borderRadius:14,padding:'18px 14px',textAlign:'center',border:`1.5px solid ${s.accent}30`}}>
+          <div style={{flex:1,position:'relative',background:pipelineColors[i]||s.grad,borderRadius:14,padding:'18px 14px',textAlign:'center',border:`1.5px solid ${s.accent}30`}}>
+            {/* Pipeline color picker button */}
+            <button onClick={e=>{e.stopPropagation();setPipelineColorPicker(pipelineColorPicker===i?null:i);}}
+              style={{position:'absolute',top:6,left:6,zIndex:20,background:'rgba(0,0,0,0.15)',border:'1px solid rgba(0,0,0,0.2)',borderRadius:4,width:22,height:22,cursor:'pointer',fontSize:11,lineHeight:'1',padding:0}}>
+              🎨
+            </button>
+            {pipelineColorPicker===i&&<div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:30,left:0,zIndex:100,background:'white',border:'2px solid #333',borderRadius:10,padding:12,boxShadow:'0 8px 32px rgba(0,0,0,0.2)',minWidth:200,textAlign:'right'}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#444',marginBottom:8}}>בחר צבע</div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:8}}>
+                {['linear-gradient(135deg,#f3f4f6,#e5e7eb)','linear-gradient(135deg,#dbeafe,#bfdbfe)','linear-gradient(135deg,#fef3c7,#fde68a)','linear-gradient(135deg,#dcfce7,#bbf7d0)','linear-gradient(135deg,#fce7f3,#fbcfe8)','linear-gradient(135deg,#ede9fe,#ddd6fe)','#fff5f0','#f0fdf4'].map((c,ci)=>(
+                  <button key={ci} onClick={()=>savePipelineColor(i,c)}
+                    style={{width:28,height:28,borderRadius:5,background:c,border:`2px solid ${pipelineColors[i]===c?'#333':'#e5e7eb'}`,cursor:'pointer'}}/>
+                ))}
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:6}}>
+                <span style={{fontSize:11,color:'#555',fontWeight:600}}>מותאם:</span>
+                <input type="color" value={'#f3f4f6'} onChange={e=>savePipelineColor(i,e.target.value)}
+                  style={{width:32,height:26,border:'2px solid #333',borderRadius:4,cursor:'pointer',padding:1}}/>
+              </div>
+              <button onClick={()=>savePipelineColor(i,defaultPipelineColors[i])}
+                style={{marginTop:8,width:'100%',padding:'4px',border:'1px dashed #ccc',borderRadius:4,background:'none',fontFamily:'Heebo',fontSize:10,color:'#888',cursor:'pointer'}}>↩ ברירת מחדל</button>
+            </div>}
             <div style={{fontSize:36,fontWeight:900,color:s.accent,lineHeight:1}}>{s.count}</div>
             <div style={{fontSize:13,fontWeight:700,color:s.accent,marginTop:6}}>{s.label}</div>
           </div>
@@ -1005,7 +1099,7 @@ function Employers({data,setData}){
   });
   const newNeed=()=>({id:Date.now(),domain:'',role:'',count:1,fee:''});
   const totals=emp=>{const n=emp.needs||[];const tc=n.reduce((s,x)=>s+(parseInt(x.count)||0),0);const tf=n.reduce((s,x)=>s+(parseFloat((x.fee||'0').replace(/,/g,''))||0)*(parseInt(x.count||1)||1),0);return{tc,tf};};
-  const openAdd=()=>{setForm({name:'',industry:'הייטק',contact:'',phone:'',email:'',city:'',status:'פעיל',notes:'',expectedIncome:'',needs:[newNeed()],contacts:[]});setModal('add');};
+  const openAdd=()=>{setForm({name:'',industry:'הייטק',contact:'',phone:'',email:'',city:'',status:data.defaults?.employerStatus||'פעיל',notes:'',expectedIncome:'',needs:[newNeed()],contacts:[]});setModal('add');};
   const openEdit=e=>{
     // migrate legacy contact fields into contacts array if needed
     let contacts=e.contacts||[];
@@ -1191,7 +1285,7 @@ function Employers({data,setData}){
                   </div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
                     {[['ענף',detail.industry],['איש קשר',detail.contact],['טלפון',detail.phone],['אימייל',detail.email],['עיר',detail.city]].map(([k,v])=>v?<div key={k} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
-                      <div style={{fontSize:11,color:'#9ca3af',fontWeight:600,marginBottom:3}}>{k}</div>
+                      <div style={{fontSize:12,color:'#444',fontWeight:700,marginBottom:3}}>{k}</div>
                       <div style={{fontSize:13,fontWeight:600,color:'#1a1a2e'}}>{v}</div>
                     </div>:null)}
                   </div>
@@ -1255,7 +1349,7 @@ function Employers({data,setData}){
                         <a href={detail.agreementUrl} target="_blank" rel="noreferrer" style={{padding:'7px 14px',background:'#16a34a',color:'white',borderRadius:8,textDecoration:'none',fontWeight:700,fontSize:13}}>פתח</a>
                         <a href={detail.agreementUrl} download style={{padding:'7px 10px',background:'#1a1a2e',color:'white',borderRadius:8,textDecoration:'none',fontWeight:700,fontSize:13}}>⬇️</a>
                       </div>
-                    :<div style={{color:'#9ca3af',fontSize:13,background:'#f9fafb',borderRadius:8,padding:'10px 14px',border:'1px dashed #d1d5db'}}>לא צורף הסכם השמה עדיין</div>
+                    :<div style={{color:'#555',fontSize:13,background:'#f9fafb',borderRadius:8,padding:'10px 14px',border:'1px dashed #d1d5db'}}>לא צורף הסכם השמה עדיין</div>
                   }
                 </div>
 
@@ -1371,7 +1465,7 @@ function Employers({data,setData}){
               </div>
             ))}
             {(!form.contacts||form.contacts.length===0)&&(
-              <div style={{color:'#9ca3af',fontSize:13,padding:'10px 0',textAlign:'center'}}>טרם הוספו אנשי קשר</div>
+              <div style={{color:'#555',fontSize:13,padding:'10px 0',textAlign:'center'}}>טרם הוספו אנשי קשר</div>
             )}
             <Btn onClick={addContact} style={{fontSize:13,marginTop:4}}>+ הוסף איש קשר</Btn>
           </FormCard>
@@ -1402,7 +1496,7 @@ function Employers({data,setData}){
                   <a href={form.agreementUrl} target="_blank" rel="noreferrer" style={{padding:'6px 12px',background:'#16a34a',color:'white',borderRadius:6,textDecoration:'none',fontWeight:700,fontSize:12}}>פתח</a>
                   <button onClick={()=>setForm(f=>({...f,agreementUrl:'',agreementName:''}))} style={{padding:'6px 10px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:6,cursor:'pointer',fontWeight:700,fontSize:12}}>הסר</button>
                 </div>
-              :<div style={{color:'#9ca3af',fontSize:13,marginBottom:10}}>לא צורף הסכם עדיין</div>
+              :<div style={{color:'#555',fontSize:13,marginBottom:10}}>לא צורף הסכם עדיין</div>
             }
             <AgreementUpload form={form} setForm={setForm}/>
           </FormCard>
@@ -1539,7 +1633,7 @@ function Jobs({data,setData}){
     return `https://jobs.topgroup4u.com/job/${job.id}`;
   };
 
-  const openAdd=()=>{setForm({jobNumber:nextNum(),title:'',publishTitle:'',domain:'',role:'',employerId:data.employers[0]?.id||'',type:'משרה מלאה',location:'',salary:'',status:'פתוח',deadline:'',description:'',requirements:'',benefits:'',image:'',imageUrl:''});setModal('add');};
+  const openAdd=()=>{setForm({jobNumber:nextNum(),title:'',publishTitle:'',domain:'',role:'',employerId:data.employers[0]?.id||'',type:'משרה מלאה',location:'',salary:'',status:data.defaults?.jobStatus||'פתוח',deadline:'',description:'',requirements:'',benefits:'',image:'',imageUrl:''});setModal('add');};
   const openEdit=j=>{setForm({...j});setModal('edit');};
   const save=()=>{
     const savedForm={...form, image: form.imageUrl||''};
@@ -1768,7 +1862,7 @@ function Jobs({data,setData}){
                   </div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
                     {[['מעסיק',emp?.name],['תחום',detail.domain],['תפקיד',detail.role],['סוג',detail.type],['שכר',detail.salary?`₪${fmtNum(detail.salary)}`:null],['מיקום',detail.location],['נוצרה',detail.createdAt],['דדליין',detail.deadline]].map(([k,v])=>v?<div key={k} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
-                      <div style={{fontSize:11,color:'#9ca3af',fontWeight:600,marginBottom:3}}>{k}</div>
+                      <div style={{fontSize:12,color:'#444',fontWeight:700,marginBottom:3}}>{k}</div>
                       <div style={{fontSize:13,fontWeight:600,color:'#1a1a2e'}}>{v}</div>
                     </div>:null)}
                   </div>
@@ -1907,7 +2001,7 @@ function Candidates({data,setData}){
   const pendingIds=new Set(data.pendingCandidates||[]);
   const filtered=data.candidates.filter(c=>!pendingIds.has(c.id)&&(c.name.includes(search)||c.role.includes(search)||(c.city||'').includes(search))&&(stFilter==='הכל'||c.status===stFilter));
   const pendingList=(data.pendingCandidates||[]).map(id=>data.candidates.find(c=>c.id===id)).filter(Boolean);
-  const openAdd=()=>{setForm({name:'',domain:'',role:'',phone:'',email:'',city:'',status:'חדש',experience:'',education:'',appliedJobs:[],cv:false,notes:''});setModal('add');};
+  const openAdd=()=>{setForm({name:'',domain:'',role:'',phone:'',email:'',city:'',status:data.defaults?.candidateStatus||'חדש',experience:'',education:'',appliedJobs:[],cv:false,notes:''});setModal('add');};
   const openEdit=c=>{setForm({...c,appliedJobs:[...c.appliedJobs]});setModal('edit');};
   const save=()=>{
     const isAdd=modal==='add';
@@ -2167,10 +2261,9 @@ function Candidates({data,setData}){
                   {[
                     {icon:'📞',label:'טלפון',val:detail.phone},
                     {icon:'✉️',label:'אימייל',val:detail.email},
-                    {icon:'📍',label:'עיר',val:detail.city},
-                    {icon:'🏷',label:'תחום',val:detail.domain},
+                    {icon:'🏙️',label:'עיר מגורים',val:detail.city},
                   ].map(({icon,label,val})=>val?<div key={label} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
-                    <div style={{fontSize:11,color:'#9ca3af',fontWeight:600,marginBottom:3}}>{icon} {label}</div>
+                    <div style={{fontSize:12,color:'#444',fontWeight:700,marginBottom:3}}>{icon} {label}</div>
                     <div style={{fontSize:13,fontWeight:600,color:'#1a1a2e'}}>{val}</div>
                   </div>:null)}
                 </div>
@@ -2184,12 +2277,14 @@ function Candidates({data,setData}){
                 </div>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
                   {[
+                    {icon:'🏷',label:'תחום',val:detail.domain},
                     {icon:'👤',label:'תפקיד',val:detail.role},
                     {icon:'⏱',label:'ניסיון',val:detail.experience},
                     {icon:'🎓',label:'השכלה',val:detail.education},
-                    {icon:'📅',label:'תאריך הגשה',val:detail.appliedAt?new Date(detail.appliedAt).toLocaleDateString('he-IL'):'—'},
-                  ].map(({icon,label,val})=>val&&val!=='—'?<div key={label} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
-                    <div style={{fontSize:11,color:'#9ca3af',fontWeight:600,marginBottom:3}}>{icon} {label}</div>
+                    {icon:'📅',label:'תאריך הגשה',val:detail.appliedAt?new Date(detail.appliedAt).toLocaleDateString('he-IL'):''},
+                    {icon:'📅',label:'תאריך הצבה',val:detail.placedAt?new Date(detail.placedAt).toLocaleDateString('he-IL'):''},
+                  ].map(({icon,label,val})=>val?<div key={label} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
+                    <div style={{fontSize:12,color:'#444',fontWeight:700,marginBottom:3}}>{icon} {label}</div>
                     <div style={{fontSize:13,fontWeight:600,color:'#1a1a2e'}}>{val}</div>
                   </div>:null)}
                 </div>
@@ -2202,16 +2297,27 @@ function Candidates({data,setData}){
                   <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>משרות מוקצות</div>
                 </div>
                 {(detail.appliedJobs||[]).length===0
-                  ?<div style={{color:'#9ca3af',fontSize:13,padding:'4px 0'}}>לא שויך למשרות עדיין</div>
+                  ?<div style={{color:'#666',fontSize:13,padding:'4px 0'}}>לא שויך למשרות עדיין</div>
                   :data.jobs.filter(j=>(detail.appliedJobs||[]).includes(j.id)).map(j=>{
                     const emp=data.employers.find(x=>x.id===j.employerId);
-                    return <div key={j.id} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:'#f8f7f4',borderRadius:10,marginBottom:8,border:'1px solid #e5e7eb'}}>
-                      <div style={{flex:1}}>
-                        <div style={{fontWeight:700,fontSize:14,color:'#1a1a2e'}}>{j.publishTitle||j.title}</div>
-                        <div style={{fontSize:12,color:'#9ca3af',marginTop:2}}>{emp?.name||''}{j.location?` · 📍${j.location}`:''}</div>
-                        <div style={{fontSize:11,color:'#9ca3af',marginTop:1}}>{j.jobNumber}{j.salary?` · ₪${j.salary}`:''}</div>
+                    const isPlaced=detail.status==='הוצב';
+                    const placedDateStr=detail.placedAt?new Date(detail.placedAt).toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'numeric'}):'';
+                    return <div key={j.id} style={{padding:'12px 14px',background:'#f8f7f4',borderRadius:10,marginBottom:8,border:`1px solid ${isPlaced?'#86efac':'#e5e7eb'}`}}>
+                      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:isPlaced?8:0}}>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:700,fontSize:14,color:'#1a1a2e'}}>{j.publishTitle||j.title}</div>
+                          <div style={{fontSize:12,color:'#555',fontWeight:600,marginTop:2}}>{emp?.name||''}{j.location?` · 📍${j.location}`:''}</div>
+                          <div style={{fontSize:12,color:'#555',marginTop:1}}>{j.jobNumber}{j.salary?` · ₪${j.salary}`:''}</div>
+                        </div>
+                        <Tag label={j.status}/>
                       </div>
-                      <Tag label={j.status}/>
+                      {isPlaced&&<div style={{display:'flex',alignItems:'center',gap:8,background:'#dcfce7',borderRadius:8,padding:'8px 12px',border:'1px solid #86efac'}}>
+                        <span style={{fontSize:16}}>🏅</span>
+                        <div>
+                          <div style={{fontSize:12,fontWeight:800,color:'#16a34a'}}>המועמד הוצב במשרה זו</div>
+                          {placedDateStr&&<div style={{fontSize:13,color:'#166534',fontWeight:700,marginTop:1}}>📅 תאריך הצבה: {placedDateStr}</div>}
+                        </div>
+                      </div>}
                     </div>;
                   })
                 }
@@ -2236,7 +2342,7 @@ function Candidates({data,setData}){
                   :<div>
                     {detail.cv
                       ?<div style={{background:'#fff5f0',border:'1px solid #fcd5c0',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#c94d1a',marginBottom:10}}>⚠️ המועמד העלה CV אך הקובץ לא נשמר.</div>
-                      :<div style={{background:'#f3f4f6',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#9ca3af',marginBottom:10}}>לא צורף קובץ CV</div>}
+                      :<div style={{background:'#f3f4f6',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#555',marginBottom:10}}>לא צורף קובץ CV</div>}
                     <label style={{display:'block',fontSize:13,fontWeight:700,marginBottom:6,color:'#374151'}}>העלה CV ידנית</label>
                     <input type="file" accept=".pdf,.doc,.docx" onChange={async(e)=>{
                       const file=e.target.files[0]; if(!file) return;
@@ -2387,12 +2493,12 @@ function Candidates({data,setData}){
                       <input type="checkbox" checked={!!chk} onChange={()=>setForm(f=>({...f,appliedJobs:chk?f.appliedJobs.filter(id=>id!==j.id):[...(f.appliedJobs||[]),j.id]}))}/>
                       <div style={{flex:1}}>
                         <div style={{fontWeight:700,fontSize:13,color:'#1a1a2e'}}>{j.publishTitle||j.title}</div>
-                        <div style={{fontSize:11,color:'#9ca3af'}}>{emp?.name||''} · {j.jobNumber}{j.location?` · ${j.location}`:''}</div>
+                        <div style={{fontSize:12,color:'#555',fontWeight:600}}>{emp?.name||''} · {j.jobNumber}{j.location?` · ${j.location}`:''}</div>
                       </div>
                       <Tag label={j.status}/>
                     </label>;
                   })}
-                  {filtered.length===0&&<div style={{color:'#9ca3af',fontSize:13,padding:'8px 0',textAlign:'center'}}>לא נמצאו משרות</div>}
+                  {filtered.length===0&&<div style={{color:'#555',fontSize:13,padding:'8px 0',textAlign:'center'}}>לא נמצאו משרות</div>}
                 </div>
                 {(form.appliedJobs||[]).length>0&&<div style={{marginTop:10,fontSize:12,color:'#e85d26',fontWeight:700}}>
                   ✅ {(form.appliedJobs||[]).length} משרות נבחרו
@@ -3044,7 +3150,22 @@ function Settings({data,setData}){
   const addStatus=(key)=>{const v=newStatus[key].trim();if(!v)return;const updated={...statuses,[key]:[...statuses[key],v]};setStatuses(updated);setData(d=>({...d,statuses:updated}));setNewStatus(n=>({...n,[key]:''}));};
   const delStatus=(key,item)=>{const updated={...statuses,[key]:statuses[key].filter(s=>s!==item)};setStatuses(updated);setData(d=>({...d,statuses:updated}));};
 
-  const tabs=[{id:'general',label:'כללי'},{id:'users',label:'משתמשים'},{id:'domains',label:'תחומים ותפקידים'},{id:'statuses',label:'סטטוסים'},{id:'notifications',label:'התראות'}];
+  // Display settings
+  const [display,setDisplay]=React.useState(()=>data.displaySettings||{fontSize:'normal',highContrast:false,accentColor:'#e85d26',colorScheme:'light',userName:'מנהל מערכת'});
+  const saveDisplay=()=>{
+    setData(d=>({...d,displaySettings:display}));
+    const sizeMap={small:'13px',normal:'15px',large:'17px',xlarge:'20px'};
+    if(display.fontSize) document.body.style.fontSize=sizeMap[display.fontSize]||'15px';
+    document.body.style.filter=display.highContrast?'contrast(1.25)':'';
+    document.documentElement.style.setProperty('--acc',display.accentColor||'#e85d26');
+    alert('✅ הגדרות תצוגה נשמרו!');
+  };
+
+  // Defaults settings
+  const [defaults,setDefaults]=React.useState(()=>data.defaults||{employerStatus:'פעיל',jobStatus:'פתוח',candidateStatus:'חדש',yearlyTarget:'',deadlineDays:'7',currency:'₪'});
+  const saveDefaults=()=>{setData(d=>({...d,defaults}));alert('✅ ברירות המחדל נשמרו!');};
+
+  const tabs=[{id:'general',label:'כללי'},{id:'display',label:'🎨 תצוגה'},{id:'users',label:'משתמשים'},{id:'domains',label:'תחומים ותפקידים'},{id:'statuses',label:'סטטוסים'},{id:'defaults',label:'ברירות מחדל'},{id:'notifications',label:'התראות'}];
   return <div style={{padding:28}} className="mobile-pad">
     <h1 style={{fontSize:28,fontWeight:800,marginBottom:20}}>⚙ הגדרות מערכת</h1>
     <div style={{display:'flex',gap:0,marginBottom:24,borderBottom:'2px solid #333',overflowX:'auto'}}>
@@ -3130,6 +3251,133 @@ function Settings({data,setData}){
     </div>}
 
     {tab==='domains'&&<DomainsTab data={data} setData={setData}/>}
+
+    {tab==='display'&&<div style={{maxWidth:620}}>
+      <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
+        <h3 style={{fontSize:17,fontWeight:800,marginBottom:18,color:'#1a1a2e'}}>👤 זהות משתמש</h3>
+        <FF label="שם שיוצג בברכה (שלום...)" value={display.userName||''} onChange={v=>setDisplay(d=>({...d,userName:v}))}/>
+      </div>
+
+      <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
+        <h3 style={{fontSize:17,fontWeight:800,marginBottom:18,color:'#1a1a2e'}}>🔤 גודל גופן</h3>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+          {[{id:'small',label:'קטן',size:'13px'},{id:'normal',label:'רגיל',size:'15px'},{id:'large',label:'גדול',size:'17px'},{id:'xlarge',label:'גדול מאוד',size:'20px'}].map(o=>(
+            <button key={o.id} onClick={()=>setDisplay(d=>({...d,fontSize:o.id}))}
+              style={{padding:'14px 8px',border:`2px solid ${display.fontSize===o.id?ACC:'#ddd'}`,borderRadius:8,background:display.fontSize===o.id?'#fff5f0':'white',cursor:'pointer',fontFamily:'Heebo',transition:'all .15s'}}>
+              <div style={{fontSize:o.size,fontWeight:700,color:display.fontSize===o.id?ACC:'#333',marginBottom:4}}>א</div>
+              <div style={{fontSize:12,color:display.fontSize===o.id?ACC:'#666',fontWeight:600}}>{o.label}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
+        <h3 style={{fontSize:17,fontWeight:800,marginBottom:18,color:'#1a1a2e'}}>🎨 צבע הדגש</h3>
+        <div style={{display:'flex',gap:12,flexWrap:'wrap',alignItems:'center'}}>
+          {['#e85d26','#3b82f6','#16a34a','#8b5cf6','#ec4899','#0891b2','#d97706','#dc2626'].map(c=>(
+            <button key={c} onClick={()=>setDisplay(d=>({...d,accentColor:c}))}
+              style={{width:40,height:40,borderRadius:20,background:c,border:`3px solid ${display.accentColor===c?'#333':'transparent'}`,cursor:'pointer',transition:'transform .15s',transform:display.accentColor===c?'scale(1.2)':'scale(1)'}}>
+            </button>
+          ))}
+          <div style={{display:'flex',alignItems:'center',gap:8,marginRight:8}}>
+            <label style={{fontSize:13,color:'#555',fontWeight:600}}>מותאם אישית:</label>
+            <input type="color" value={display.accentColor||'#e85d26'} onChange={e=>setDisplay(d=>({...d,accentColor:e.target.value}))}
+              style={{width:40,height:36,border:'2px solid #333',borderRadius:6,cursor:'pointer',padding:2}}/>
+          </div>
+        </div>
+        <div style={{marginTop:12,padding:'10px 14px',background:'#f8f7f4',borderRadius:8,fontSize:13,color:'#555'}}>
+          צבע נוכחי: <span style={{color:display.accentColor,fontWeight:800}}>{display.accentColor}</span>
+          <span style={{marginRight:12,padding:'3px 12px',background:display.accentColor,color:'white',borderRadius:4,fontSize:12,fontWeight:700}}>דוגמה</span>
+        </div>
+      </div>
+
+      <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
+        <h3 style={{fontSize:17,fontWeight:800,marginBottom:14,color:'#1a1a2e'}}>♿ נגישות</h3>
+        <label style={{display:'flex',alignItems:'center',gap:14,cursor:'pointer',padding:'12px 0',borderBottom:'1px dashed #eee'}}>
+          <div style={{position:'relative',width:48,height:26}}>
+            <input type="checkbox" checked={!!display.highContrast} onChange={e=>setDisplay(d=>({...d,highContrast:e.target.checked}))} style={{opacity:0,width:0,height:0}}/>
+            <div style={{position:'absolute',inset:0,background:display.highContrast?ACC:'#ccc',borderRadius:13,transition:'background .2s',cursor:'pointer'}}
+              onClick={()=>setDisplay(d=>({...d,highContrast:!d.highContrast}))}>
+              <div style={{position:'absolute',top:3,right:display.highContrast?3:22,width:20,height:20,background:'white',borderRadius:10,transition:'right .2s',boxShadow:'0 1px 4px rgba(0,0,0,0.3)'}}></div>
+            </div>
+          </div>
+          <div>
+            <div style={{fontSize:14,fontWeight:700}}>ניגודיות גבוהה</div>
+            <div style={{fontSize:12,color:'#666',marginTop:2}}>מגביר ניגודיות צבעים לקריאות טובה יותר</div>
+          </div>
+        </label>
+      </div>
+
+      <Btn variant="primary" onClick={saveDisplay}>💾 שמור הגדרות תצוגה</Btn>
+    </div>}
+
+    {tab==='defaults'&&<div style={{maxWidth:560}}>
+      <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
+        <h3 style={{fontSize:17,fontWeight:800,marginBottom:18,color:'#1a1a2e'}}>🎯 יעד עמלות שנתי</h3>
+        <div style={{display:'flex',gap:10,alignItems:'flex-end'}}>
+          <div style={{flex:1}}>
+            <FF label="יעד עמלות שנתי (₪)" value={defaults.yearlyTarget||''} onChange={v=>setDefaults(d=>({...d,yearlyTarget:v}))} hint="אם מוגדר, ישמש ב'נותר ליעד' בדשבורד במקום הסכום האוטומטי"/>
+          </div>
+          {defaults.yearlyTarget&&<div style={{padding:'10px 16px',background:'#f0fdf4',border:'1px solid #86efac',borderRadius:8,fontSize:14,fontWeight:700,color:'#16a34a',whiteSpace:'nowrap'}}>
+            ₪{parseInt(defaults.yearlyTarget).toLocaleString()}
+          </div>}
+        </div>
+      </div>
+
+      <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
+        <h3 style={{fontSize:17,fontWeight:800,marginBottom:18,color:'#1a1a2e'}}>⏰ ימי התראה לדדליין משרה</h3>
+        <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+          {['3','5','7','10','14','30'].map(d=>(
+            <button key={d} onClick={()=>setDefaults(x=>({...x,deadlineDays:d}))}
+              style={{padding:'10px 18px',border:`2px solid ${defaults.deadlineDays===d?ACC:'#ddd'}`,borderRadius:8,background:defaults.deadlineDays===d?'#fff5f0':'white',color:defaults.deadlineDays===d?ACC:'#333',fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+              {d} ימים
+            </button>
+          ))}
+        </div>
+        <div style={{marginTop:10,fontSize:13,color:'#666'}}>כרגע: התראה {defaults.deadlineDays||7} ימים לפני דדליין</div>
+      </div>
+
+      <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
+        <h3 style={{fontSize:17,fontWeight:800,marginBottom:18,color:'#1a1a2e'}}>💱 מטבע תצוגה</h3>
+        <div style={{display:'flex',gap:10}}>
+          {[{id:'₪',label:'שקל ₪'},{id:'$',label:'דולר $'},{id:'€',label:'יורו €'}].map(c=>(
+            <button key={c.id} onClick={()=>setDefaults(d=>({...d,currency:c.id}))}
+              style={{padding:'10px 20px',border:`2px solid ${defaults.currency===c.id?ACC:'#ddd'}`,borderRadius:8,background:defaults.currency===c.id?'#fff5f0':'white',color:defaults.currency===c.id?ACC:'#333',fontFamily:'Heebo',fontWeight:700,fontSize:15,cursor:'pointer'}}>
+              {c.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
+        <h3 style={{fontSize:17,fontWeight:800,marginBottom:18,color:'#1a1a2e'}}>📋 סטטוס ברירת מחדל</h3>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}}>
+          <div>
+            <div style={{fontSize:12,color:'#444',fontWeight:700,marginBottom:6}}>מעסיק חדש</div>
+            <select value={defaults.employerStatus||'פעיל'} onChange={e=>setDefaults(d=>({...d,employerStatus:e.target.value}))}
+              style={{width:'100%',padding:'8px 10px',border:'2px solid #333',borderRadius:4,fontFamily:'Heebo',fontSize:13}}>
+              {(data.statuses?.employers||['פעיל','פסיבי']).map(s=><option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <div style={{fontSize:12,color:'#444',fontWeight:700,marginBottom:6}}>משרה חדשה</div>
+            <select value={defaults.jobStatus||'פתוח'} onChange={e=>setDefaults(d=>({...d,jobStatus:e.target.value}))}
+              style={{width:'100%',padding:'8px 10px',border:'2px solid #333',borderRadius:4,fontFamily:'Heebo',fontSize:13}}>
+              {(data.statuses?.jobs||['פתוח','ממתין','סגור']).map(s=><option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <div style={{fontSize:12,color:'#444',fontWeight:700,marginBottom:6}}>מועמד חדש</div>
+            <select value={defaults.candidateStatus||'חדש'} onChange={e=>setDefaults(d=>({...d,candidateStatus:e.target.value}))}
+              style={{width:'100%',padding:'8px 10px',border:'2px solid #333',borderRadius:4,fontFamily:'Heebo',fontSize:13}}>
+              {(data.statuses?.candidates||['חדש','בתהליך','ראיון נקבע','הוצב']).map(s=><option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <Btn variant="primary" onClick={saveDefaults}>💾 שמור ברירות מחדל</Btn>
+    </div>}
 
     {tab==='statuses'&&<div style={{maxWidth:500}}>
       {[['סטטוס מועמדים','candidates'],['סטטוס משרות','jobs'],['סטטוס מעסיקים','employers']].map(([title,key])=><div key={key} className="sbox" style={{background:'#fff',padding:18,marginBottom:14}}>
@@ -3387,6 +3635,20 @@ function AppInner(){
   },[]);
 
   // Save to Supabase on data change (debounced 1s)
+  // Apply display settings on data change
+  React.useEffect(()=>{
+    const ds=data.displaySettings||{};
+    const sizeMap={small:'13px',normal:'15px',large:'17px',xlarge:'20px'};
+    if(ds.fontSize) document.body.style.fontSize=sizeMap[ds.fontSize]||'15px';
+    document.body.style.filter=ds.highContrast?'contrast(1.25)':'';
+    // Apply accent color via CSS variable
+    const acc=ds.accentColor||'#e85d26';
+    document.documentElement.style.setProperty('--acc',acc);
+    // Derive light/dark variants
+    document.documentElement.style.setProperty('--acc-light',acc+'22');
+    document.documentElement.style.setProperty('--acc-dark',acc);
+  },[data.displaySettings]);
+
   const isFirst=React.useRef(true);
   const saveTimer=React.useRef(null);
   React.useEffect(()=>{
