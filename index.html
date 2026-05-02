@@ -152,6 +152,27 @@ const LOG_ICONS={candidate:'👤',job:'📋',employer:'🏢',pending:'🔔'};
 const LOG_ACTIONS={added:'נוסף',updated:'עודכן',deleted:'נמחק',approved:'אושר',rejected:'נדחה'};
 const fmtNum = s => (s||'').toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');
 
+function ConfirmDialog({open,title,message,name,onConfirm,onCancel}){
+  if(!open) return null;
+  return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+    <div style={{background:'white',borderRadius:14,width:'100%',maxWidth:420,boxShadow:'0 20px 60px rgba(0,0,0,0.3)',overflow:'hidden'}}>
+      <div style={{background:'#c94d1a',padding:'18px 24px',display:'flex',alignItems:'center',gap:10}}>
+        <span style={{fontSize:24}}>⚠️</span>
+        <span style={{color:'white',fontWeight:800,fontSize:17}}>{title}</span>
+      </div>
+      <div style={{padding:'24px 24px 8px'}}>
+        <div style={{fontSize:15,color:'#333',lineHeight:1.6,marginBottom:8}}>{message}</div>
+        {name&&<div style={{background:'#fde8dc',border:'2px solid #e85d26',borderRadius:8,padding:'10px 14px',fontSize:15,fontWeight:800,color:'#c94d1a',marginBottom:4}}>🗑 {name}</div>}
+        <div style={{fontSize:13,color:'#888',marginTop:10,marginBottom:4}}>פעולה זו היא בלתי הפיכה.</div>
+      </div>
+      <div style={{display:'flex',gap:10,padding:'12px 24px 20px',justifyContent:'flex-end'}}>
+        <button onClick={onCancel} style={{padding:'10px 22px',border:'2px solid #333',borderRadius:8,background:'white',fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>ביטול</button>
+        <button onClick={onConfirm} style={{padding:'10px 22px',border:'none',borderRadius:8,background:'#c94d1a',color:'white',fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>🗑 מחק</button>
+      </div>
+    </div>
+  </div>;
+}
+
 function Tag({label}){
   return <span style={{background:TAG_COLORS[label]||'#e2e3e5',border:'1.5px solid #333',borderRadius:3,padding:'1px 8px',fontSize:13,fontWeight:600}}>{label}</span>;
 }
@@ -860,12 +881,37 @@ function AgreementUpload({form,setForm}){
 function Employers({data,setData}){
   const [search,setSearch]=React.useState('');
   const [indFilter,setIndFilter]=React.useState('הכל');
+  const [statusFilter,setStatusFilter]=React.useState('הכל');
+  const [cityFilter,setCityFilter]=React.useState('הכל');
+  const [showFilters,setShowFilters]=React.useState(false);
   const [modal,setModal]=React.useState(null);
   const [form,setForm]=React.useState({});
   const [detail,setDetail]=React.useState(null);
   const [msgTarget,setMsgTarget]=React.useState(null);
+  const [confirmDel,setConfirmDel]=React.useState(null);
   const industries=['הכל',...new Set(data.employers.map(e=>e.industry).filter(Boolean))];
-  const filtered=data.employers.filter(e=>(e.name.includes(search)||e.contact.includes(search)||e.city.includes(search))&&(indFilter==='הכל'||e.industry===indFilter));
+  const allStatuses=['הכל',...new Set(data.employers.map(e=>e.status).filter(Boolean))];
+  const allCitiesEmp=['הכל',...[...new Set(data.employers.map(e=>e.city).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'he'))];
+  const allDomainsEmp=['הכל',...new Set((data.jobDomains||[]).map(d=>d.name).filter(Boolean))].sort((a,b)=>a==='הכל'?-1:b==='הכל'?1:a.localeCompare(b,'he'));
+  const [domainFilterEmp,setDomainFilterEmp]=React.useState('הכל');
+  const [roleFilterEmp,setRoleFilterEmp]=React.useState('הכל');
+  const allRolesEmp=React.useMemo(()=>{
+    const base=(data.jobDomains||[]).find(d=>d.name===domainFilterEmp)?.roles||[];
+    if(domainFilterEmp==='הכל') return ['הכל',...new Set(data.employers.flatMap(e=>(e.needs||[]).map(n=>n.role)).filter(Boolean))];
+    return ['הכל',...new Set([...base,...data.employers.flatMap(e=>(e.needs||[]).filter(n=>n.domain===domainFilterEmp).map(n=>n.role)).filter(Boolean)])];
+  },[domainFilterEmp,data]);
+  const activeFiltersEmp=[indFilter!=='הכל',statusFilter!=='הכל',cityFilter!=='הכל',domainFilterEmp!=='הכל',roleFilterEmp!=='הכל'].filter(Boolean).length;
+  const resetFiltersEmp=()=>{setIndFilter('הכל');setStatusFilter('הכל');setCityFilter('הכל');setDomainFilterEmp('הכל');setRoleFilterEmp('הכל');setSearch('');};
+  const filtered=data.employers.filter(e=>{
+    const s=search.trim().toLowerCase();
+    const matchSearch=!s||(e.name||'').toLowerCase().includes(s)||(e.contact||'').toLowerCase().includes(s)||(e.city||'').toLowerCase().includes(s)||(e.industry||'').toLowerCase().includes(s);
+    const matchInd=indFilter==='הכל'||e.industry===indFilter;
+    const matchStatus=statusFilter==='הכל'||e.status===statusFilter;
+    const matchCity=cityFilter==='הכל'||e.city===cityFilter;
+    const matchDomain=domainFilterEmp==='הכל'||(e.needs||[]).some(n=>n.domain===domainFilterEmp);
+    const matchRole=roleFilterEmp==='הכל'||(e.needs||[]).some(n=>n.role===roleFilterEmp);
+    return matchSearch&&matchInd&&matchStatus&&matchCity&&matchDomain&&matchRole;
+  });
   const newNeed=()=>({id:Date.now(),domain:'',role:'',count:1,fee:''});
   const totals=emp=>{const n=emp.needs||[];const tc=n.reduce((s,x)=>s+(parseInt(x.count)||0),0);const tf=n.reduce((s,x)=>s+(parseFloat((x.fee||'0').replace(/,/g,''))||0)*(parseInt(x.count||1)||1),0);return{tc,tf};};
   const openAdd=()=>{setForm({name:'',industry:'הייטק',contact:'',phone:'',email:'',city:'',status:'פעיל',notes:'',expectedIncome:'',needs:[newNeed()],contacts:[]});setModal('add');};
@@ -887,7 +933,15 @@ function Employers({data,setData}){
   };
   const del=id=>{
     const emp=data.employers.find(e=>e.id===id);
-    if(confirm('למחוק מעסיק?'))setData(d=>({...d,employers:d.employers.filter(e=>e.id!==id),activityLog:[mkLog('employer','deleted',emp?.name||id),...(d.activityLog||[])].slice(0,50)}));
+    setConfirmDel({id,name:emp?.name||id,type:'employer'});
+  };
+  const doDelEmployer=()=>{
+    if(!confirmDel)return;
+    const {id}=confirmDel;
+    const emp=data.employers.find(e=>e.id===id);
+    setData(d=>({...d,employers:d.employers.filter(e=>e.id!==id),activityLog:[mkLog('employer','deleted',emp?.name||id),...(d.activityLog||[])].slice(0,50)}));
+    setConfirmDel(null);
+    if(detail?.id===id)setDetail(null);
   };
   const newContact=()=>({id:'c'+Date.now(),name:'',role:'',phone:'',mobile:'',email:'',isPrimary:false});
   const addContact=()=>setForm(f=>{
@@ -900,17 +954,56 @@ function Employers({data,setData}){
   const setPrimaryContact=idx=>setForm(f=>({...f,contacts:(f.contacts||[]).map((c,i)=>({...c,isPrimary:i===idx}))}));
   const addNeed=()=>setForm(f=>({...f,needs:[...(f.needs||[]),newNeed()]}));
   const delNeed=idx=>setForm(f=>({...f,needs:f.needs.filter((_,i)=>i!==idx)}));
+  const updNeed=(idx,val)=>setForm(f=>({...f,needs:(f.needs||[]).map((n,i)=>i===idx?val:n)}));
 
   return <div style={{padding:28}} className="mobile-pad">
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
       <h1 style={{fontSize:28,fontWeight:800}}>🏢 מעסיקים</h1>
       <Btn variant="primary" onClick={openAdd}>+ מעסיק</Btn>
     </div>
-    <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
-      <SearchBar placeholder="חיפוש..." value={search} onChange={setSearch}/>
-      <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-        {industries.map(ind=><Btn key={ind} onClick={()=>setIndFilter(ind)} style={{background:indFilter===ind?ACC:'white',color:indFilter===ind?'white':'#333',padding:'8px 14px',fontSize:13}}>{ind}</Btn>)}
+    {/* Advanced filters bar */}
+    <div style={{background:'#fff',border:'2px solid #333',borderRadius:4,padding:'14px 18px',marginBottom:14}}>
+      <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+        <SearchBar placeholder="חיפוש שם, איש קשר, עיר, ענף..." value={search} onChange={setSearch}/>
+        <button onClick={()=>setShowFilters(v=>!v)} style={{display:'flex',alignItems:'center',gap:6,padding:'8px 14px',border:'2px solid #333',borderRadius:3,background:showFilters?'#1a1a2e':'white',color:showFilters?'white':'#333',fontFamily:'Heebo',fontSize:13,fontWeight:700,cursor:'pointer',position:'relative'}}>
+          🔽 סינון מתקדם
+          {activeFiltersEmp>0&&<span style={{background:ACC,color:'white',borderRadius:10,padding:'1px 7px',fontSize:11,fontWeight:800}}>{activeFiltersEmp}</span>}
+        </button>
+        {(search||activeFiltersEmp>0)&&<button onClick={resetFiltersEmp} style={{padding:'8px 12px',border:'2px solid #e85d26',borderRadius:3,background:'#fde8dc',color:ACC,fontFamily:'Heebo',fontSize:13,fontWeight:700,cursor:'pointer'}}>✕ נקה</button>}
+        <span style={{marginRight:'auto',fontSize:13,color:'#888',fontWeight:600}}>{filtered.length} מעסיקים</span>
       </div>
+      {showFilters&&<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:12,marginTop:14,paddingTop:14,borderTop:'1px dashed #ddd'}}>
+        <div>
+          <div style={{fontSize:12,color:'#888',fontWeight:700,marginBottom:6}}>ענף</div>
+          <select value={indFilter} onChange={e=>setIndFilter(e.target.value)} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:'white'}}>
+            {industries.map(i=><option key={i} value={i}>{i}</option>)}
+          </select>
+        </div>
+        <div>
+          <div style={{fontSize:12,color:'#888',fontWeight:700,marginBottom:6}}>סטטוס</div>
+          <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:'white'}}>
+            {allStatuses.map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+        <div>
+          <div style={{fontSize:12,color:'#888',fontWeight:700,marginBottom:6}}>עיר</div>
+          <select value={cityFilter} onChange={e=>setCityFilter(e.target.value)} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:'white'}}>
+            {allCitiesEmp.map(c=><option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div>
+          <div style={{fontSize:12,color:'#888',fontWeight:700,marginBottom:6}}>תחום נדרש</div>
+          <select value={domainFilterEmp} onChange={e=>{setDomainFilterEmp(e.target.value);setRoleFilterEmp('הכל');}} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:'white'}}>
+            {allDomainsEmp.map(d=><option key={d} value={d}>{d}</option>)}
+          </select>
+        </div>
+        <div>
+          <div style={{fontSize:12,color:'#888',fontWeight:700,marginBottom:6}}>תפקיד נדרש</div>
+          <select value={roleFilterEmp} onChange={e=>setRoleFilterEmp(e.target.value)} disabled={domainFilterEmp==='הכל'&&allRolesEmp.length<=1} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:domainFilterEmp==='הכל'&&allRolesEmp.length<=1?'#f5f5f5':'white'}}>
+            {allRolesEmp.map(r=><option key={r} value={r}>{r}</option>)}
+          </select>
+        </div>
+      </div>}
     </div>
 
     {/* Desktop table */}
@@ -1136,7 +1229,7 @@ function Employers({data,setData}){
                   <button onClick={()=>{setDetail(null);openEdit(detail);}} style={{flex:1,padding:'10px 0',background:'#1a1a2e',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>
                     ✏️ עריכה
                   </button>
-                  <button onClick={()=>{if(confirm('למחוק מעסיק?')){del(detail.id);setDetail(null);}}} style={{padding:'10px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>
+                  <button onClick={()=>del(detail.id)} style={{padding:'10px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>
                     🗑
                   </button>
                 </div>
@@ -1238,6 +1331,22 @@ function Employers({data,setData}){
       initialContactId={msgTarget.contactId||null}
       onClose={()=>setMsgTarget(null)}
     />}
+    <ConfirmDialog
+      open={!!confirmDel}
+      title="מחיקת מעסיק"
+      message="האם אתה בטוח שברצונך למחוק את המעסיק:"
+      name={confirmDel?.name}
+      onConfirm={doDelEmployer}
+      onCancel={()=>setConfirmDel(null)}
+    />
+    <ConfirmDialog
+      open={!!confirmDel}
+      title="מחיקת משרה"
+      message="האם אתה בטוח שברצונך למחוק את המשרה:"
+      name={confirmDel?.name}
+      onConfirm={doDelJob}
+      onCancel={()=>setConfirmDel(null)}
+    />
   </div>;
 }
 
@@ -1295,14 +1404,47 @@ function ImgUpload({form,setForm}){
 function Jobs({data,setData}){
   const [search,setSearch]=React.useState('');
   const [stFilter,setStFilter]=React.useState('הכל');
+  const [domainFilter,setDomainFilter]=React.useState('הכל');
+  const [empFilter,setEmpFilter]=React.useState('הכל');
+  const [typeFilter,setTypeFilter]=React.useState('הכל');
+  const [locationFilter,setLocationFilter]=React.useState('הכל');
+  const [showFilters,setShowFilters]=React.useState(false);
   const [modal,setModal]=React.useState(null);
   const [form,setForm]=React.useState({});
   const [detail,setDetail]=React.useState(null);
   const [pubJob,setPubJob]=React.useState(null);
+  const [confirmDel,setConfirmDel]=React.useState(null);
+
+  const allDomainsJ=['הכל',...new Set(data.jobs.map(j=>j.domain).filter(Boolean))].sort((a,b)=>a==='הכל'?-1:b==='הכל'?1:a.localeCompare(b,'he'));
+  const allEmps=['הכל',...new Set(data.jobs.map(j=>{const e=data.employers.find(x=>x.id===j.employerId);return e?.name||null;}).filter(Boolean))].sort((a,b)=>a==='הכל'?-1:b==='הכל'?1:a.localeCompare(b,'he'));
+  const allTypes=['הכל',...new Set(data.jobs.map(j=>j.type).filter(Boolean))];
+  const allLocations=['הכל',...new Set(data.jobs.map(j=>j.location).filter(Boolean))].sort((a,b)=>a==='הכל'?-1:b==='הכל'?1:a.localeCompare(b,'he'));
+  const [roleFilterJ,setRoleFilterJ]=React.useState('הכל');
+  const [salaryMin,setSalaryMin]=React.useState('');
+  const [salaryMax,setSalaryMax]=React.useState('');
+  const allRolesJ=React.useMemo(()=>{
+    const base=domainFilter==='הכל'?(data.jobDomains||[]).flatMap(d=>d.roles||[]):(data.jobDomains||[]).find(d=>d.name===domainFilter)?.roles||[];
+    return ['הכל',...new Set([...base,...data.jobs.filter(j=>domainFilter==='הכל'||j.domain===domainFilter).map(j=>j.role).filter(Boolean)])];
+  },[domainFilter,data]);
+  const parseSalaryNum=sal=>{const n=parseFloat((sal||'').replace(/[^0-9.]/g,''));return isNaN(n)?null:n;};
+  const activeFiltersJ=[stFilter!=='הכל',domainFilter!=='הכל',empFilter!=='הכל',typeFilter!=='הכל',locationFilter!=='הכל',roleFilterJ!=='הכל',!!salaryMin,!!salaryMax].filter(Boolean).length;
+  const resetFiltersJ=()=>{setStFilter('הכל');setDomainFilter('הכל');setEmpFilter('הכל');setTypeFilter('הכל');setLocationFilter('הכל');setRoleFilterJ('הכל');setSalaryMin('');setSalaryMax('');setSearch('');};
 
   const filtered=data.jobs.filter(j=>{
     const emp=data.employers.find(e=>e.id===j.employerId);
-    return (j.title.includes(search)||(emp?.name||'').includes(search)||j.location.includes(search))&&(stFilter==='הכל'||j.status===stFilter);
+    const s=search.trim().toLowerCase();
+    const matchSearch=!s||(j.title||'').toLowerCase().includes(s)||(j.publishTitle||'').toLowerCase().includes(s)||(emp?.name||'').toLowerCase().includes(s)||(j.location||'').toLowerCase().includes(s)||(j.domain||'').toLowerCase().includes(s)||(j.role||'').toLowerCase().includes(s);
+    const matchStatus=stFilter==='הכל'||j.status===stFilter;
+    const matchDomain=domainFilter==='הכל'||j.domain===domainFilter;
+    const matchEmp=empFilter==='הכל'||(emp?.name||'')=== empFilter;
+    const matchType=typeFilter==='הכל'||j.type===typeFilter;
+    const matchLocation=locationFilter==='הכל'||j.location===locationFilter;
+    const matchRole=roleFilterJ==='הכל'||j.role===roleFilterJ;
+    const salParts=(j.salary||'').split('-').map(x=>parseSalaryNum(x)).filter(v=>v!==null);
+    const salLow=salParts[0]||null; const salHigh=salParts[1]||salLow;
+    const minOk=!salaryMin||salHigh===null||(salHigh>=(parseSalaryNum(salaryMin)||0));
+    const maxOk=!salaryMax||salLow===null||(salLow<=(parseSalaryNum(salaryMax)||Infinity));
+    return matchSearch&&matchStatus&&matchDomain&&matchEmp&&matchType&&matchLocation&&matchRole&&minOk&&maxOk;
   });
 
   const nextNum=()=>{
@@ -1326,7 +1468,15 @@ function Jobs({data,setData}){
   };
   const del=id=>{
     const job=data.jobs.find(j=>j.id===id);
-    if(confirm('למחוק משרה?'))setData(d=>({...d,jobs:d.jobs.filter(j=>j.id!==id),activityLog:[mkLog('job','deleted',job?.publishTitle||job?.title||id),...(d.activityLog||[])].slice(0,50)}));
+    setConfirmDel({id,name:job?.publishTitle||job?.title||job?.jobNumber||id});
+  };
+  const doDelJob=()=>{
+    if(!confirmDel)return;
+    const {id}=confirmDel;
+    const job=data.jobs.find(j=>j.id===id);
+    setData(d=>({...d,jobs:d.jobs.filter(j=>j.id!==id),activityLog:[mkLog('job','deleted',job?.publishTitle||job?.title||id),...(d.activityLog||[])].slice(0,50)}));
+    setConfirmDel(null);
+    if(detail?.id===id)setDetail(null);
   };
 
 
@@ -1335,11 +1485,63 @@ function Jobs({data,setData}){
       <h1 style={{fontSize:28,fontWeight:800}}>📋 משרות</h1>
       <Btn variant="primary" onClick={openAdd}>+ משרה</Btn>
     </div>
-    <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
-      <SearchBar placeholder="חיפוש..." value={search} onChange={setSearch}/>
-      <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-        {['הכל','פתוח','ממתין','סגור'].map(s=><Btn key={s} onClick={()=>setStFilter(s)} style={{background:stFilter===s?ACC:'white',color:stFilter===s?'white':'#333',padding:'8px 14px',fontSize:13}}>{s}</Btn>)}
+    {/* Advanced filters bar - Jobs */}
+    <div style={{background:'#fff',border:'2px solid #333',borderRadius:4,padding:'14px 18px',marginBottom:14}}>
+      <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+        <SearchBar placeholder="חיפוש משרה, מעסיק, מיקום, תחום..." value={search} onChange={setSearch}/>
+        <button onClick={()=>setShowFilters(v=>!v)} style={{display:'flex',alignItems:'center',gap:6,padding:'8px 14px',border:'2px solid #333',borderRadius:3,background:showFilters?'#1a1a2e':'white',color:showFilters?'white':'#333',fontFamily:'Heebo',fontSize:13,fontWeight:700,cursor:'pointer'}}>
+          🔽 סינון מתקדם
+          {activeFiltersJ>0&&<span style={{background:ACC,color:'white',borderRadius:10,padding:'1px 7px',fontSize:11,fontWeight:800}}>{activeFiltersJ}</span>}
+        </button>
+        {(search||activeFiltersJ>0)&&<button onClick={resetFiltersJ} style={{padding:'8px 12px',border:'2px solid #e85d26',borderRadius:3,background:'#fde8dc',color:ACC,fontFamily:'Heebo',fontSize:13,fontWeight:700,cursor:'pointer'}}>✕ נקה</button>}
+        <span style={{marginRight:'auto',fontSize:13,color:'#888',fontWeight:600}}>{filtered.length} משרות</span>
       </div>
+      {showFilters&&<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))',gap:12,marginTop:14,paddingTop:14,borderTop:'1px dashed #ddd'}}>
+        <div>
+          <div style={{fontSize:12,color:'#888',fontWeight:700,marginBottom:6}}>סטטוס</div>
+          <select value={stFilter} onChange={e=>setStFilter(e.target.value)} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:'white'}}>
+            {['הכל','פתוח','ממתין','סגור'].map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+        <div>
+          <div style={{fontSize:12,color:'#888',fontWeight:700,marginBottom:6}}>תחום</div>
+          <select value={domainFilter} onChange={e=>setDomainFilter(e.target.value)} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:'white'}}>
+            {allDomainsJ.map(d=><option key={d} value={d}>{d}</option>)}
+          </select>
+        </div>
+        <div>
+          <div style={{fontSize:12,color:'#888',fontWeight:700,marginBottom:6}}>מעסיק</div>
+          <select value={empFilter} onChange={e=>setEmpFilter(e.target.value)} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:'white'}}>
+            {allEmps.map(e=><option key={e} value={e}>{e}</option>)}
+          </select>
+        </div>
+        <div>
+          <div style={{fontSize:12,color:'#888',fontWeight:700,marginBottom:6}}>סוג משרה</div>
+          <select value={typeFilter} onChange={e=>setTypeFilter(e.target.value)} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:'white'}}>
+            {allTypes.map(t=><option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        <div>
+          <div style={{fontSize:12,color:'#888',fontWeight:700,marginBottom:6}}>מיקום</div>
+          <select value={locationFilter} onChange={e=>setLocationFilter(e.target.value)} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:'white'}}>
+            {allLocations.map(l=><option key={l} value={l}>{l}</option>)}
+          </select>
+        </div>
+        <div>
+          <div style={{fontSize:12,color:'#888',fontWeight:700,marginBottom:6}}>תפקיד</div>
+          <select value={roleFilterJ} onChange={e=>setRoleFilterJ(e.target.value)} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:'white'}}>
+            {allRolesJ.map(r=><option key={r} value={r}>{r}</option>)}
+          </select>
+        </div>
+        <div>
+          <div style={{fontSize:12,color:'#888',fontWeight:700,marginBottom:6}}>שכר מינימום ₪</div>
+          <input type="number" value={salaryMin} onChange={e=>setSalaryMin(e.target.value)} placeholder="לדוגמה: 10000" style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:'white'}}/>
+        </div>
+        <div>
+          <div style={{fontSize:12,color:'#888',fontWeight:700,marginBottom:6}}>שכר מקסימום ₪</div>
+          <input type="number" value={salaryMax} onChange={e=>setSalaryMax(e.target.value)} placeholder="לדוגמה: 30000" style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:'white'}}/>
+        </div>
+      </div>}
     </div>
     {/* Desktop table */}
     <div className="sbox desktop-only" style={{background:'#fff',overflowX:'auto'}}>
@@ -1524,7 +1726,7 @@ function Jobs({data,setData}){
                   <button onClick={()=>{setDetail(null);openEdit(detail);}} style={{flex:1,padding:'11px 0',background:'#1a1a2e',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
                     ✏️ ערוך משרה
                   </button>
-                  <button onClick={()=>{if(confirm('למחוק משרה?')){del(detail.id);setDetail(null);}}} style={{padding:'11px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+                  <button onClick={()=>del(detail.id)} style={{padding:'11px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
                     🗑
                   </button>
                 </div>
@@ -1609,6 +1811,7 @@ function Candidates({data,setData}){
   const [detail,setDetail]=React.useState(null);
   const [msgTarget,setMsgTarget]=React.useState(null);
   const [jobSearch,setJobSearch]=React.useState('');
+  const [confirmDel,setConfirmDel]=React.useState(null);
   const stages=['חדש','בתהליך','ראיון נקבע','הוצב'];
   const pendingIds=new Set(data.pendingCandidates||[]);
   const filtered=data.candidates.filter(c=>!pendingIds.has(c.id)&&(c.name.includes(search)||c.role.includes(search)||(c.city||'').includes(search))&&(stFilter==='הכל'||c.status===stFilter));
@@ -1624,7 +1827,15 @@ function Candidates({data,setData}){
   };
   const del=id=>{
     const cand=data.candidates.find(c=>c.id===id);
-    if(confirm('למחוק מועמד?'))setData(d=>({...d,candidates:d.candidates.filter(c=>c.id!==id),activityLog:[mkLog('candidate','deleted',cand?.name||id),...(d.activityLog||[])].slice(0,50)}));
+    setConfirmDel({id,name:cand?.name||id});
+  };
+  const doDelCandidate=()=>{
+    if(!confirmDel)return;
+    const {id}=confirmDel;
+    const cand=data.candidates.find(c=>c.id===id);
+    setData(d=>({...d,candidates:d.candidates.filter(c=>c.id!==id),activityLog:[mkLog('candidate','deleted',cand?.name||id),...(d.activityLog||[])].slice(0,50)}));
+    setConfirmDel(null);
+    if(detail?.id===id)setDetail(null);
   };
 
   const approvePendingLocal=(cid)=>{
@@ -1635,13 +1846,22 @@ function Candidates({data,setData}){
       activityLog:[mkLog('pending','approved',cand?.name||cid),...(d.activityLog||[])].slice(0,50)
     }));
   };
+  const [confirmReject,setConfirmReject]=React.useState(null);
   const rejectPendingLocal=(cid)=>{
+    const cand=data.candidates.find(c=>c.id===cid);
+    setConfirmReject({id:cid,name:cand?.name||cid});
+  };
+  const doRejectPendingLocal=()=>{
+    if(!confirmReject)return;
+    const {id:cid}=confirmReject;
     const cand=data.candidates.find(c=>c.id===cid);
     setData(d=>({...d,
       pendingCandidates:(d.pendingCandidates||[]).filter(id=>id!==cid),
       candidates:d.candidates.filter(c=>c.id!==cid),
       activityLog:[mkLog('pending','rejected',cand?.name||cid),...(d.activityLog||[])].slice(0,50)
     }));
+    setConfirmReject(null);
+    if(detail?.id===cid)setDetail(null);
   };
 
   const [showAdvanced,setShowAdvanced]=React.useState(false);
@@ -1955,7 +2175,7 @@ function Candidates({data,setData}){
               {pendingIds.has(detail.id)&&<div style={{background:'#f0fdf4',border:'1.5px solid #86efac',borderRadius:12,padding:'14px 16px',display:'flex',gap:10,alignItems:'center'}}>
                 <span style={{flex:1,fontSize:14,color:'#15803d',fontWeight:600}}>מועמד זה ממתין לאישורך</span>
                 <button onClick={()=>{approvePendingLocal(detail.id);setDetail(null);}} style={{padding:'9px 18px',background:'#16a34a',color:'white',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>✅ אשר</button>
-                <button onClick={()=>{rejectPendingLocal(detail.id);setDetail(null);}} style={{padding:'9px 14px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>✕ דחה</button>
+                <button onClick={()=>rejectPendingLocal(detail.id)} style={{padding:'9px 14px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>✕ דחה</button>
               </div>}
 
               {/* כפתורי תקשורת */}
@@ -1996,7 +2216,7 @@ function Candidates({data,setData}){
                 <button onClick={()=>{setDetail(null);openEdit(detail);}} style={{flex:1,padding:'11px 0',background:'#1a1a2e',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
                   ✏️ ערוך פרטים
                 </button>
-                <button onClick={()=>{if(confirm('למחוק מועמד?')){del(detail.id);setDetail(null);}}} style={{padding:'11px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+                <button onClick={()=>del(detail.id)} style={{padding:'11px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
                   🗑
                 </button>
               </div>
@@ -2099,6 +2319,22 @@ function Candidates({data,setData}){
       employer={data.employers.find(e=>e.id===data.jobs.find(j=>msgTarget.c.appliedJobs?.includes(j.id))?.employerId)}
       onClose={()=>setMsgTarget(null)}
     />}
+    <ConfirmDialog
+      open={!!confirmDel}
+      title="מחיקת מועמד"
+      message="האם אתה בטוח שברצונך למחוק את המועמד:"
+      name={confirmDel?.name}
+      onConfirm={doDelCandidate}
+      onCancel={()=>setConfirmDel(null)}
+    />
+    <ConfirmDialog
+      open={!!confirmReject}
+      title="דחיית מועמד בהמתנה"
+      message="האם אתה בטוח שברצונך לדחות את המועמד:"
+      name={confirmReject?.name}
+      onConfirm={doRejectPendingLocal}
+      onCancel={()=>setConfirmReject(null)}
+    />
   </div>;
 }
 
@@ -2505,9 +2741,9 @@ function CandidateHunter({data}){
         <div>
           <label style={labelStyle}>תחום מקצועי</label>
           <select value={domain} onChange={e=>{setDomain(e.target.value);setRole('');setRoleSearch('');}}
-            style={{...inputStyle,cursor:'pointer'}}>
-            <option value="">-- כל התחומים --</option>
-            {allDomains.map(d=><option key={d} value={d}>{d}</option>)}
+            style={{...inputStyle,cursor:'pointer',background:'#2d2d44',color:'white'}}>
+            <option value="" style={{background:'#2d2d44',color:'white'}}>-- כל התחומים --</option>
+            {allDomains.map(d=><option key={d} value={d} style={{background:'#2d2d44',color:'white'}}>{d}</option>)}
           </select>
         </div>
 
@@ -2542,9 +2778,9 @@ function CandidateHunter({data}){
         <div>
           <label style={labelStyle}>אזור / עיר</label>
           <select value={city} onChange={e=>setCity(e.target.value)}
-            style={{...inputStyle,cursor:'pointer'}}>
-            <option value="">-- כל האזורים --</option>
-            {allCities.map(c=><option key={c} value={c}>{c}</option>)}
+            style={{...inputStyle,cursor:'pointer',background:'#2d2d44',color:'white'}}>
+            <option value="" style={{background:'#2d2d44',color:'white'}}>-- כל האזורים --</option>
+            {allCities.map(c=><option key={c} value={c} style={{background:'#2d2d44',color:'white'}}>{c}</option>)}
           </select>
         </div>
       </div>
@@ -2556,9 +2792,9 @@ function CandidateHunter({data}){
           <label style={labelStyle}>טען ממשרה קיימת</label>
           <div style={{display:'flex',gap:8}}>
             <select value={selJob} onChange={e=>setSelJob(e.target.value)}
-              style={{...inputStyle,flex:1,cursor:'pointer'}}>
-              <option value="">-- בחר משרה --</option>
-              {data.jobs.map(j=><option key={j.id} value={j.id}>{j.jobNumber} — {j.title} ({j.status})</option>)}
+              style={{...inputStyle,flex:1,cursor:'pointer',background:'#2d2d44',color:'white'}}>
+              <option value="" style={{background:'#2d2d44',color:'white'}}>-- בחר משרה --</option>
+              {data.jobs.map(j=><option key={j.id} value={j.id} style={{background:'#2d2d44',color:'white'}}>{j.jobNumber} — {j.title} ({j.status})</option>)}
             </select>
             <button onClick={loadFromJob} disabled={!selJob}
               style={{padding:'10px 16px',background:selJob?'#e85d26':'rgba(255,255,255,0.1)',color:'white',border:'none',borderRadius:9,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:selJob?'pointer':'not-allowed',flexShrink:0}}>
@@ -3080,7 +3316,14 @@ function AppInner(){
       activityLog:[mkLog('pending','approved',cand?.name||cid),...(d.activityLog||[])].slice(0,50)
     }));
   };
+  const [confirmRejectApp,setConfirmRejectApp]=React.useState(null);
   const rejectPending=(cid)=>{
+    const cand2=data.candidates.find(c=>c.id===cid);
+    setConfirmRejectApp({id:cid,name:cand2?.name||cid});
+  };
+  const doRejectPending=()=>{
+    if(!confirmRejectApp)return;
+    const {id:cid}=confirmRejectApp;
     const cand2=data.candidates.find(c=>c.id===cid);
     setData(d=>({
       ...d,
@@ -3088,6 +3331,7 @@ function AppInner(){
       candidates:d.candidates.filter(c=>c.id!==cid),
       activityLog:[mkLog('pending','rejected',cand2?.name||cid),...(d.activityLog||[])].slice(0,50)
     }));
+    setConfirmRejectApp(null);
   };
 
   return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#f5f0e8'}}>
@@ -3170,6 +3414,14 @@ function AppInner(){
         </div>
       </div>
     </div>}
+    <ConfirmDialog
+      open={!!confirmRejectApp}
+      title="דחיית מועמד בהמתנה"
+      message="האם אתה בטוח שברצונך לדחות את המועמד:"
+      name={confirmRejectApp?.name}
+      onConfirm={doRejectPending}
+      onCancel={()=>setConfirmRejectApp(null)}
+    />
   </div>;
 }
 
