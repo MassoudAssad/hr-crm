@@ -3617,7 +3617,18 @@ function AppInner(){
     loadFromSupabase().then(sbData=>{
       if(sbData&&(sbData.employers?.length||sbData.jobs?.length||sbData.candidates?.length||sbData.jobDomains?.length)){
         const jobs=(sbData.jobs||[]).map(j=>({domain:'',role:'',description:'',requirements:'',benefits:'',image:'',publishTitle:'',...j}));
-        const merged={...sbData,jobs,candidates:(sbData.candidates||[]).map(c=>({domain:'',...c})),employers:(sbData.employers||[]).map(e=>({needs:[],...e})),jobDomains:sbData.jobDomains?.length?sbData.jobDomains:INIT.jobDomains};
+        const merged={
+          ...sbData,
+          jobs,
+          candidates:(sbData.candidates||[]).map(c=>({domain:'',...c})),
+          employers:(sbData.employers||[]).map(e=>({needs:[],...e})),
+          jobDomains:sbData.jobDomains?.length?sbData.jobDomains:INIT.jobDomains,
+          displaySettings:sbData.displaySettings||undefined,
+          kpiColors:sbData.kpiColors||undefined,
+          commissionBg:sbData.commissionBg||undefined,
+          pipelineColors:sbData.pipelineColors||undefined,
+          defaults:sbData.defaults||undefined,
+        };
         setData(merged);
         localStorage.setItem('crm_data',JSON.stringify(merged));
         setSyncStatus('ok');
@@ -3634,7 +3645,18 @@ function AppInner(){
       loadFromSupabase().then(sbData=>{
         if(!sbData)return;
         const jobs=(sbData.jobs||[]).map(j=>({domain:'',role:'',description:'',requirements:'',benefits:'',image:'',publishTitle:'',...j}));
-        const merged={...sbData,jobs,candidates:(sbData.candidates||[]).map(c=>({domain:'',...c})),employers:(sbData.employers||[]).map(e=>({needs:[],...e})),jobDomains:sbData.jobDomains?.length?sbData.jobDomains:INIT.jobDomains};
+        const merged={
+          ...sbData,
+          jobs,
+          candidates:(sbData.candidates||[]).map(c=>({domain:'',...c})),
+          employers:(sbData.employers||[]).map(e=>({needs:[],...e})),
+          jobDomains:sbData.jobDomains?.length?sbData.jobDomains:INIT.jobDomains,
+          displaySettings:sbData.displaySettings||undefined,
+          kpiColors:sbData.kpiColors||undefined,
+          commissionBg:sbData.commissionBg||undefined,
+          pipelineColors:sbData.pipelineColors||undefined,
+          defaults:sbData.defaults||undefined,
+        };
         setData(merged);
         localStorage.setItem('crm_data',JSON.stringify(merged));
         setSyncStatus('ok');
