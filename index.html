@@ -12,7 +12,7 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root { --acc: #e85d26; --acc-light: #fde8dc; --acc-dark: #c94d1a; }
-body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; overflow-x: hidden; font-size: 16px; }
+body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; overflow-x: hidden; }
 .sbox { border: 2px solid #333; border-radius: 2px; position: relative; }
 .sbox::before { content:''; position:absolute; inset:2px; border:1px solid rgba(0,0,0,0.07); border-radius:1px; pointer-events:none; }
 
@@ -70,7 +70,9 @@ body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; ov
 <script>
 (function(){
   var acc=localStorage.getItem('crm_accentColor')||'#e85d26';
+  var fs=localStorage.getItem('crm_fontSize')||'';
   document.documentElement.style.setProperty('--acc',acc);
+  if(fs) document.body.style.fontSize=fs;
 })();
 </script>
 </head>
@@ -3159,8 +3161,12 @@ function Settings({data,setData}){
   const saveDisplay=()=>{
     const saved={...display};
     setData(d=>({...d,displaySettings:saved}));
-    // Save font size directly to localStorage for immediate next-load apply
+    // Font size: save to localStorage, applied on next load via early script
+    const sizeMap={small:'13px',normal:'16px',large:'19px',xlarge:'22px'};
+    localStorage.setItem('crm_fontSize',sizeMap[saved.fontSize||'normal']);
     localStorage.setItem('crm_accentColor',saved.accentColor||'#e85d26');
+    // Apply font size immediately too
+    document.body.style.fontSize=sizeMap[saved.fontSize||'normal'];
     document.body.style.filter=saved.highContrast?'contrast(1.25)':'';
     document.documentElement.style.setProperty('--acc',saved.accentColor||'#e85d26');
     setDisplaySaved(true);
@@ -3267,6 +3273,20 @@ function Settings({data,setData}){
       </div>
 
 
+
+      <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
+        <h3 style={{fontSize:17,fontWeight:800,marginBottom:18,color:'#1a1a2e'}}>🔤 גודל גופן</h3>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+          {[{id:'small',label:'קטן',px:'13px'},{id:'normal',label:'רגיל',px:'16px'},{id:'large',label:'גדול',px:'19px'},{id:'xlarge',label:'גדול מאוד',px:'22px'}].map(o=>(
+            <button key={o.id} type="button" onClick={()=>setDisplay(d=>({...d,fontSize:o.id}))}
+              style={{padding:'14px 8px',border:`2px solid ${(display.fontSize||'normal')===o.id?ACC:'#ddd'}`,borderRadius:8,background:(display.fontSize||'normal')===o.id?'#fff5f0':'white',cursor:'pointer',fontFamily:'Heebo',transition:'all .15s'}}>
+              <div style={{fontSize:o.px,fontWeight:700,color:(display.fontSize||'normal')===o.id?ACC:'#333',marginBottom:4}}>א</div>
+              <div style={{fontSize:'12px',color:(display.fontSize||'normal')===o.id?ACC:'#666',fontWeight:600}}>{o.label}</div>
+            </button>
+          ))}
+        </div>
+        <div style={{fontSize:'12px',color:'#888',marginTop:10}}>השינוי יכנס לתוקף לאחר שמירה ורענון הדף</div>
+      </div>
 
       <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
         <h3 style={{fontSize:17,fontWeight:800,marginBottom:18,color:'#1a1a2e'}}>🎨 צבע הדגש</h3>
