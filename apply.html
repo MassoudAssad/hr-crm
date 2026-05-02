@@ -215,7 +215,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
       job.type        ? `<div class="tag">💼 ${job.type}</div>` : '',
       job.domain      ? `<div class="tag">🏷 ${job.domain}</div>` : '',
       job.role        ? `<div class="tag">👤 ${job.role}</div>` : '',
-      job.salary      ? `<div class="tag tag-salary">₪ ${fmt(job.salary)}</div>` : '',
+      '',
       job.employerName? `<div class="tag tag-company">🏢 ${job.employerName}</div>` : '',
     ].filter(Boolean).join('');
 
