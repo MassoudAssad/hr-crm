@@ -187,7 +187,7 @@ function Avatar({name,size=32}){
 
 function Btn({children,variant,onClick,style={}}){
   const pri=variant==='primary';
-  return <button onClick={onClick} style={{background:pri?ACC:'white',color:pri?'white':'#333',border:'2px solid #333',borderRadius:3,padding:'6px 14px',cursor:'pointer',fontFamily:'Heebo,sans-serif',fontSize:14,fontWeight:600,...style}}
+  return <button type="button" onClick={onClick} style={{background:pri?ACC:'white',color:pri?'white':'#333',border:'2px solid #333',borderRadius:3,padding:'6px 14px',cursor:'pointer',fontFamily:'Heebo,sans-serif',fontSize:14,fontWeight:600,...style}}
     onMouseDown={e=>e.currentTarget.style.transform='scale(0.97)'}
     onMouseUp={e=>e.currentTarget.style.transform='scale(1)'}
     onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>{children}</button>;
@@ -3152,14 +3152,18 @@ function Settings({data,setData}){
   },[data.displaySettings]);
   const [displaySaved,setDisplaySaved]=React.useState(false);
   const saveDisplay=()=>{
-    const saved={...display};
-    setData(d=>({...d,displaySettings:saved}));
-    const sizeMap={small:'0.85rem',normal:'1rem',large:'1.15rem',xlarge:'1.3rem'};
-    document.documentElement.style.setProperty('--fs',sizeMap[saved.fontSize]||'1rem');
-    document.body.style.filter=saved.highContrast?'contrast(1.25)':'';
-    document.documentElement.style.setProperty('--acc',saved.accentColor||'#e85d26');
-    setDisplaySaved(true);
-    setTimeout(()=>setDisplaySaved(false),3000);
+    try{
+      const saved={...display};
+      console.log('saveDisplay called', saved);
+      setData(d=>({...d,displaySettings:saved}));
+      const sizeMap={small:'0.85rem',normal:'1rem',large:'1.15rem',xlarge:'1.3rem'};
+      document.documentElement.style.setProperty('--fs',sizeMap[saved.fontSize]||'1rem');
+      document.body.style.filter=saved.highContrast?'contrast(1.25)':'';
+      document.documentElement.style.setProperty('--acc',saved.accentColor||'#e85d26');
+      setDisplaySaved(true);
+      setTimeout(()=>setDisplaySaved(false),3000);
+      console.log('saveDisplay done');
+    }catch(e){console.error('saveDisplay error:',e);}
   };
 
   // Defaults settings
