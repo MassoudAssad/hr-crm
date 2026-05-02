@@ -3151,11 +3151,12 @@ function Settings({data,setData}){
   const addStatus=(key)=>{const v=newStatus[key].trim();if(!v)return;const updated={...statuses,[key]:[...statuses[key],v]};setStatuses(updated);setData(d=>({...d,statuses:updated}));setNewStatus(n=>({...n,[key]:''}));};
   const delStatus=(key,item)=>{const updated={...statuses,[key]:statuses[key].filter(s=>s!==item)};setStatuses(updated);setData(d=>({...d,statuses:updated}));};
 
-  // Display settings
-  const [display,setDisplay]=React.useState(()=>data.displaySettings||{fontSize:'normal',highContrast:false,accentColor:'#e85d26',colorScheme:'light',userName:'מנהל מערכת'});
-  // Sync display state when data loads from Supabase
+  // Display settings — defaults always present, merged with Supabase data
+  const DISPLAY_DEFAULTS={fontSize:'normal',highContrast:false,accentColor:'#e85d26',colorScheme:'light',userName:'מנהל מערכת'};
+  const [display,setDisplay]=React.useState(()=>({...DISPLAY_DEFAULTS,...(data.displaySettings||{})}));
+  // Sync display state when data loads from Supabase — always merge with defaults
   React.useEffect(()=>{
-    if(data.displaySettings) setDisplay(data.displaySettings);
+    if(data.displaySettings) setDisplay({...DISPLAY_DEFAULTS,...data.displaySettings});
   },[data.displaySettings]);
   const [displaySaved,setDisplaySaved]=React.useState(false);
   const saveDisplay=()=>{
