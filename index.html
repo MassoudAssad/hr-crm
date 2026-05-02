@@ -3152,18 +3152,14 @@ function Settings({data,setData}){
   },[data.displaySettings]);
   const [displaySaved,setDisplaySaved]=React.useState(false);
   const saveDisplay=()=>{
-    try{
-      const saved={...display};
-      console.log('saveDisplay called', saved);
-      setData(d=>({...d,displaySettings:saved}));
-      const sizeMap={small:'0.85rem',normal:'1rem',large:'1.15rem',xlarge:'1.3rem'};
-      document.documentElement.style.setProperty('--fs',sizeMap[saved.fontSize]||'1rem');
-      document.body.style.filter=saved.highContrast?'contrast(1.25)':'';
-      document.documentElement.style.setProperty('--acc',saved.accentColor||'#e85d26');
-      setDisplaySaved(true);
-      setTimeout(()=>setDisplaySaved(false),3000);
-      console.log('saveDisplay done');
-    }catch(e){console.error('saveDisplay error:',e);}
+    const saved={...display};
+    setData(d=>({...d,displaySettings:saved}));
+    const sizeMap={small:'0.85rem',normal:'1rem',large:'1.15rem',xlarge:'1.3rem'};
+    document.documentElement.style.setProperty('--fs',sizeMap[saved.fontSize]||'1.15rem');
+    document.body.style.filter=saved.highContrast?'contrast(1.25)':'';
+    document.documentElement.style.setProperty('--acc',saved.accentColor||'#e85d26');
+    setDisplaySaved(true);
+    setTimeout(()=>setDisplaySaved(false),3000);
   };
 
   // Defaults settings
@@ -3673,8 +3669,8 @@ function AppInner(){
   // Apply display settings on data change
   React.useEffect(()=>{
     const ds=data.displaySettings||{};
-    const sizeMap={small:'0.85rem',normal:'1rem',large:'1.15rem',xlarge:'1.3rem'};
-    if(ds.fontSize) document.documentElement.style.setProperty('--fs',sizeMap[ds.fontSize]||'1rem');
+    const sizeMap={small:'0.85rem',normal:'1.15rem',large:'1.15rem',xlarge:'1.3rem'};
+    document.documentElement.style.setProperty('--fs',sizeMap[ds.fontSize||'normal']||'1.15rem');
     document.body.style.filter=ds.highContrast?'contrast(1.25)':'';
     // Apply accent color via CSS variable
     const acc=ds.accentColor||'#e85d26';
