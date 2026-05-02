@@ -818,9 +818,9 @@ function NeedRow({need,domains,onChange,onDel}){
     </div>
     <div>
       <div style={{fontSize:12,color:MUT,marginBottom:2}}>תפקיד</div>
-      <select value={need.role||''} onChange={e=>onChange({...need,role:e.target.value})} disabled={!need.domain} style={{width:'100%',padding:'6px 8px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:!need.domain?'#f5f5f5':'white'}}>
-        <option value="">{need.domain?'-- תפקיד --':'בחר תחום'}</option>
-        {(domains||[]).find(d=>d.name===need.domain)?.roles.map(r=><option key={r} value={r}>{r}</option>)}
+      <select value={need.role||''} onChange={e=>onChange({...need,role:e.target.value})} disabled={!(need.domain||'').trim()} style={{width:'100%',padding:'6px 8px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:!(need.domain||'').trim()?'#f5f5f5':'white'}}>
+        <option value="">{(need.domain||'').trim()?'-- תפקיד --':'בחר תחום'}</option>
+        {(domains||[]).find(d=>d.name.trim()===(need.domain||'').trim())?.roles.map(r=><option key={r} value={r}>{r}</option>)}
       </select>
     </div>
     <div>
