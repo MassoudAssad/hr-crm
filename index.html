@@ -3150,6 +3150,7 @@ function Settings({data,setData}){
   React.useEffect(()=>{
     if(data.displaySettings) setDisplay(data.displaySettings);
   },[data.displaySettings]);
+  const [displaySaved,setDisplaySaved]=React.useState(false);
   const saveDisplay=()=>{
     const saved={...display};
     setData(d=>({...d,displaySettings:saved}));
@@ -3157,13 +3158,15 @@ function Settings({data,setData}){
     document.documentElement.style.setProperty('--fs',sizeMap[saved.fontSize]||'1rem');
     document.body.style.filter=saved.highContrast?'contrast(1.25)':'';
     document.documentElement.style.setProperty('--acc',saved.accentColor||'#e85d26');
-    alert('✅ הגדרות תצוגה נשמרו!');
+    setDisplaySaved(true);
+    setTimeout(()=>setDisplaySaved(false),3000);
   };
 
   // Defaults settings
   const [defaults,setDefaults]=React.useState(()=>data.defaults||{employerStatus:'פעיל',jobStatus:'פתוח',candidateStatus:'חדש',yearlyTarget:'',deadlineDays:'7',currency:'₪'});
   React.useEffect(()=>{if(data.defaults)setDefaults(data.defaults);},[data.defaults]);
-  const saveDefaults=()=>{const saved={...defaults};setData(d=>({...d,defaults:saved}));alert('✅ ברירות המחדל נשמרו!');};
+  const [defaultsSaved,setDefaultsSaved]=React.useState(false);
+  const saveDefaults=()=>{const saved={...defaults};setData(d=>({...d,defaults:saved}));setDefaultsSaved(true);setTimeout(()=>setDefaultsSaved(false),3000);};
 
   const tabs=[{id:'general',label:'כללי'},{id:'display',label:'🎨 תצוגה'},{id:'users',label:'משתמשים'},{id:'domains',label:'תחומים ותפקידים'},{id:'statuses',label:'סטטוסים'},{id:'defaults',label:'ברירות מחדל'},{id:'notifications',label:'התראות'}];
   return <div style={{padding:28}} className="mobile-pad">
@@ -3308,7 +3311,10 @@ function Settings({data,setData}){
         </label>
       </div>
 
-      <Btn variant="primary" onClick={saveDisplay}>💾 שמור הגדרות תצוגה</Btn>
+      <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <Btn variant="primary" onClick={saveDisplay}>💾 שמור הגדרות תצוגה</Btn>
+        {displaySaved&&<div style={{background:'#dcfce7',border:'1px solid #86efac',borderRadius:8,padding:'8px 16px',fontSize:14,fontWeight:700,color:'#16a34a'}}>✅ נשמר בהצלחה!</div>}
+      </div>
     </div>}
 
     {tab==='defaults'&&<div style={{maxWidth:560}}>
@@ -3376,7 +3382,10 @@ function Settings({data,setData}){
         </div>
       </div>
 
-      <Btn variant="primary" onClick={saveDefaults}>💾 שמור ברירות מחדל</Btn>
+      <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <Btn variant="primary" onClick={saveDefaults}>💾 שמור ברירות מחדל</Btn>
+        {defaultsSaved&&<div style={{background:'#dcfce7',border:'1px solid #86efac',borderRadius:8,padding:'8px 16px',fontSize:14,fontWeight:700,color:'#16a34a'}}>✅ נשמר בהצלחה!</div>}
+      </div>
     </div>}
 
     {tab==='statuses'&&<div style={{maxWidth:500}}>
