@@ -70,9 +70,9 @@ body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; ov
 <script>
 (function(){
   var acc=localStorage.getItem('crm_accentColor')||'#e85d26';
-  var fs=localStorage.getItem('crm_fontSize')||'';
+  var zoom=localStorage.getItem('crm_zoom')||'100%';
   document.documentElement.style.setProperty('--acc',acc);
-  if(fs) document.body.style.fontSize=fs;
+  document.body.style.zoom=zoom;
 })();
 </script>
 </head>
@@ -3152,7 +3152,7 @@ function Settings({data,setData}){
   const delStatus=(key,item)=>{const updated={...statuses,[key]:statuses[key].filter(s=>s!==item)};setStatuses(updated);setData(d=>({...d,statuses:updated}));};
 
   // Display settings — defaults always present, merged with Supabase data
-  const DISPLAY_DEFAULTS={fontSize:'normal',highContrast:false,accentColor:'#e85d26',colorScheme:'light',userName:'מנהל מערכת'};
+  const DISPLAY_DEFAULTS={zoom:'100',highContrast:false,accentColor:'#e85d26',colorScheme:'light',userName:'מנהל מערכת'};
   const [display,setDisplay]=React.useState(()=>({...DISPLAY_DEFAULTS,...(data.displaySettings||{})}));
   // Sync display state when data loads from Supabase — always merge with defaults
   React.useEffect(()=>{
@@ -3162,12 +3162,11 @@ function Settings({data,setData}){
   const saveDisplay=()=>{
     const saved={...display};
     setData(d=>({...d,displaySettings:saved}));
-    // Font size: save to localStorage, applied on next load via early script
-    const sizeMap={small:'13px',normal:'16px',large:'19px',xlarge:'22px'};
-    localStorage.setItem('crm_fontSize',sizeMap[saved.fontSize||'normal']);
+    // Zoom: save to localStorage and apply immediately
+    const zoomVal=(saved.zoom||'100')+'%';
+    localStorage.setItem('crm_zoom',zoomVal);
     localStorage.setItem('crm_accentColor',saved.accentColor||'#e85d26');
-    // Apply font size immediately too
-    document.body.style.fontSize=sizeMap[saved.fontSize||'normal'];
+    document.body.style.zoom=zoomVal;
     document.body.style.filter=saved.highContrast?'contrast(1.25)':'';
     document.documentElement.style.setProperty('--acc',saved.accentColor||'#e85d26');
     setDisplaySaved(true);
@@ -3276,17 +3275,19 @@ function Settings({data,setData}){
 
 
       <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
-        <h3 style={{fontSize:17,fontWeight:800,marginBottom:18,color:'#1a1a2e'}}>🔤 גודל גופן</h3>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
-          {[{id:'small',label:'קטן',px:'13px'},{id:'normal',label:'רגיל',px:'16px'},{id:'large',label:'גדול',px:'19px'},{id:'xlarge',label:'גדול מאוד',px:'22px'}].map(o=>(
-            <button key={o.id} type="button" onClick={()=>setDisplay(d=>({...d,fontSize:o.id}))}
-              style={{padding:'14px 8px',border:`2px solid ${(display.fontSize||'normal')===o.id?ACC:'#ddd'}`,borderRadius:8,background:(display.fontSize||'normal')===o.id?'#fff5f0':'white',cursor:'pointer',fontFamily:'Heebo',transition:'all .15s'}}>
-              <div style={{fontSize:o.px,fontWeight:700,color:(display.fontSize||'normal')===o.id?ACC:'#333',marginBottom:4}}>א</div>
-              <div style={{fontSize:'12px',color:(display.fontSize||'normal')===o.id?ACC:'#666',fontWeight:600}}>{o.label}</div>
+        <h3 style={{fontSize:17,fontWeight:800,marginBottom:6,color:'#1a1a2e'}}>🔍 רמת הגדלה (Zoom)</h3>
+        <div style={{fontSize:13,color:'#666',marginBottom:16}}>מגדיל את כל תוכן המסך באופן פרופורציונלי</div>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+          {[{id:'90',label:'90%'},{id:'100',label:'100%'},{id:'110',label:'110%'},{id:'125',label:'125%'},{id:'150',label:'150%'}].map(o=>(
+            <button key={o.id} type="button" onClick={()=>setDisplay(d=>({...d,zoom:o.id}))}
+              style={{padding:'12px 20px',border:`2px solid ${(display.zoom||'100')===o.id?ACC:'#ddd'}`,borderRadius:8,background:(display.zoom||'100')===o.id?'#fff5f0':'white',cursor:'pointer',fontFamily:'Heebo',fontWeight:700,fontSize:15,color:(display.zoom||'100')===o.id?ACC:'#333',transition:'all .15s'}}>
+              {o.label}
             </button>
           ))}
         </div>
-        <div style={{fontSize:'12px',color:'#888',marginTop:10}}>השינוי יכנס לתוקף לאחר שמירה ורענון הדף</div>
+        <div style={{marginTop:12,padding:'10px 14px',background:'#f8f7f4',borderRadius:8,fontSize:13,color:'#555'}}>
+          Zoom נוכחי: <strong>{display.zoom||'100'}%</strong> — השינוי מוחל מיד לאחר שמירה
+        </div>
       </div>
 
       <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
