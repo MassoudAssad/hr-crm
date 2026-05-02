@@ -631,36 +631,29 @@ function ProgressRing({pct,size=110,stroke=10,color='#e85d26'}){
     <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" style={{transition:'stroke-dashoffset .8s ease'}}/>
   </svg>;
 }
-function Dashboard({data,onNav}){
+function Dashboard({data,onNav,setData,kpiColors:kpiColorsProp,setKpiColors:setKpiColorsProp,commissionBg:commissionBgProp,setCommissionBg:setCommissionBgProp,pipelineColors:pipelineColorsProp,setPipelineColors:setPipelineColorsProp}){
   const now=new Date();
   const curYear=now.getFullYear();
   const [selYear,setSelYear]=React.useState(curYear);
   const [selMonth,setSelMonth]=React.useState(0); // 0 = כל השנה
+  // Color states come from AppInner via props (survive navigation)
   const defaultKpiColors=['#1a1a2e','linear-gradient(135deg,#3b82f6,#1d4ed8)','linear-gradient(135deg,#8b5cf6,#6d28d9)','linear-gradient(135deg,#e85d26,#c94d1a)'];
-  const [kpiColors,setKpiColors]=React.useState(()=>data.kpiColors||defaultKpiColors);
-  React.useEffect(()=>{if(data.kpiColors)setKpiColors(data.kpiColors);},[data.kpiColors]);
+  const defaultPipelineColors=['linear-gradient(135deg,#f3f4f6,#e5e7eb)','linear-gradient(135deg,#dbeafe,#bfdbfe)','linear-gradient(135deg,#fef3c7,#fde68a)','linear-gradient(135deg,#dcfce7,#bbf7d0)'];
+  const kpiColors=kpiColorsProp||defaultKpiColors;
+  const commissionBg=commissionBgProp||'linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)';
+  const pipelineColors=pipelineColorsProp||defaultPipelineColors;
   const [kpiColorPicker,setKpiColorPicker]=React.useState(null);
+  const [showCommissionPicker,setShowCommissionPicker]=React.useState(false);
+  const [pipelineColorPicker,setPipelineColorPicker]=React.useState(null);
+  const KPI_PRESETS=['#1a1a2e','#e85d26','#3b82f6','#8b5cf6','#16a34a','#f59e0b','#ec4899','#0891b2','#dc2626','#065f46'];
   const saveKpiColor=(idx,color)=>{
-    const updated=[...kpiColors];
-    updated[idx]=color;
-    setKpiColors(updated);
+    const updated=[...kpiColors];updated[idx]=color;
+    setKpiColorsProp(updated);
     setData(d=>({...d,kpiColors:updated}));
     setKpiColorPicker(null);
   };
-  const KPI_PRESETS=['#1a1a2e','#e85d26','#3b82f6','#8b5cf6','#16a34a','#f59e0b','#ec4899','#0891b2','#dc2626','#065f46'];
-
-  // Commission bar color
-  const [commissionBg,setCommissionBg]=React.useState(()=>data.commissionBg||'linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)');
-  const [showCommissionPicker,setShowCommissionPicker]=React.useState(false);
-  const saveCommissionBg=(color)=>{setCommissionBg(color);setData(d=>({...d,commissionBg:color}));setShowCommissionPicker(false);};
-  React.useEffect(()=>{if(data.commissionBg)setCommissionBg(data.commissionBg);},[data.commissionBg]);
-
-  // Pipeline colors
-  const defaultPipelineColors=['linear-gradient(135deg,#f3f4f6,#e5e7eb)','linear-gradient(135deg,#dbeafe,#bfdbfe)','linear-gradient(135deg,#fef3c7,#fde68a)','linear-gradient(135deg,#dcfce7,#bbf7d0)'];
-  const [pipelineColors,setPipelineColors]=React.useState(()=>data.pipelineColors||defaultPipelineColors);
-  const [pipelineColorPicker,setPipelineColorPicker]=React.useState(null);
-  const savePipelineColor=(idx,color)=>{const updated=[...pipelineColors];updated[idx]=color;setPipelineColors(updated);setData(d=>({...d,pipelineColors:updated}));setPipelineColorPicker(null);};
-  React.useEffect(()=>{if(data.pipelineColors)setPipelineColors(data.pipelineColors);},[data.pipelineColors]);
+  const saveCommissionBg=(color)=>{setCommissionBgProp(color);setData(d=>({...d,commissionBg:color}));setShowCommissionPicker(false);};
+  const savePipelineColor=(idx,color)=>{const updated=[...pipelineColors];updated[idx]=color;setPipelineColorsProp(updated);setData(d=>({...d,pipelineColors:updated}));setPipelineColorPicker(null);};
   const MONTHS=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
   const availableYears=[...new Set([curYear,curYear-1,...data.candidates.filter(c=>c.placedAt).map(c=>new Date(c.placedAt).getFullYear())])].sort((a,b)=>b-a);
 
@@ -3697,11 +3690,28 @@ function AppInner(){
     setConfirmRejectApp(null);
   };
 
+  // Dashboard color states — live here so they survive navigation
+  const defaultKpiColorsApp=['#1a1a2e','linear-gradient(135deg,#3b82f6,#1d4ed8)','linear-gradient(135deg,#8b5cf6,#6d28d9)','linear-gradient(135deg,#e85d26,#c94d1a)'];
+  const defaultPipelineColorsApp=['linear-gradient(135deg,#f3f4f6,#e5e7eb)','linear-gradient(135deg,#dbeafe,#bfdbfe)','linear-gradient(135deg,#fef3c7,#fde68a)','linear-gradient(135deg,#dcfce7,#bbf7d0)'];
+  const [kpiColors,setKpiColors]=React.useState(()=>data.kpiColors||defaultKpiColorsApp);
+  const [commissionBg,setCommissionBg]=React.useState(()=>data.commissionBg||'linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)');
+  const [pipelineColors,setPipelineColors]=React.useState(()=>data.pipelineColors||defaultPipelineColorsApp);
+  // Sync from data when it loads from Supabase
+  React.useEffect(()=>{
+    if(data.kpiColors) setKpiColors(data.kpiColors);
+    if(data.commissionBg) setCommissionBg(data.commissionBg);
+    if(data.pipelineColors) setPipelineColors(data.pipelineColors);
+  },[data.kpiColors,data.commissionBg,data.pipelineColors]);
+
   return <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#f5f0e8'}}>
     <div id="desktop-sidebar"><Sidebar active={page} onNav={setPage}/></div>
     <div id="main-content" style={{flex:1,overflow:'auto',minWidth:0}}>
       <div style={{background:syncBg,padding:'3px 14px',fontSize:12,textAlign:'center',borderBottom:'1px solid #ddd'}}>{syncMsg}</div>
-      {page==='dashboard'&&<Dashboard data={data} onNav={setPage}/>}
+      {page==='dashboard'&&<Dashboard data={data} onNav={setPage} setData={setData}
+        kpiColors={kpiColors} setKpiColors={setKpiColors}
+        commissionBg={commissionBg} setCommissionBg={setCommissionBg}
+        pipelineColors={pipelineColors} setPipelineColors={setPipelineColors}
+      />}
       {page==='employers'&&<Employers data={data} setData={setData}/>}
       {page==='jobs'&&<Jobs data={data} setData={setData}/>}
       {page==='candidates'&&<Candidates data={data} setData={setData}/>}
