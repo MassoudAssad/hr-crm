@@ -70,10 +70,7 @@ body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; ov
 </style>
 <script>
 (function(){
-  var sizeMap={small:'0.85rem',normal:'1rem',large:'1.15rem',xlarge:'1.3rem'};
-  var fs=localStorage.getItem('crm_fontSize')||'large';
   var acc=localStorage.getItem('crm_accentColor')||'#e85d26';
-  document.documentElement.style.setProperty('--fs',sizeMap[fs]||'1.15rem');
   document.documentElement.style.setProperty('--acc',acc);
 })();
 </script>
@@ -3164,10 +3161,7 @@ function Settings({data,setData}){
     const saved={...display};
     setData(d=>({...d,displaySettings:saved}));
     // Save font size directly to localStorage for immediate next-load apply
-    localStorage.setItem('crm_fontSize',saved.fontSize||'large');
     localStorage.setItem('crm_accentColor',saved.accentColor||'#e85d26');
-    const sizeMap={small:'0.85rem',normal:'1rem',large:'1.15rem',xlarge:'1.3rem'};
-    document.documentElement.style.setProperty('--fs',sizeMap[saved.fontSize]||'1.15rem');
     document.body.style.filter=saved.highContrast?'contrast(1.25)':'';
     document.documentElement.style.setProperty('--acc',saved.accentColor||'#e85d26');
     setDisplaySaved(true);
@@ -3273,18 +3267,7 @@ function Settings({data,setData}){
         <FF label="שם שיוצג בברכה (שלום...)" value={display.userName||''} onChange={v=>setDisplay(d=>({...d,userName:v}))}/>
       </div>
 
-      <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
-        <h3 style={{fontSize:17,fontWeight:800,marginBottom:18,color:'#1a1a2e'}}>🔤 גודל גופן</h3>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
-          {[{id:'small',label:'קטן',size:'13px'},{id:'normal',label:'רגיל',size:'15px'},{id:'large',label:'גדול',size:'17px'},{id:'xlarge',label:'גדול מאוד',size:'20px'}].map(o=>(
-            <button key={o.id} onClick={()=>setDisplay(d=>({...d,fontSize:o.id}))}
-              style={{padding:'14px 8px',border:`2px solid ${display.fontSize===o.id?ACC:'#ddd'}`,borderRadius:8,background:display.fontSize===o.id?'#fff5f0':'white',cursor:'pointer',fontFamily:'Heebo',transition:'all .15s'}}>
-              <div style={{fontSize:o.size,fontWeight:700,color:display.fontSize===o.id?ACC:'#333',marginBottom:4}}>א</div>
-              <div style={{fontSize:12,color:display.fontSize===o.id?ACC:'#666',fontWeight:600}}>{o.label}</div>
-            </button>
-          ))}
-        </div>
-      </div>
+
 
       <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
         <h3 style={{fontSize:17,fontWeight:800,marginBottom:18,color:'#1a1a2e'}}>🎨 צבע הדגש</h3>
@@ -3651,9 +3634,12 @@ function AppInner(){
     }).catch(()=>setSyncStatus('error'));
   },[]);
 
-  // Auto-refresh from Supabase every 10 seconds
+  // Auto-refresh from Supabase every 30 seconds (not 10 — avoid overwriting recent saves)
+  const lastSaveTime=React.useRef(0);
   React.useEffect(()=>{
     const interval=setInterval(()=>{
+      // Skip refresh if we saved in the last 5 seconds
+      if(Date.now()-lastSaveTime.current<5000)return;
       loadFromSupabase().then(sbData=>{
         if(!sbData)return;
         const jobs=(sbData.jobs||[]).map(j=>({domain:'',role:'',description:'',requirements:'',benefits:'',image:'',publishTitle:'',...j}));
@@ -3673,7 +3659,7 @@ function AppInner(){
         localStorage.setItem('crm_data',JSON.stringify(merged));
         setSyncStatus('ok');
       }).catch(()=>{});
-    },10000);
+    },30000);
     return()=>clearInterval(interval);
   },[]);
 
@@ -3681,8 +3667,7 @@ function AppInner(){
   // Apply display settings on data change
   React.useEffect(()=>{
     const ds=data.displaySettings||{};
-    const sizeMap={small:'0.85rem',normal:'1.15rem',large:'1.15rem',xlarge:'1.3rem'};
-    document.documentElement.style.setProperty('--fs',sizeMap[ds.fontSize||'normal']||'1.15rem');
+    // Font size is fixed at 1.15rem — not controlled by settings
     document.body.style.filter=ds.highContrast?'contrast(1.25)':'';
     // Apply accent color via CSS variable
     const acc=ds.accentColor||'#e85d26';
@@ -3700,8 +3685,9 @@ function AppInner(){
     setSyncStatus('syncing');
     if(saveTimer.current)clearTimeout(saveTimer.current);
     saveTimer.current=setTimeout(()=>{
+      lastSaveTime.current=Date.now();
       saveToSupabase(data).then(ok=>setSyncStatus(ok?'ok':'error'));
-    },1000);
+    },500);
   },[data]);
 
   // page intentionally starts at dashboard each session
