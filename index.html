@@ -1436,7 +1436,7 @@ function Employers({data,setData}){
           <FormCard title="פרטי המעסיק" icon="🏢" color="#fff5f0">
             <FormGrid>
               <FF label="שם חברה" value={form.name||''} onChange={v=>setForm(f=>({...f,name:v}))}/>
-              <FF label="ענף" type="select" value={form.industry||'הייטק'} onChange={v=>setForm(f=>({...f,industry:v}))} options={['הייטק','תעשייה','פיננסים','קמעונאות','בריאות','חינוך','אחר']}/>
+              <FF label="ענף" type="select" value={form.industry||'הייטק'} onChange={v=>setForm(f=>({...f,industry:v}))} options={data.industries||['הייטק','תעשייה','פיננסים','קמעונאות','בריאות','חינוך','אחר']}/>
               <FF label="עיר" value={form.city||''} onChange={v=>setForm(f=>({...f,city:v}))}/>
               <FF label="סטטוס" type="select" value={form.status||'פעיל'} onChange={v=>setForm(f=>({...f,status:v}))} options={data.statuses?.employers?.length?data.statuses.employers:['פעיל','פסיבי']}/>
             </FormGrid>
@@ -3147,6 +3147,12 @@ function Settings({data,setData}){
   // Statuses tab state
   const defaultStatuses={candidates:['חדש','בתהליך','ראיון נקבע','הוצב','נדחה'],jobs:['פתוח','ממתין','סגור'],employers:['פעיל','פסיבי']};
   const [statuses,setStatuses]=React.useState(()=>data.statuses||defaultStatuses);
+  const DEFAULT_INDUSTRIES=['הייטק','תעשייה','פיננסים','קמעונאות','בריאות','חינוך','אחר'];
+  const [industries,setIndustries]=React.useState(()=>data.industries||DEFAULT_INDUSTRIES);
+  React.useEffect(()=>{if(data.industries)setIndustries(data.industries);},[data.industries]);
+  const [newIndustry,setNewIndustry]=React.useState('');
+  const addIndustry=()=>{const v=newIndustry.trim();if(!v||industries.includes(v))return;const updated=[...industries,v];setIndustries(updated);setData(d=>({...d,industries:updated}));setNewIndustry('');};
+  const delIndustry=name=>{if(industries.length<=1)return;const updated=industries.filter(i=>i!==name);setIndustries(updated);setData(d=>({...d,industries:updated}));};
   const [newStatus,setNewStatus]=React.useState({candidates:'',jobs:'',employers:''});
   const addStatus=(key)=>{const v=newStatus[key].trim();if(!v)return;const updated={...statuses,[key]:[...statuses[key],v]};setStatuses(updated);setData(d=>({...d,statuses:updated}));setNewStatus(n=>({...n,[key]:''}));};
   const delStatus=(key,item)=>{const updated={...statuses,[key]:statuses[key].filter(s=>s!==item)};setStatuses(updated);setData(d=>({...d,statuses:updated}));};
@@ -3418,6 +3424,22 @@ function Settings({data,setData}){
           <Btn onClick={()=>addStatus(key)} variant="primary" style={{fontSize:13}}>+ הוסף</Btn>
         </div>
       </div>)}
+
+      {/* Industries section */}
+      <div className="sbox" style={{background:'#fff',padding:18,marginBottom:14}}>
+        <h3 style={{fontSize:17,fontWeight:700,marginBottom:6}}>סטטוס ענפים</h3>
+        <div style={{fontSize:13,color:'#666',marginBottom:12}}>ענפים מופיעים בטופס הוספת/עריכת מעסיק</div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:12}}>
+          {industries.map(item=><div key={item} style={{display:'flex',alignItems:'center',gap:6,background:'#f0ede6',border:'2px solid #333',borderRadius:3,padding:'4px 10px'}}>
+            <span style={{fontSize:14}}>{item}</span>
+            <button type="button" onClick={()=>delIndustry(item)} style={{background:'none',border:'none',cursor:'pointer',fontSize:14,color:'#999'}}>✕</button>
+          </div>)}
+        </div>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <input value={newIndustry} onChange={e=>setNewIndustry(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addIndustry()} placeholder="ענף חדש..." style={{flex:1,border:'2px solid #333',borderRadius:3,padding:'6px 10px',fontFamily:'Heebo',fontSize:14}}/>
+          <Btn onClick={addIndustry} variant="primary" style={{fontSize:13}}>+ הוסף</Btn>
+        </div>
+      </div>
     </div>}
 
     {tab==='notifications'&&<div className="sbox" style={{background:'#fff',padding:24,maxWidth:480}}>
