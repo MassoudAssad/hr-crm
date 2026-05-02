@@ -68,6 +68,15 @@ body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; ov
   .form-grid { grid-template-columns: 1fr !important; }
 }
 </style>
+<script>
+(function(){
+  var sizeMap={small:'0.85rem',normal:'1rem',large:'1.15rem',xlarge:'1.3rem'};
+  var fs=localStorage.getItem('crm_fontSize')||'large';
+  var acc=localStorage.getItem('crm_accentColor')||'#e85d26';
+  document.documentElement.style.setProperty('--fs',sizeMap[fs]||'1.15rem');
+  document.documentElement.style.setProperty('--acc',acc);
+})();
+</script>
 </head>
 <body>
 <div id="root"></div>
@@ -3154,6 +3163,9 @@ function Settings({data,setData}){
   const saveDisplay=()=>{
     const saved={...display};
     setData(d=>({...d,displaySettings:saved}));
+    // Save font size directly to localStorage for immediate next-load apply
+    localStorage.setItem('crm_fontSize',saved.fontSize||'large');
+    localStorage.setItem('crm_accentColor',saved.accentColor||'#e85d26');
     const sizeMap={small:'0.85rem',normal:'1rem',large:'1.15rem',xlarge:'1.3rem'};
     document.documentElement.style.setProperty('--fs',sizeMap[saved.fontSize]||'1.15rem');
     document.body.style.filter=saved.highContrast?'contrast(1.25)':'';
