@@ -3145,18 +3145,24 @@ function Settings({data,setData}){
 
   // Display settings
   const [display,setDisplay]=React.useState(()=>data.displaySettings||{fontSize:'normal',highContrast:false,accentColor:'#e85d26',colorScheme:'light',userName:'מנהל מערכת'});
+  // Sync display state when data loads from Supabase
+  React.useEffect(()=>{
+    if(data.displaySettings) setDisplay(data.displaySettings);
+  },[data.displaySettings]);
   const saveDisplay=()=>{
-    setData(d=>({...d,displaySettings:display}));
+    const saved={...display};
+    setData(d=>({...d,displaySettings:saved}));
     const sizeMap={small:'13px',normal:'15px',large:'17px',xlarge:'20px'};
-    if(display.fontSize) document.body.style.fontSize=sizeMap[display.fontSize]||'15px';
-    document.body.style.filter=display.highContrast?'contrast(1.25)':'';
-    document.documentElement.style.setProperty('--acc',display.accentColor||'#e85d26');
+    if(saved.fontSize) document.body.style.fontSize=sizeMap[saved.fontSize]||'15px';
+    document.body.style.filter=saved.highContrast?'contrast(1.25)':'';
+    document.documentElement.style.setProperty('--acc',saved.accentColor||'#e85d26');
     alert('✅ הגדרות תצוגה נשמרו!');
   };
 
   // Defaults settings
   const [defaults,setDefaults]=React.useState(()=>data.defaults||{employerStatus:'פעיל',jobStatus:'פתוח',candidateStatus:'חדש',yearlyTarget:'',deadlineDays:'7',currency:'₪'});
-  const saveDefaults=()=>{setData(d=>({...d,defaults}));alert('✅ ברירות המחדל נשמרו!');};
+  React.useEffect(()=>{if(data.defaults)setDefaults(data.defaults);},[data.defaults]);
+  const saveDefaults=()=>{const saved={...defaults};setData(d=>({...d,defaults:saved}));alert('✅ ברירות המחדל נשמרו!');};
 
   const tabs=[{id:'general',label:'כללי'},{id:'display',label:'🎨 תצוגה'},{id:'users',label:'משתמשים'},{id:'domains',label:'תחומים ותפקידים'},{id:'statuses',label:'סטטוסים'},{id:'defaults',label:'ברירות מחדל'},{id:'notifications',label:'התראות'}];
   return <div style={{padding:28}} className="mobile-pad">
