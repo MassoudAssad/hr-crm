@@ -631,21 +631,67 @@ function ProgressRing({pct,size=110,stroke=10,color='#e85d26'}){
   </svg>;
 }
 function Dashboard({data,onNav}){
-  const now=new Date();const startOfYear=new Date(now.getFullYear(),0,1);
+  const now=new Date();
+  const curYear=now.getFullYear();
+  const [selYear,setSelYear]=React.useState(curYear);
+  const [selMonth,setSelMonth]=React.useState(0); // 0 = כל השנה
+  const MONTHS=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  const availableYears=[...new Set([curYear,curYear-1,...data.candidates.filter(c=>c.placedAt).map(c=>new Date(c.placedAt).getFullYear())])].sort((a,b)=>b-a);
+
+  // filter function: does placedAt fall in selected period?
+  const inPeriod=c=>{
+    const d=c.placedAt?new Date(c.placedAt):null;
+    if(!d||isNaN(d))return false;
+    if(d.getFullYear()!==selYear)return false;
+    if(selMonth===0)return true;
+    return d.getMonth()+1===selMonth;
+  };
+
   const openJobs=data.jobs.filter(j=>j.status==='פתוח').length;
   const activeEmp=data.employers.filter(e=>e.status==='פעיל').length;
-  const placed=data.candidates.filter(c=>c.status==='הוצב').length;
+  const placedInPeriod=data.candidates.filter(c=>c.status==='הוצב'&&inPeriod(c)).length;
+  const placedTotal=data.candidates.filter(c=>c.status==='הוצב').length;
   const pendingCount=(data.pendingCandidates||[]).length;
-  const expectedCommission=data.employers.reduce((sum,emp)=>sum+(emp.needs||[]).reduce((s,n)=>s+(parseFloat((n.fee||'0').replace(/,/g,''))||0)*(parseInt(n.count)||1),0),0);
-  const earnedThisYear=data.candidates.filter(c=>c.status==='הוצב'&&c.appliedAt&&new Date(c.appliedAt)>=startOfYear).reduce((sum,c)=>{const job=data.jobs.find(j=>c.appliedJobs?.includes(j.id));const emp=job?data.employers.find(e=>e.id===job.employerId):null;const need=emp?.needs?.find(n=>n.role===c.role||n.role===job?.role);return sum+(parseFloat((need?.fee||'0').replace(/,/g,''))||0);},0);
-  const commissionPct=expectedCommission>0?Math.round((earnedThisYear/expectedCommission)*100):0;
+
+  // ציפי עמלות — רק משרות פתוחות
+  const expectedCommission=data.employers.reduce((sum,emp)=>{
+    const empOpenJobs=data.jobs.filter(j=>j.employerId===emp.id&&j.status==='פתוח');
+    return sum+(emp.needs||[]).reduce((s,n)=>{
+      const hasOpenJob=empOpenJobs.some(j=>j.domain===n.domain&&j.role===n.role)||empOpenJobs.length>0;
+      return s+(hasOpenJob?(parseFloat((n.fee||'0').replace(/,/g,''))||0)*(parseInt(n.count)||1):0);
+    },0);
+  },0);
+
+  // עמלות בפועל — לפי placedAt
+  const getEarned=c=>{
+    const job=data.jobs.find(j=>c.appliedJobs?.includes(j.id));
+    const emp=job?data.employers.find(e=>e.id===job.employerId):null;
+    const need=emp?.needs?.find(n=>n.role===c.role||n.role===job?.role);
+    return parseFloat((need?.fee||'0').replace(/,/g,''))||0;
+  };
+  const earnedInPeriod=data.candidates.filter(c=>c.status==='הוצב'&&inPeriod(c)).reduce((sum,c)=>sum+getEarned(c),0);
+  const commissionPct=expectedCommission>0?Math.round((earnedInPeriod/expectedCommission)*100):0;
+
+  // monthly breakdown for chart
+  const monthlyData=React.useMemo(()=>{
+    return MONTHS.map((m,i)=>{
+      const placed=data.candidates.filter(c=>{
+        if(c.status!=='הוצב'||!c.placedAt)return false;
+        const d=new Date(c.placedAt);
+        return d.getFullYear()===selYear&&d.getMonth()===i;
+      });
+      const earned=placed.reduce((s,c)=>s+getEarned(c),0);
+      return{month:m,shortMonth:m.slice(0,3),placed:placed.length,earned};
+    });
+  },[data,selYear]);
+  const maxEarned=Math.max(...monthlyData.map(m=>m.earned),1);
   const DOMAIN_COLORS=['#e85d26','#3b82f6','#16a34a','#f59e0b','#8b5cf6','#ec4899','#0891b2','#d97706'];
   const domainCommission=React.useMemo(()=>{
     const map={};
     data.employers.forEach(emp=>{(emp.needs||[]).forEach(n=>{const d=n.domain||'אחר';if(!map[d])map[d]={domain:d,expected:0,earned:0};map[d].expected+=(parseFloat((n.fee||'0').replace(/,/g,''))||0)*(parseInt(n.count)||1);});});
-    data.candidates.filter(c=>c.status==='הוצב'&&c.appliedAt&&new Date(c.appliedAt)>=startOfYear).forEach(c=>{const job=data.jobs.find(j=>c.appliedJobs?.includes(j.id));const emp=job?data.employers.find(e=>e.id===job.employerId):null;const need=emp?.needs?.find(n=>n.role===c.role||n.role===job?.role);const fee=parseFloat((need?.fee||'0').replace(/,/g,''))||0;const d=job?.domain||c.domain||'אחר';if(!map[d])map[d]={domain:d,expected:0,earned:fee};else map[d].earned+=fee;});
+    data.candidates.filter(c=>c.status==='הוצב'&&inPeriod(c)).forEach(c=>{const job=data.jobs.find(j=>c.appliedJobs?.includes(j.id));const emp=job?data.employers.find(e=>e.id===job.employerId):null;const need=emp?.needs?.find(n=>n.role===c.role||n.role===job?.role);const fee=parseFloat((need?.fee||'0').replace(/,/g,''))||0;const d=job?.domain||c.domain||'אחר';if(!map[d])map[d]={domain:d,expected:0,earned:fee};else map[d].earned+=fee;});
     return Object.values(map).filter(x=>x.expected>0||x.earned>0).sort((a,b)=>b.expected-a.expected).slice(0,6);
-  },[data]);
+  },[data,selYear,selMonth]);
   const jobsByDomain=React.useMemo(()=>{const map={};data.jobs.filter(j=>j.status==='פתוח').forEach(j=>{const d=j.domain||'אחר';map[d]=(map[d]||0)+1;});return Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([d,c],i)=>({domain:d,count:c,color:DOMAIN_COLORS[i%DOMAIN_COLORS.length]}));},[data]);
   const totalOpenDomain=jobsByDomain.reduce((s,x)=>s+x.count,0)||1;
   const topEmployers=React.useMemo(()=>data.employers.map(emp=>{const empJobs=data.jobs.filter(j=>j.employerId===emp.id&&j.status==='פתוח').length;const expFee=(emp.needs||[]).reduce((s,n)=>s+(parseFloat((n.fee||'0').replace(/,/g,''))||0)*(parseInt(n.count)||1),0);return{...emp,openJobs:empJobs,expFee};}).filter(e=>e.openJobs>0||e.expFee>0).sort((a,b)=>b.expFee-a.expFee).slice(0,5),[data]);
@@ -654,23 +700,42 @@ function Dashboard({data,onNav}){
     {label:'חדשים',count:data.candidates.filter(c=>c.status==='חדש'&&!(data.pendingCandidates||[]).includes(c.id)).length,accent:'#6b7280',grad:'linear-gradient(135deg,#f3f4f6,#e5e7eb)'},
     {label:'בתהליך',count:data.candidates.filter(c=>c.status==='בתהליך').length,accent:'#3b82f6',grad:'linear-gradient(135deg,#dbeafe,#bfdbfe)'},
     {label:'ראיון',count:data.candidates.filter(c=>c.status==='ראיון נקבע').length,accent:'#f59e0b',grad:'linear-gradient(135deg,#fef3c7,#fde68a)'},
-    {label:'הוצבו',count:placed,accent:'#16a34a',grad:'linear-gradient(135deg,#dcfce7,#bbf7d0)'},
+    {label:'הוצבו',count:placedInPeriod,accent:'#16a34a',grad:'linear-gradient(135deg,#dcfce7,#bbf7d0)'},
   ];
   const openJobsList=data.jobs.filter(j=>j.status==='פתוח').map(j=>{const emp=data.employers.find(e=>e.id===j.employerId);const cCount=data.candidates.filter(c=>(c.appliedJobs||[]).includes(j.id)).length;const maxC=Math.max(...data.jobs.filter(x=>x.status==='פתוח').map(x=>data.candidates.filter(c=>(c.appliedJobs||[]).includes(x.id)).length),1);return{...j,empName:emp?.name||'',cCount,barPct:Math.round((cCount/maxC)*100)};});
   const soon7=data.jobs.filter(j=>{if(j.status==='סגור'||!j.deadline)return false;const parts=j.deadline.split('/');if(parts.length!==3)return false;const d=new Date(parts[2],parts[1]-1,parts[0]);const diff=(d-now)/(1000*60*60*24);return diff>=0&&diff<=7;});
   const fmtMoney=n=>n>=1000000?`₪${(n/1000000).toFixed(1)}M`:n>=1000?`₪${Math.round(n/1000)}K`:`₪${Math.round(n)}`;
   const pctColor=p=>p>=80?'#16a34a':p>=40?'#f59e0b':'#e85d26';
   return <div style={{padding:28,maxWidth:1280}} className="mobile-pad">
-    <div style={{marginBottom:24,display:'flex',justifyContent:'space-between',alignItems:'flex-end',flexWrap:'wrap',gap:8}}>
+    <div style={{marginBottom:20,display:'flex',justifyContent:'space-between',alignItems:'flex-end',flexWrap:'wrap',gap:8}}>
       <div><h1 style={{fontSize:32,fontWeight:900,color:'#1a1a2e',marginBottom:4}}>שלום 👋</h1><div style={{color:MUT,fontSize:14}}>{now.toLocaleDateString('he-IL',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></div>
       {pendingCount>0&&<div onClick={()=>onNav('candidates')} style={{cursor:'pointer',background:'#fff5f0',border:'2px solid #e85d26',borderRadius:12,padding:'10px 18px',display:'flex',alignItems:'center',gap:10,animation:'pendingPulse 1.8s ease-in-out infinite'}}><span style={{fontSize:20}}>🔔</span><div><div style={{fontWeight:800,fontSize:15,color:'#e85d26'}}>{pendingCount} מועמדים ממתינים</div><div style={{fontSize:12,color:MUT}}>לחץ לאישור</div></div></div>}
     </div>
+
+    {/* Year / Month selector */}
+    <div style={{background:'#fff',border:'2px solid #333',borderRadius:6,padding:'12px 18px',marginBottom:20,display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
+      <span style={{fontSize:13,fontWeight:800,color:'#1a1a2e'}}>📅 תקופה:</span>
+      <div style={{display:'flex',gap:6,flexWrap:'wrap',alignItems:'center'}}>
+        {availableYears.map(y=><button key={y} onClick={()=>{setSelYear(y);setSelMonth(0);}}
+          style={{padding:'5px 14px',border:'2px solid #333',borderRadius:4,background:selYear===y?'#1a1a2e':'white',color:selYear===y?'white':'#333',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>{y}</button>)}
+      </div>
+      <div style={{width:1,height:24,background:'#ddd'}}/>
+      <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+        <button onClick={()=>setSelMonth(0)} style={{padding:'5px 10px',border:'2px solid #333',borderRadius:4,background:selMonth===0?'#e85d26':'white',color:selMonth===0?'white':'#333',fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer'}}>כל השנה</button>
+        {MONTHS.map((m,i)=><button key={i} onClick={()=>setSelMonth(i+1)}
+          style={{padding:'5px 8px',border:'2px solid #333',borderRadius:4,background:selMonth===i+1?'#e85d26':'white',color:selMonth===i+1?'white':'#333',fontFamily:'Heebo',fontWeight:700,fontSize:11,cursor:'pointer'}}>{m.slice(0,3)}</button>)}
+      </div>
+      <span style={{marginRight:'auto',fontSize:12,color:MUT,fontWeight:600}}>
+        {selMonth===0?`שנת ${selYear}`:`${MONTHS[selMonth-1]} ${selYear}`}
+      </span>
+    </div>
+
     <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,marginBottom:24}} className="mobile-grid-2">
       {[
         {label:'משרות פתוחות',value:openJobs,icon:'📋',bg:'#1a1a2e',fg:'white',sub:`מתוך ${data.jobs.length} סה"כ`,link:'jobs'},
         {label:'מעסיקים פעילים',value:activeEmp,icon:'🏢',bg:'linear-gradient(135deg,#3b82f6,#1d4ed8)',fg:'white',sub:`מתוך ${data.employers.length} סה"כ`,link:'employers'},
         {label:'מועמדים',value:data.candidates.filter(c=>!(data.pendingCandidates||[]).includes(c.id)).length,icon:'👥',bg:'linear-gradient(135deg,#8b5cf6,#6d28d9)',fg:'white',sub:`${pendingCount} ממתינים לאישור`,link:'candidates'},
-        {label:'הוצבו השנה',value:placed,icon:'🏆',bg:'linear-gradient(135deg,#e85d26,#c94d1a)',fg:'white',sub:'מתחילת השנה',link:'candidates'},
+        {label:'הוצבו בתקופה',value:placedInPeriod,icon:'🏆',bg:'linear-gradient(135deg,#e85d26,#c94d1a)',fg:'white',sub:`${placedTotal} סה"כ כל הזמן`,link:'candidates'},
       ].map(s=><div key={s.label} onClick={()=>onNav(s.link)} style={{background:s.bg,borderRadius:16,padding:'20px 18px',cursor:'pointer',boxShadow:'0 4px 20px rgba(0,0,0,0.12)',transition:'transform .15s,box-shadow .15s'}} onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 10px 32px rgba(0,0,0,0.18)';}} onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 4px 20px rgba(0,0,0,0.12)';}}>
         <div style={{fontSize:26,marginBottom:8}}>{s.icon}</div>
         <div style={{fontSize:38,fontWeight:900,lineHeight:1,color:s.fg}}>{s.value}</div>
@@ -687,18 +752,18 @@ function Dashboard({data,onNav}){
         </div>
       </div>
       <div style={{borderRight:'1px solid rgba(255,255,255,0.1)',paddingRight:24}}>
-        <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',fontWeight:700,marginBottom:6,letterSpacing:1}}>ציפי עמלות שנתי</div>
+        <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',fontWeight:700,marginBottom:6,letterSpacing:1}}>ציפי עמלות {selMonth===0?selYear:`${MONTHS[selMonth-1]} ${selYear}`}</div>
         <div style={{fontSize:30,fontWeight:900,color:'white'}}>{fmtMoney(expectedCommission)}</div>
         <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginTop:3}}>מכלל המעסיקים</div>
       </div>
       <div style={{borderRight:'1px solid rgba(255,255,255,0.1)',paddingRight:24}}>
-        <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',fontWeight:700,marginBottom:6,letterSpacing:1}}>עמלות בפועל {now.getFullYear()}</div>
-        <div style={{fontSize:30,fontWeight:900,color:'#e85d26'}}>{fmtMoney(earnedThisYear)}</div>
-        <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginTop:3}}>{placed} הצבות</div>
+        <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',fontWeight:700,marginBottom:6,letterSpacing:1}}>עמלות בפועל {selMonth===0?selYear:`${MONTHS[selMonth-1]} ${selYear}`}</div>
+        <div style={{fontSize:30,fontWeight:900,color:'#e85d26'}}>{fmtMoney(earnedInPeriod)}</div>
+        <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginTop:3}}>{placedInPeriod} הצבות</div>
       </div>
       <div>
         <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',fontWeight:700,marginBottom:6,letterSpacing:1}}>נותר ליעד</div>
-        <div style={{fontSize:30,fontWeight:900,color:expectedCommission>earnedThisYear?'#f59e0b':'#16a34a'}}>{fmtMoney(Math.max(0,expectedCommission-earnedThisYear))}</div>
+        <div style={{fontSize:30,fontWeight:900,color:expectedCommission>earnedInPeriod?'#f59e0b':'#16a34a'}}>{fmtMoney(Math.max(0,expectedCommission-earnedInPeriod))}</div>
         <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginTop:3}}>{commissionPct>=100?'🎉 יעד הושג!':commissionPct>=80?'🚀 כמעט שם':'💪 יאללה קדימה'}</div>
       </div>
     </div>
@@ -793,6 +858,32 @@ function Dashboard({data,onNav}){
         </div>):<div style={{color:MUT,fontSize:13,textAlign:'center',padding:20}}>אין נתונים</div>}
       </div>
     </div>
+    {/* Monthly bar chart */}
+    {selMonth===0&&<div style={{background:'#fff',borderRadius:20,padding:'20px 24px',boxShadow:'0 4px 20px rgba(0,0,0,0.06)',marginBottom:24}}>
+      <h3 style={{fontSize:15,fontWeight:800,color:'#1a1a2e',marginBottom:16}}>📊 עמלות חודשיות — {selYear}</h3>
+      <div style={{display:'flex',alignItems:'flex-end',gap:6,height:120,paddingBottom:4}}>
+        {monthlyData.map((m,i)=>{
+          const barH=maxEarned>0?Math.round((m.earned/maxEarned)*100):0;
+          const isCurrentMonth=i===now.getMonth()&&selYear===curYear;
+          return <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+            <div style={{fontSize:10,color:'#888',fontWeight:600,whiteSpace:'nowrap'}}>{m.earned>0?fmtMoney(m.earned):''}</div>
+            <div style={{width:'100%',display:'flex',flexDirection:'column',justifyContent:'flex-end',height:80,position:'relative'}}>
+              <div title={`${m.month}: ${fmtMoney(m.earned)} | ${m.placed} הצבות`}
+                style={{width:'100%',height:`${Math.max(barH,m.placed>0?4:0)}%`,background:isCurrentMonth?'#e85d26':'linear-gradient(180deg,#3b82f6,#1d4ed8)',borderRadius:'4px 4px 0 0',transition:'height .5s',cursor:'default',minHeight:m.placed>0?4:0}}>
+              </div>
+            </div>
+            {m.placed>0&&<div style={{fontSize:9,background:'#dcfce7',color:'#16a34a',borderRadius:3,padding:'1px 4px',fontWeight:700}}>+{m.placed}</div>}
+            <div style={{fontSize:10,color:isCurrentMonth?'#e85d26':'#888',fontWeight:isCurrentMonth?800:600}}>{m.shortMonth}</div>
+          </div>;
+        })}
+      </div>
+      <div style={{display:'flex',gap:16,marginTop:8,fontSize:11,color:MUT}}>
+        <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:10,height:10,background:'linear-gradient(180deg,#3b82f6,#1d4ed8)',borderRadius:2,display:'inline-block'}}></span>עמלות חודשיות</span>
+        <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:10,height:10,background:'#e85d26',borderRadius:2,display:'inline-block'}}></span>חודש נוכחי</span>
+        <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{background:'#dcfce7',color:'#16a34a',borderRadius:3,padding:'0 4px',fontWeight:700,fontSize:10}}>+N</span>הצבות</span>
+      </div>
+    </div>}
+
     <div style={{background:'#fff',borderRadius:20,padding:'20px 24px',boxShadow:'0 4px 20px rgba(0,0,0,0.06)',marginBottom:soon7.length?24:0}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
         <h3 style={{fontSize:15,fontWeight:800,color:'#1a1a2e'}}>⚡ היסטוריית פעולות</h3>
@@ -1339,14 +1430,6 @@ function Employers({data,setData}){
       onConfirm={doDelEmployer}
       onCancel={()=>setConfirmDel(null)}
     />
-    <ConfirmDialog
-      open={!!confirmDel}
-      title="מחיקת משרה"
-      message="האם אתה בטוח שברצונך למחוק את המשרה:"
-      name={confirmDel?.name}
-      onConfirm={doDelJob}
-      onCancel={()=>setConfirmDel(null)}
-    />
   </div>;
 }
 
@@ -1799,6 +1882,14 @@ function Jobs({data,setData}){
         <Btn variant="primary" onClick={save}>שמירה</Btn>
       </div>
     </Modal>}
+    <ConfirmDialog
+      open={!!confirmDel}
+      title="מחיקת משרה"
+      message="האם אתה בטוח שברצונך למחוק את המשרה:"
+      name={confirmDel?.name}
+      onConfirm={doDelJob}
+      onCancel={()=>setConfirmDel(null)}
+    />
   </div>;
 }
 
@@ -2259,7 +2350,17 @@ function Candidates({data,setData}){
               </div>
               <FF label="ניסיון" value={form.experience||''} onChange={v=>setForm(f=>({...f,experience:v}))}/>
               <FF label="השכלה" value={form.education||''} onChange={v=>setForm(f=>({...f,education:v}))}/>
-              <FF label="סטטוס" type="select" value={form.status||'חדש'} onChange={v=>setForm(f=>({...f,status:v}))} options={data.statuses?.candidates?.length?data.statuses.candidates:['חדש','בתהליך','ראיון נקבע','הוצב']}/>
+              <FF label="סטטוס" type="select" value={form.status||'חדש'} onChange={v=>{
+                const upd={...form,status:v};
+                if(v==='הוצב'&&!form.placedAt) upd.placedAt=new Date().toISOString().split('T')[0];
+                if(v!=='הוצב') upd.placedAt='';
+                setForm(f=>({...f,...upd}));
+              }} options={data.statuses?.candidates?.length?data.statuses.candidates:['חדש','בתהליך','ראיון נקבע','הוצב']}/>
+              {form.status==='הוצב'&&<div>
+                <div style={{fontSize:13,fontWeight:600,color:'#555',marginBottom:4}}>📅 תאריך הצבה</div>
+                <input type="date" value={form.placedAt||''} onChange={e=>setForm(f=>({...f,placedAt:e.target.value}))}
+                  style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,outline:'none'}}/>
+              </div>}
             </FormGrid>
           </FormCard>
         </div>
@@ -3235,7 +3336,7 @@ function App(){
 }
 
 function AppInner(){
-  const [page,setPage]=React.useState(()=>localStorage.getItem('crm_page')||'dashboard');
+  const [page,setPage]=React.useState('dashboard');
   const [syncStatus,setSyncStatus]=React.useState('syncing');
   const [data,setData]=React.useState(()=>{
     try{
@@ -3298,7 +3399,7 @@ function AppInner(){
     },1000);
   },[data]);
 
-  React.useEffect(()=>{localStorage.setItem('crm_page',page);},[page]);
+  // page intentionally starts at dashboard each session
 
   const syncBg=syncStatus==='ok'?'#d4edda':syncStatus==='error'?'#fde8dc':'#fff3cd';
   const syncMsg=syncStatus==='syncing'?'🔄 מסנכרן...':syncStatus==='ok'?'☁️ מסונכרן עם Supabase':'⚠️ שגיאת סנכרון';
