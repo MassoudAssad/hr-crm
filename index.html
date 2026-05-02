@@ -11,8 +11,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-:root { --acc: #e85d26; --acc-light: #fde8dc; --acc-dark: #c94d1a; }
-body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; overflow-x: hidden; }
+:root { --acc: #e85d26; --acc-light: #fde8dc; --acc-dark: #c94d1a; --fs: 1rem; }
+body { background: #f5f0e8; font-family: 'Heebo', sans-serif; direction: rtl; overflow-x: hidden; font-size: var(--fs); }
+#main-content * { font-size: inherit; }
 .sbox { border: 2px solid #333; border-radius: 2px; position: relative; }
 .sbox::before { content:''; position:absolute; inset:2px; border:1px solid rgba(0,0,0,0.07); border-radius:1px; pointer-events:none; }
 
@@ -3152,8 +3153,8 @@ function Settings({data,setData}){
   const saveDisplay=()=>{
     const saved={...display};
     setData(d=>({...d,displaySettings:saved}));
-    const sizeMap={small:'13px',normal:'15px',large:'17px',xlarge:'20px'};
-    if(saved.fontSize) document.body.style.fontSize=sizeMap[saved.fontSize]||'15px';
+    const sizeMap={small:'0.85rem',normal:'1rem',large:'1.15rem',xlarge:'1.3rem'};
+    document.documentElement.style.setProperty('--fs',sizeMap[saved.fontSize]||'1rem');
     document.body.style.filter=saved.highContrast?'contrast(1.25)':'';
     document.documentElement.style.setProperty('--acc',saved.accentColor||'#e85d26');
     alert('✅ הגדרות תצוגה נשמרו!');
@@ -3637,8 +3638,8 @@ function AppInner(){
   // Apply display settings on data change
   React.useEffect(()=>{
     const ds=data.displaySettings||{};
-    const sizeMap={small:'13px',normal:'15px',large:'17px',xlarge:'20px'};
-    if(ds.fontSize) document.body.style.fontSize=sizeMap[ds.fontSize]||'15px';
+    const sizeMap={small:'0.85rem',normal:'1rem',large:'1.15rem',xlarge:'1.3rem'};
+    if(ds.fontSize) document.documentElement.style.setProperty('--fs',sizeMap[ds.fontSize]||'1rem');
     document.body.style.filter=ds.highContrast?'contrast(1.25)':'';
     // Apply accent color via CSS variable
     const acc=ds.accentColor||'#e85d26';
