@@ -126,7 +126,7 @@ const SIDEBAR_BG = '#1a1a2e';
 const MUT = '#888';
 const TAG_COLORS = {
   'פעיל':'#d4edda','פסיבי':'#f8d7da','פתוח':'#d4edda','ממתין':'#fff3cd',
-  'סגור':'#e2e3e5','בתהליך':'#cce5ff','הוצב':'#d4edda','ראיון נקבע':'#fff3cd','חדש':'#e2e3e5'
+  'סגור':'#e2e3e5','בתהליך':'#cce5ff','השמה מוצלחת':'#d4edda','ראיון נקבע':'#fff3cd','חדש':'#e2e3e5'
 };
 
 const INIT = {
@@ -137,13 +137,13 @@ const INIT = {
     {id:'e4',name:'קמעונאות גדולה',industry:'קמעונאות',contact:'שרה מזרחי',phone:'058-4444444',email:'sara@retail.co.il',city:'ראשון לציון',status:'פעיל',notes:'',needs:[],expectedIncome:''},
   ],
   jobs: [
-    {id:'j1',jobNumber:'TG-001',title:'מפתח Full Stack',publishTitle:'',domain:'הייטק',role:'מפתח Full Stack',employerId:'e1',type:'משרה מלאה',location:'תל אביב',salary:'25,000-35,000',status:'פתוח',candidates:['c1','c2'],createdAt:'01/03/2026',deadline:'30/04/2026',description:'',requirements:'',benefits:'',image:''},
-    {id:'j2',jobNumber:'TG-002',title:'מנהל מוצר',publishTitle:'',domain:'הייטק',role:'מנהל מוצר',employerId:'e1',type:'משרה מלאה',location:'תל אביב',salary:'30,000-40,000',status:'פתוח',candidates:['c3'],createdAt:'15/03/2026',deadline:'15/05/2026',description:'',requirements:'',benefits:'',image:''},
-    {id:'j3',jobNumber:'TG-003',title:'מפעיל מכונות',publishTitle:'',domain:'',role:'מפעיל מכונות',employerId:'e2',type:'משמרות',location:'חיפה',salary:'12,000-15,000',status:'ממתין',candidates:['c4','c5'],createdAt:'20/02/2026',deadline:'20/04/2026',description:'',requirements:'',benefits:'',image:''},
+    {id:'j1',jobNumber:'TG-001',title:'מפתח Full Stack',publishTitle:'',domain:'הייטק',role:'מפתח Full Stack',employerId:'e1',type:'משרה מלאה',location:'תל אביב',salary:'30000',status:'פתוח',createdAt:'01/03/2026',deadline:'30/04/2026',description:'',requirements:'',benefits:'',image:''},
+    {id:'j2',jobNumber:'TG-002',title:'מנהל מוצר',publishTitle:'',domain:'הייטק',role:'מנהל מוצר',employerId:'e1',type:'משרה מלאה',location:'תל אביב',salary:'35000',status:'פתוח',createdAt:'15/03/2026',deadline:'15/05/2026',description:'',requirements:'',benefits:'',image:''},
+    {id:'j3',jobNumber:'TG-003',title:'מפעיל מכונות',publishTitle:'',domain:'',role:'מפעיל מכונות',employerId:'e2',type:'משמרות',location:'חיפה',salary:'13500',status:'ממתין',createdAt:'20/02/2026',deadline:'20/04/2026',description:'',requirements:'',benefits:'',image:''},
   ],
   candidates: [
     {id:'c1',name:'אבי ישראלי',domain:'הייטק',role:'מפתח Full Stack',phone:'052-9876543',email:'avi@gmail.com',city:'תל אביב',status:'בתהליך',appliedJobs:['j1'],experience:'5 שנים',education:'B.Sc מדעי המחשב',cv:true,notes:'מועמד מצוין'},
-    {id:'c2',name:'מיכל ברגר',domain:'הייטק',role:'מפתחת Frontend',phone:'054-8765432',email:'michal@gmail.com',city:'הרצליה',status:'הוצב',appliedJobs:['j1'],experience:'3 שנים',education:'B.Sc הנדסת תוכנה',cv:true,notes:''},
+    {id:'c2',name:'מיכל ברגר',domain:'הייטק',role:'מפתחת Frontend',phone:'054-8765432',email:'michal@gmail.com',city:'הרצליה',status:'השמה מוצלחת',appliedJobs:['j1'],experience:'3 שנים',education:'B.Sc הנדסת תוכנה',cv:true,notes:''},
     {id:'c3',name:'יוסי פרץ',domain:'הייטק',role:'מנהל מוצר',phone:'050-7654321',email:'yossi@gmail.com',city:'רמת גן',status:'ראיון נקבע',appliedJobs:['j2'],experience:'8 שנים',education:'MBA',cv:true,notes:''},
     {id:'c4',name:'חנה כץ',domain:'רפואה',role:'אחות',phone:'058-6543210',email:'hana@gmail.com',city:'חיפה',status:'חדש',appliedJobs:['j3'],experience:'2 שנים',education:'תיכון',cv:false,notes:''},
     {id:'c5',name:'אחמד חסן',domain:'רפואה',role:'איש אחזקה',phone:'050-5432109',email:'ahmad@gmail.com',city:'עכו',status:'חדש',appliedJobs:['j3'],experience:'4 שנים',education:'הנדסאי',cv:true,notes:''},
@@ -179,7 +179,7 @@ function fmtDateHe(iso) {
 }
 const STATUS_ICON = {
   'פתוח':'📂','בתהליך':'⚙️','ממתין':'⏳','ראיון נקבע':'📅',
-  'הוצב':'🏅','סגור':'🔒','פעיל':'✅','פסיבי':'😴','חדש':'🆕',
+  'השמה מוצלחת':'🏅','סגור':'🔒','פעיל':'✅','פסיבי':'😴','חדש':'🆕',
 };
 function StatusHistoryBlock({item}) {
   const history = item?.statusHistory || [];
@@ -725,8 +725,12 @@ function Dashboard({data,onNav,setData,kpiColors:kpiColorsProp,setKpiColors:setK
 
   // filter function: does placedAt fall in selected period?
   const inPeriod=c=>{
-    const d=c.placedAt?new Date(c.placedAt):null;
-    if(!d||isNaN(d))return false;
+    // אם יש placedAt — השתמש בו. אחרת, אם status=השמה מוצלחת — חשב כשנה נוכחית
+    let d=c.placedAt?new Date(c.placedAt):null;
+    if(!d||isNaN(d)){
+      if(c.status==='השמה מוצלחת') d=new Date(); // fallback לתאריך היום
+      else return false;
+    }
     if(d.getFullYear()!==selYear)return false;
     if(selMonth===0)return true;
     return d.getMonth()+1===selMonth;
@@ -734,8 +738,8 @@ function Dashboard({data,onNav,setData,kpiColors:kpiColorsProp,setKpiColors:setK
 
   const openJobs=data.jobs.filter(j=>j.status==='פתוח').length;
   const activeEmp=data.employers.filter(e=>e.status==='פעיל').length;
-  const placedInPeriod=data.candidates.filter(c=>c.status==='הוצב'&&inPeriod(c)).length;
-  const placedTotal=data.candidates.filter(c=>c.status==='הוצב').length;
+  const placedInPeriod=data.candidates.filter(c=>c.status==='השמה מוצלחת'&&inPeriod(c)).length;
+  const placedTotal=data.candidates.filter(c=>c.status==='השמה מוצלחת').length;
   const pendingCount=(data.pendingCandidates||[]).length;
 
   // ציפי עמלות — רק משרות פתוחות
@@ -749,19 +753,30 @@ function Dashboard({data,onNav,setData,kpiColors:kpiColorsProp,setKpiColors:setK
 
   // עמלות בפועל — לפי placedAt
   const getEarned=c=>{
-    const job=data.jobs.find(j=>c.appliedJobs?.includes(j.id));
-    const emp=job?data.employers.find(e=>e.id===job.employerId):null;
-    const need=emp?.needs?.find(n=>n.role===c.role||n.role===job?.role);
-    return parseFloat((need?.fee||'0').replace(/,/g,''))||0;
+    // מחפש את המשרה שבה הושם — קודם לפי placedJobId, אחרת משרה בסטטוס השמה מוצלחת, אחרת הראשונה
+    const job=data.jobs.find(j=>j.id===c.placedJobId)
+      ||data.jobs.find(j=>c.appliedJobs?.includes(j.id)&&j.status==='השמה מוצלחת')
+      ||data.jobs.find(j=>c.appliedJobs?.includes(j.id));
+    if(!job) return 0;
+    // 1. fee ישיר על המשרה — מקור הכי אמין
+    const directFee=parseFloat((job.fee||'').toString().replace(/,/g,''));
+    if(directFee>0) return directFee;
+    // 2. employer.needs — רק אם שם התפקיד תואם בדיוק
+    const emp=data.employers.find(e=>e.id===job.employerId);
+    const need=emp?.needs?.find(n=>n.role===job.role);
+    const needFee=parseFloat((need?.fee||'').replace(/,/g,''));
+    if(needFee>0) return needFee;
+    // 3. אין נתון — מחזיר 0, לא מנחש
+    return 0;
   };
-  const earnedInPeriod=data.candidates.filter(c=>c.status==='הוצב'&&inPeriod(c)).reduce((sum,c)=>sum+getEarned(c),0);
+  const earnedInPeriod=data.candidates.filter(c=>c.status==='השמה מוצלחת'&&inPeriod(c)).reduce((sum,c)=>sum+getEarned(c),0);
   const commissionPct=expectedCommission>0?Math.round((earnedInPeriod/expectedCommission)*100):0;
 
   // monthly breakdown for chart
   const monthlyData=React.useMemo(()=>{
     return MONTHS.map((m,i)=>{
       const placed=data.candidates.filter(c=>{
-        if(c.status!=='הוצב'||!c.placedAt)return false;
+        if(c.status!=='השמה מוצלחת'||!c.placedAt)return false;
         const d=new Date(c.placedAt);
         return d.getFullYear()===selYear&&d.getMonth()===i;
       });
@@ -774,7 +789,7 @@ function Dashboard({data,onNav,setData,kpiColors:kpiColorsProp,setKpiColors:setK
   const domainCommission=React.useMemo(()=>{
     const map={};
     data.employers.forEach(emp=>{(emp.needs||[]).forEach(n=>{const d=n.domain||'אחר';if(!map[d])map[d]={domain:d,expected:0,earned:0};map[d].expected+=(parseFloat((n.fee||'0').replace(/,/g,''))||0)*(parseInt(n.count)||1);});});
-    data.candidates.filter(c=>c.status==='הוצב'&&inPeriod(c)).forEach(c=>{const job=data.jobs.find(j=>c.appliedJobs?.includes(j.id));const emp=job?data.employers.find(e=>e.id===job.employerId):null;const need=emp?.needs?.find(n=>n.role===c.role||n.role===job?.role);const fee=parseFloat((need?.fee||'0').replace(/,/g,''))||0;const d=job?.domain||c.domain||'אחר';if(!map[d])map[d]={domain:d,expected:0,earned:fee};else map[d].earned+=fee;});
+    data.candidates.filter(c=>c.status==='השמה מוצלחת'&&inPeriod(c)).forEach(c=>{const job=data.jobs.find(j=>c.appliedJobs?.includes(j.id)&&j.status==='השמה מוצלחת')||data.jobs.find(j=>c.appliedJobs?.includes(j.id));const emp=job?data.employers.find(e=>e.id===job.employerId):null;const fee=(job?.fee&&parseFloat(job.fee.toString().replace(/,/g,''))>0)?parseFloat(job.fee.toString().replace(/,/g,'')):parseFloat((emp?.needs?.find(n=>n.role===c.role||n.role===job?.role)?.fee||'0').replace(/,/g,''))||0;const d=job?.domain||c.domain||'אחר';if(!map[d])map[d]={domain:d,expected:0,earned:fee};else map[d].earned+=fee;});
     return Object.values(map).filter(x=>x.expected>0||x.earned>0).sort((a,b)=>b.expected-a.expected).slice(0,6);
   },[data,selYear,selMonth]);
   const jobsByDomain=React.useMemo(()=>{const map={};data.jobs.filter(j=>j.status==='פתוח').forEach(j=>{const d=j.domain||'אחר';map[d]=(map[d]||0)+1;});return Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([d,c],i)=>({domain:d,count:c,color:DOMAIN_COLORS[i%DOMAIN_COLORS.length]}));},[data]);
@@ -785,7 +800,7 @@ function Dashboard({data,onNav,setData,kpiColors:kpiColorsProp,setKpiColors:setK
     {label:'חדשים',count:data.candidates.filter(c=>c.status==='חדש'&&!(data.pendingCandidates||[]).includes(c.id)).length,accent:'#6b7280',grad:'linear-gradient(135deg,#f3f4f6,#e5e7eb)'},
     {label:'בתהליך',count:data.candidates.filter(c=>c.status==='בתהליך').length,accent:'#3b82f6',grad:'linear-gradient(135deg,#dbeafe,#bfdbfe)'},
     {label:'ראיון',count:data.candidates.filter(c=>c.status==='ראיון נקבע').length,accent:'#f59e0b',grad:'linear-gradient(135deg,#fef3c7,#fde68a)'},
-    {label:'הוצבו',count:placedInPeriod,accent:'#16a34a',grad:'linear-gradient(135deg,#dcfce7,#bbf7d0)'},
+    {label:'השמות',count:placedInPeriod,accent:'#16a34a',grad:'linear-gradient(135deg,#dcfce7,#bbf7d0)'},
   ];
   const openJobsList=data.jobs.filter(j=>j.status==='פתוח').map(j=>{const emp=data.employers.find(e=>e.id===j.employerId);const cCount=data.candidates.filter(c=>(c.appliedJobs||[]).includes(j.id)).length;const maxC=Math.max(...data.jobs.filter(x=>x.status==='פתוח').map(x=>data.candidates.filter(c=>(c.appliedJobs||[]).includes(x.id)).length),1);return{...j,empName:emp?.name||'',cCount,barPct:Math.round((cCount/maxC)*100)};});
   const deadlineDays=parseInt(data.defaults?.deadlineDays||7);
@@ -820,7 +835,7 @@ function Dashboard({data,onNav,setData,kpiColors:kpiColorsProp,setKpiColors:setK
         {label:'משרות פתוחות',value:openJobs,icon:'📋',fg:'white',sub:`מתוך ${data.jobs.length} סה"כ`,link:'jobs'},
         {label:'מעסיקים פעילים',value:activeEmp,icon:'🏢',fg:'white',sub:`מתוך ${data.employers.length} סה"כ`,link:'employers'},
         {label:'מועמדים',value:data.candidates.filter(c=>!(data.pendingCandidates||[]).includes(c.id)).length,icon:'👥',fg:'white',sub:`${pendingCount} ממתינים לאישור`,link:'candidates'},
-        {label:'הוצבו בתקופה',value:placedInPeriod,icon:'🏆',fg:'white',sub:`${placedTotal} סה"כ כל הזמן`,link:'candidates'},
+        {label:'השמות בתקופה',value:placedInPeriod,icon:'🏆',fg:'white',sub:`${placedTotal} סה"כ כל הזמן`,link:'candidates'},
       ].map((s,idx)=><div key={s.label} style={{position:'relative',borderRadius:16,boxShadow:'0 4px 20px rgba(0,0,0,0.12)',background:kpiColors[idx]||defaultKpiColors[idx],transition:'transform .15s,box-shadow .15s',cursor:'pointer'}}
         onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 10px 32px rgba(0,0,0,0.18)';}}
         onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 4px 20px rgba(0,0,0,0.12)';}}>
@@ -889,9 +904,9 @@ function Dashboard({data,onNav,setData,kpiColors:kpiColorsProp,setKpiColors:setK
         <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginTop:3}}>מכלל המעסיקים</div>
       </div>
       <div style={{borderRight:'1px solid rgba(255,255,255,0.1)',paddingRight:24}}>
-        <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',fontWeight:700,marginBottom:6,letterSpacing:1}}>עמלות בפועל {selMonth===0?selYear:`${MONTHS[selMonth-1]} ${selYear}`}</div>
+        <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',fontWeight:700,marginBottom:6,letterSpacing:1}}>עמלות השנה {selMonth===0?selYear:`${MONTHS[selMonth-1]} ${selYear}`}</div>
         <div style={{fontSize:30,fontWeight:900,color:'#e85d26'}}>{fmtMoney(earnedInPeriod)}</div>
-        <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginTop:3}}>{placedInPeriod} הצבות</div>
+        <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginTop:3}}>{earnedInPeriod>0?placedInPeriod:placedTotal} הצבות{earnedInPeriod>0?' בתקופה':' סה"כ'}</div>
       </div>
       <div>
         <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',fontWeight:700,marginBottom:6,letterSpacing:1}}>נותר ליעד</div>
@@ -1486,13 +1501,13 @@ function Employers({data,setData}){
 
             {/* ── רצועת משרות לפי סטטוס ── */}
             {(()=>{
-              const STATUS_ORDER=['פתוח','בתהליך','ממתין','ראיון נקבע','הוצב','סגור'];
+              const STATUS_ORDER=['פתוח','בתהליך','ממתין','ראיון נקבע','השמה מוצלחת','סגור'];
               const STATUS_STYLE={
                 'פתוח':      {bg:'#f0fdf4',border:'#86efac',icon:'📂',label:'פתוחות'},
                 'בתהליך':    {bg:'#eff6ff',border:'#bfdbfe',icon:'⚙️',label:'בתהליך'},
                 'ממתין':     {bg:'#fffbeb',border:'#fde68a',icon:'⏳',label:'ממתינות'},
                 'ראיון נקבע':{bg:'#faf5ff',border:'#d8b4fe',icon:'📅',label:'ראיון נקבע'},
-                'הוצב':      {bg:'#fff7ed',border:'#fdba74',icon:'🏅',label:'השמה מוצלחת'},
+                'השמה מוצלחת':{bg:'#fff7ed',border:'#fdba74',icon:'🏅',label:'השמה מוצלחת'},
                 'סגור':      {bg:'#f3f4f6',border:'#d1d5db',icon:'🔒',label:'סגורות'},
               };
               const grouped={};
@@ -1518,8 +1533,8 @@ function Employers({data,setData}){
                       <div style={{display:'flex',flexDirection:'column',gap:8}}>
                         {jobs.map(j=>{
                           const jCands=data.candidates.filter(c=>(c.appliedJobs||[]).includes(j.id));
-                          const placedCands=jCands.filter(c=>c.status==='הוצב');
-                          const isPlaced=status==='הוצב';
+                          const placedCands=jCands.filter(c=>c.status==='השמה מוצלחת');
+                          const isPlaced=status==='השמה מוצלחת';
                           return <div key={j.id} style={{background:'white',borderRadius:10,padding:'12px 16px',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
                             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:(isPlaced&&placedCands.length)?8:0}}>
                               <div>
@@ -1534,7 +1549,7 @@ function Employers({data,setData}){
                               </div>
                             </div>
                             {isPlaced&&placedCands.length>0&&<div style={{borderTop:'1px dashed #e0dbd0',paddingTop:8,marginTop:4}}>
-                              <div style={{fontSize:11,fontWeight:700,color:'#888',marginBottom:6}}>מועמדים שהוצבו:</div>
+                              <div style={{fontSize:11,fontWeight:700,color:'#888',marginBottom:6}}>מועמדים שהושמו:</div>
                               <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
                                 {placedCands.map(c=>{
                                   const placedDate=c.placedAt?new Date(c.placedAt).toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'numeric'}):'';
@@ -1617,7 +1632,7 @@ function Employers({data,setData}){
                   </div>
                   {vcJobs.map(j=>{
                     const emp2=data.employers.find(x=>x.id===j.employerId);
-                    return <div key={j.id} style={{padding:'10px 12px',background:'#f8f7f4',borderRadius:8,marginBottom:6,border:`1px solid ${vc.status==='הוצב'?'#86efac':'#e5e7eb'}`}}>
+                    return <div key={j.id} style={{padding:'10px 12px',background:'#f8f7f4',borderRadius:8,marginBottom:6,border:`1px solid ${vc.status==='השמה מוצלחת'?'#86efac':'#e5e7eb'}`}}>
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
                         <div style={{flex:1}}>
                           <div style={{fontWeight:700,fontSize:13,color:'#1a1a2e'}}>{j.publishTitle||j.title}</div>
@@ -1857,10 +1872,9 @@ function Jobs({data,setData}){
     const matchType=typeFilter==='הכל'||j.type===typeFilter;
     const matchLocation=locationFilter==='הכל'||j.location===locationFilter;
     const matchRole=roleFilterJ==='הכל'||j.role===roleFilterJ;
-    const salParts=(j.salary||'').split('-').map(x=>parseSalaryNum(x)).filter(v=>v!==null);
-    const salLow=salParts[0]||null; const salHigh=salParts[1]||salLow;
-    const minOk=!salaryMin||salHigh===null||(salHigh>=(parseSalaryNum(salaryMin)||0));
-    const maxOk=!salaryMax||salLow===null||(salLow<=(parseSalaryNum(salaryMax)||Infinity));
+    const salNum=parseSalaryNum(j.salary);
+    const minOk=!salaryMin||salNum===null||(salNum>=(parseSalaryNum(salaryMin)||0));
+    const maxOk=!salaryMax||salNum===null||(salNum<=(parseSalaryNum(salaryMax)||Infinity));
     return matchSearch&&matchStatus&&matchDomain&&matchEmp&&matchType&&matchLocation&&matchRole&&minOk&&maxOk;
   });
 
@@ -1873,14 +1887,19 @@ function Jobs({data,setData}){
     return `https://jobs.topgroup4u.com/job/${job.id}`;
   };
 
-  const openAdd=()=>{setForm({jobNumber:nextNum(),title:'',publishTitle:'',domain:'',role:'',employerId:data.employers[0]?.id||'',type:'משרה מלאה',location:'',salary:'',status:data.defaults?.jobStatus||'פתוח',deadline:'',description:'',requirements:'',benefits:'',image:'',imageUrl:''});setModal('add');};
+  const openAdd=()=>{setForm({jobNumber:nextNum(),title:'',publishTitle:'',domain:'',role:'',employerId:data.employers[0]?.id||'',type:'משרה מלאה',location:'',salary:'',commissionPct:'',status:data.defaults?.jobStatus||'פתוח',deadline:'',description:'',requirements:'',benefits:'',image:'',imageUrl:'',fee:''});setModal('add');};
   const openEdit=j=>{setForm({...j});setModal('edit');};
   const save=()=>{
     const savedForm={...form, image: form.imageUrl||''};
     const isAdd=modal==='add';
     const entry=mkLog('job',isAdd?'added':'updated',savedForm.publishTitle||savedForm.title||savedForm.jobNumber);
-    if(isAdd) setData(d=>({...d,jobs:[...d.jobs,withStatusChange(null,{...savedForm,id:'j'+Date.now(),candidates:[],createdAt:new Date().toLocaleDateString('he-IL')})],activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
-    else setData(d=>({...d,jobs:d.jobs.map(j=>j.id===savedForm.id?withStatusChange(j,savedForm):j),activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
+    if(isAdd){
+      setData(d=>({...d,jobs:[...d.jobs,withStatusChange(null,{...savedForm,id:'j'+Date.now(),createdAt:new Date().toLocaleDateString('he-IL')})],activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
+    } else {
+      setData(d=>({...d,jobs:d.jobs.map(j=>j.id===savedForm.id?withStatusChange(j,savedForm):j),activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
+      // עדכן detail אם פתוח כדי שהטבלה והכרטיס יסתנכרנו
+      if(detail?.id===savedForm.id) setDetail(withStatusChange(detail,savedForm));
+    }
     setModal(null);
   };
   const del=id=>{
@@ -1917,7 +1936,7 @@ function Jobs({data,setData}){
         <div>
           <div style={{fontSize:12,color:'#888',fontWeight:700,marginBottom:6}}>סטטוס</div>
           <select value={stFilter} onChange={e=>setStFilter(e.target.value)} style={{width:'100%',padding:'7px 10px',border:'2px solid #333',borderRadius:3,fontFamily:'Heebo',fontSize:13,background:'white'}}>
-            {['הכל','פתוח','ממתין','סגור'].map(s=><option key={s} value={s}>{s}</option>)}
+            {['הכל',...(data.statuses?.jobs||['פתוח','ממתין','סגור'])].map(s=><option key={s} value={s}>{s}</option>)}
           </select>
         </div>
         <div>
@@ -1964,7 +1983,7 @@ function Jobs({data,setData}){
     <div className="sbox desktop-only" style={{background:'#fff',overflowX:'auto'}}>
       <table style={{width:'100%',borderCollapse:'collapse',fontSize:14,minWidth:750}}>
         <thead><tr style={{background:'#f0ede6',borderBottom:'2px solid #333'}}>
-          {['מספר','משרה','מעסיק','תחום / תפקיד','מיקום','שכר','מועמדים','סטטוס',''].map(h=><th key={h} style={{padding:'10px 12px',textAlign:'right',fontSize:14,fontWeight:700,whiteSpace:'nowrap'}}>{h}</th>)}
+          {['מספר','משרה','מעסיק','תחום / תפקיד','מיקום','שכר','דמי השמה','מועמדים','סטטוס',''].map(h=><th key={h} style={{padding:'10px 12px',textAlign:'right',fontSize:14,fontWeight:700,whiteSpace:'nowrap'}}>{h}</th>)}
         </tr></thead>
         <tbody>
           {filtered.map(job=>{
@@ -1988,6 +2007,7 @@ function Jobs({data,setData}){
               </td>
               <td style={{padding:'10px 12px',color:'#555'}}>📍 {job.location||'—'}</td>
               <td style={{padding:'10px 12px',color:ACC,fontWeight:600}}>₪{fmtNum(job.salary)}</td>
+              <td style={{padding:'10px 12px',color:'#15803d',fontWeight:600}}>{job.fee?`₪${fmtNum(job.fee)}`:'—'}</td>
               <td style={{padding:'10px 12px'}}>
                 <div style={{display:'flex',gap:3,alignItems:'center'}}>
                   {cands.slice(0,3).map(c=><Avatar key={c.id} name={c.name} size={24}/>)}
@@ -2101,7 +2121,7 @@ function Jobs({data,setData}){
                     <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>פרטי המשרה</div>
                   </div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-                    {[['מעסיק',emp?.name],['תחום',detail.domain],['תפקיד',detail.role],['סוג',detail.type],['שכר',detail.salary?`₪${fmtNum(detail.salary)}`:null],['מיקום',detail.location],['נוצרה',detail.createdAt],['דדליין',detail.deadline]].map(([k,v])=>v?<div key={k} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
+                    {[['מעסיק',emp?.name],['תחום',detail.domain],['תפקיד',detail.role],['סוג',detail.type],['שכר',detail.salary?`₪${fmtNum(detail.salary)}`:null],['אחוז עמלה',detail.commissionPct?`${detail.commissionPct}%`:null],['דמי השמה',detail.fee?`₪${fmtNum(detail.fee)}`:null],['מיקום',detail.location],['נוצרה',detail.createdAt],['דדליין',detail.deadline]].map(([k,v])=>v?<div key={k} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
                       <div style={{fontSize:12,color:'#444',fontWeight:700,marginBottom:3}}>{k}</div>
                       <div style={{fontSize:13,fontWeight:600,color:'#1a1a2e'}}>{v}</div>
                     </div>:null)}
@@ -2196,7 +2216,30 @@ function Jobs({data,setData}){
               <FF label="מעסיק" type="select" value={data.employers.find(e=>e.id===form.employerId)?.name||''} onChange={v=>setForm(f=>({...f,employerId:data.employers.find(e=>e.name===v)?.id||f.employerId}))} options={data.employers.map(e=>e.name)}/>
               <FF label="סוג משרה" type="select" value={form.type||'משרה מלאה'} onChange={v=>setForm(f=>({...f,type:v}))} options={['משרה מלאה','חצי משרה','משמרות','פרילנס','זמני']}/>
               <FF label="מיקום" value={form.location||''} onChange={v=>setForm(f=>({...f,location:v}))}/>
-              <FF label="טווח שכר (₪)" value={form.salary||''} onChange={v=>setForm(f=>({...f,salary:v}))}/>
+              <div style={{marginBottom:10}}>
+                <label style={{display:'block',fontSize:12,marginBottom:4,fontWeight:700,color:'#6b7280'}}>שכר (₪)</label>
+                <input type="number" value={form.salary||''} onChange={e=>{
+                  const sal=e.target.value;
+                  const pct=parseFloat(form.commissionPct)||0;
+                  const autoFee=pct>0&&sal?Math.round(parseFloat(sal)*pct/100):'';
+                  setForm(f=>({...f,salary:sal,fee:autoFee!==''?String(autoFee):f.fee}));
+                }} placeholder="לדוגמה: 15000" style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,color:'#1a1a2e',background:'#fafafa',outline:'none'}}/>
+              </div>
+              <div style={{marginBottom:10}}>
+                <label style={{display:'block',fontSize:12,marginBottom:4,fontWeight:700,color:'#6b7280'}}>אחוז עמלה (%)</label>
+                <input type="number" min="0" max="100" value={form.commissionPct||''} onChange={e=>{
+                  const pct=e.target.value;
+                  const sal=parseFloat(form.salary)||0;
+                  const autoFee=pct&&sal?Math.round(sal*parseFloat(pct)/100):'';
+                  setForm(f=>({...f,commissionPct:pct,fee:autoFee!==''?String(autoFee):f.fee}));
+                }} placeholder="לדוגמה: 70" style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,color:'#1a1a2e',background:'#fafafa',outline:'none'}}/>
+              </div>
+              <div style={{marginBottom:10,gridColumn:'1 / -1'}}>
+                <label style={{display:'block',fontSize:12,marginBottom:4,fontWeight:700,color:'#6b7280'}}>דמי השמה (₪) <span style={{fontWeight:400,color:'#9ca3af'}}>מחושב אוטומטית · ניתן לעריכה</span></label>
+                <input type="number" value={form.fee||''} onChange={e=>setForm(f=>({...f,fee:e.target.value}))}
+                  placeholder={form.salary&&form.commissionPct?`${Math.round((parseFloat(form.salary)||0)*(parseFloat(form.commissionPct)||0)/100)}`:''} 
+                  style={{width:'100%',padding:'9px 12px',border:'1.5px solid #86efac',borderRadius:9,fontFamily:'Heebo',fontSize:14,fontWeight:700,color:'#15803d',background:'#f0fdf4',outline:'none'}}/>
+              </div>
               <FF label="תאריך דדליין" type="date" value={form.deadline||''} onChange={v=>setForm(f=>({...f,deadline:v}))}/>
               <FF label="סטטוס" type="select" value={form.status||'פתוח'} onChange={v=>setForm(f=>({...f,status:v}))} options={data.statuses?.jobs?.length?data.statuses.jobs:['פתוח','ממתין','סגור']}/>
             </FormGrid>
@@ -2239,17 +2282,67 @@ function Candidates({data,setData}){
   const [msgTarget,setMsgTarget]=React.useState(null);
   const [jobSearch,setJobSearch]=React.useState('');
   const [confirmDel,setConfirmDel]=React.useState(null);
-  const stages=['חדש','בתהליך','ראיון נקבע','הוצב'];
+  const stages=['חדש','בתהליך','ראיון נקבע','השמה מוצלחת'];
   const pendingIds=new Set(data.pendingCandidates||[]);
   const filtered=data.candidates.filter(c=>!pendingIds.has(c.id)&&(c.name.includes(search)||c.role.includes(search)||(c.city||'').includes(search))&&(stFilter==='הכל'||c.status===stFilter));
   const pendingList=(data.pendingCandidates||[]).map(id=>data.candidates.find(c=>c.id===id)).filter(Boolean);
   const openAdd=()=>{setForm({name:'',domain:'',role:'',phone:'',email:'',city:'',status:data.defaults?.candidateStatus||'חדש',experience:'',education:'',appliedJobs:[],cv:false,notes:''});setModal('add');};
   const openEdit=c=>{setForm({...c,appliedJobs:[...c.appliedJobs]});setModal('edit');};
+  const [placeModal,setPlaceModal]=React.useState(null); // {candidateId, jobs:[]}
+
+  // פונקציה אטומית: מעדכנת מועמד + משרה בפעולה אחת
+  const doPlace=(candidateId, jobId)=>{
+    const now=new Date().toISOString();
+    const nowDate=now.split('T')[0];
+    setData(d=>{
+      const cand=d.candidates.find(c=>c.id===candidateId);
+      const job=d.jobs.find(j=>j.id===jobId);
+      if(!cand||!job) return d;
+      const updatedCand=withStatusChange(cand,{...cand,status:'השמה מוצלחת',placedAt:nowDate,placedJobId:jobId});
+      const updatedJob=withStatusChange(job,{...job,status:'השמה מוצלחת',placedCandidateId:candidateId,placedCandidateName:cand.name,placedAt:nowDate});
+      const log1=mkLog('candidate','updated',cand.name+' → השמה מוצלחת');
+      const log2=mkLog('job','updated',job.publishTitle||job.title||job.jobNumber+' → השמה מוצלחת');
+      return {...d,
+        candidates:d.candidates.map(c=>c.id===candidateId?updatedCand:c),
+        jobs:d.jobs.map(j=>j.id===jobId?updatedJob:j),
+        activityLog:[log1,log2,...(d.activityLog||[])].slice(0,50)
+      };
+    });
+    setPlaceModal(null);
+    if(detail?.id===candidateId) setDetail(prev=>({...prev,status:'השמה מוצלחת',placedAt:nowDate,placedJobId:jobId}));
+  };
+
+  const triggerPlace=(cand)=>{
+    const jobs=(cand.appliedJobs||[]).map(jid=>data.jobs.find(j=>j.id===jid)).filter(Boolean).filter(j=>j.status!=='השמה מוצלחת');
+    if(jobs.length===0){alert('אין משרות פתוחות מקושרות למועמד זה');return;}
+    if(jobs.length===1){doPlace(cand.id,jobs[0].id);return;}
+    setPlaceModal({candidateId:cand.id,candName:cand.name,jobs});
+  };
   const save=()=>{
     const isAdd=modal==='add';
     const entry=mkLog('candidate',isAdd?'added':'updated',form.name);
-    if(isAdd) setData(d=>({...d,candidates:[...d.candidates,withStatusChange(null,{...form,id:'c'+Date.now()})],activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
-    else setData(d=>({...d,candidates:d.candidates.map(c=>c.id===form.id?withStatusChange(c,form):c),activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
+    if(isAdd){
+      setData(d=>({...d,candidates:[...d.candidates,withStatusChange(null,{...form,id:'c'+Date.now()})],activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
+    } else {
+      const prevCand=data.candidates.find(c=>c.id===form.id);
+      const statusChanged=prevCand&&prevCand.status!==form.status&&form.status==='השמה מוצלחת';
+      const now=new Date().toISOString().split('T')[0];
+      const updForm=statusChanged&&!form.placedAt?{...form,placedAt:now}:form;
+      setData(d=>{
+        let jobs=d.jobs;
+        // אם סטטוס השתנה להשמה מוצלחת — סנכרן גם משרה אחת (אם יש placedJobId, אחרת הראשונה)
+        if(statusChanged){
+          const jobId=updForm.placedJobId||(updForm.appliedJobs||[])[0];
+          if(jobId){
+            const job=d.jobs.find(j=>j.id===jobId);
+            if(job&&job.status!=='השמה מוצלחת'){
+              jobs=d.jobs.map(j=>j.id===jobId?withStatusChange(j,{...j,status:'השמה מוצלחת',placedCandidateId:updForm.id,placedCandidateName:updForm.name,placedAt:updForm.placedAt||now}):j);
+            }
+          }
+        }
+        return {...d,candidates:d.candidates.map(c=>c.id===updForm.id?withStatusChange(prevCand,updForm):c),jobs,activityLog:[entry,...(d.activityLog||[])].slice(0,50)};
+      });
+    }
     setModal(null);
   };
   const del=id=>{
@@ -2398,7 +2491,7 @@ function Candidates({data,setData}){
       </div>
     </div>}
     <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
-      {['הכל','חדש','בתהליך','ראיון נקבע','הוצב'].map(s=><Btn key={s} onClick={()=>setStFilter(s)} style={{background:stFilter===s?ACC:'white',color:stFilter===s?'white':'#333',padding:'5px 8px',fontSize:11}}>{s}</Btn>)}
+      {['הכל','חדש','בתהליך','ראיון נקבע','השמה מוצלחת'].map(s=><Btn key={s} onClick={()=>setStFilter(s)} style={{background:stFilter===s?ACC:'white',color:stFilter===s?'white':'#333',padding:'5px 8px',fontSize:11}}>{s}</Btn>)}
     </div>
 
     {/* Mobile list */}
@@ -2542,7 +2635,7 @@ function Candidates({data,setData}){
                   ?<div style={{color:'#666',fontSize:13,padding:'4px 0'}}>לא שויך למשרות עדיין</div>
                   :data.jobs.filter(j=>(detail.appliedJobs||[]).includes(j.id)).map(j=>{
                     const emp=data.employers.find(x=>x.id===j.employerId);
-                    const isPlaced=detail.status==='הוצב';
+                    const isPlaced=detail.status==='השמה מוצלחת';
                     const placedDateStr=detail.placedAt?new Date(detail.placedAt).toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'numeric'}):'';
                     return <div key={j.id} style={{padding:'12px 14px',background:'#f8f7f4',borderRadius:10,marginBottom:8,border:`1px solid ${isPlaced?'#86efac':'#e5e7eb'}`}}>
                       <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:isPlaced?8:0}}>
@@ -2556,7 +2649,7 @@ function Candidates({data,setData}){
                       {isPlaced&&<div style={{display:'flex',alignItems:'center',gap:8,background:'#dcfce7',borderRadius:8,padding:'8px 12px',border:'1px solid #86efac'}}>
                         <span style={{fontSize:16}}>🏅</span>
                         <div>
-                          <div style={{fontSize:12,fontWeight:800,color:'#16a34a'}}>המועמד הוצב במשרה זו</div>
+                          <div style={{fontSize:12,fontWeight:800,color:'#16a34a'}}>השמה מוצלחת במשרה זו</div>
                           {placedDateStr&&<div style={{fontSize:13,color:'#166534',fontWeight:700,marginTop:1}}>📅 תאריך הצבה: {placedDateStr}</div>}
                         </div>
                       </div>}
@@ -2650,6 +2743,12 @@ function Candidates({data,setData}){
                 + הוסף משימה למועמד זה
               </button>
 
+              {/* כפתור השמה מוצלחת */}
+              {detail.status!=='השמה מוצלחת'&&<button onClick={()=>triggerPlace(detail)}
+                style={{width:'100%',padding:'12px 0',background:'linear-gradient(135deg,#16a34a,#15803d)',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:800,fontSize:15,cursor:'pointer',boxShadow:'0 4px 14px rgba(22,163,74,0.35)'}}>
+                🏅 השמה מוצלחת
+              </button>}
+
               {/* עריכה / מחיקה */}
               <div style={{display:'flex',gap:10}}>
                 <button onClick={()=>{setDetail(null);openEdit(detail);}} style={{flex:1,padding:'11px 0',background:'#1a1a2e',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
@@ -2702,11 +2801,11 @@ function Candidates({data,setData}){
               <FF label="השכלה" value={form.education||''} onChange={v=>setForm(f=>({...f,education:v}))}/>
               <FF label="סטטוס" type="select" value={form.status||'חדש'} onChange={v=>{
                 const upd={...form,status:v};
-                if(v==='הוצב'&&!form.placedAt) upd.placedAt=new Date().toISOString().split('T')[0];
-                if(v!=='הוצב') upd.placedAt='';
+                if(v==='השמה מוצלחת'&&!form.placedAt) upd.placedAt=new Date().toISOString().split('T')[0];
+                if(v!=='השמה מוצלחת') upd.placedAt='';
                 setForm(f=>({...f,...upd}));
-              }} options={data.statuses?.candidates?.length?data.statuses.candidates:['חדש','בתהליך','ראיון נקבע','הוצב']}/>
-              {form.status==='הוצב'&&<div>
+              }} options={data.statuses?.candidates?.length?data.statuses.candidates:['חדש','בתהליך','ראיון נקבע','השמה מוצלחת']}/>
+              {form.status==='השמה מוצלחת'&&<div>
                 <div style={{fontSize:13,fontWeight:600,color:'#555',marginBottom:4}}>📅 תאריך הצבה</div>
                 <input type="date" value={form.placedAt||''} onChange={e=>setForm(f=>({...f,placedAt:e.target.value}))}
                   style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,outline:'none'}}/>
@@ -2762,6 +2861,32 @@ function Candidates({data,setData}){
         <Btn variant="primary" onClick={save}>שמירה</Btn>
       </div>
     </Modal>}
+
+    {/* Modal בחירת משרה להשמה */}
+    {placeModal&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.65)',backdropFilter:'blur(4px)',zIndex:1200,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+      <div style={{background:'white',borderRadius:20,width:'100%',maxWidth:480,boxShadow:'0 20px 60px rgba(0,0,0,0.35)',overflow:'hidden'}}>
+        <div style={{background:'linear-gradient(135deg,#16a34a,#15803d)',padding:'20px 24px'}}>
+          <div style={{color:'white',fontWeight:800,fontSize:18}}>🏅 השמה מוצלחת</div>
+          <div style={{color:'rgba(255,255,255,0.8)',fontSize:13,marginTop:4}}>{placeModal.candName} — באיזו משרה הושם/ה?</div>
+        </div>
+        <div style={{padding:'16px 20px'}}>
+          {placeModal.jobs.map(j=>{
+            const emp=data.employers.find(e=>e.id===j.employerId);
+            return <button key={j.id} onClick={()=>doPlace(placeModal.candidateId,j.id)}
+              style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'13px 16px',marginBottom:8,background:'#f8f7f4',border:'2px solid #e5e7eb',borderRadius:12,cursor:'pointer',fontFamily:'Heebo',textAlign:'right',transition:'all .15s'}}
+              onMouseEnter={e=>{e.currentTarget.style.background='#f0fdf4';e.currentTarget.style.borderColor='#86efac';}}
+              onMouseLeave={e=>{e.currentTarget.style.background='#f8f7f4';e.currentTarget.style.borderColor='#e5e7eb';}}>
+              <div style={{width:40,height:40,borderRadius:10,background:'#dcfce7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>📋</div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:14,color:'#1a1a2e'}}>{j.publishTitle||j.title}</div>
+                <div style={{fontSize:12,color:'#555',marginTop:2}}>{emp?.name||''} · {j.jobNumber}{j.location?` · ${j.location}`:''}</div>
+              </div>
+            </button>;
+          })}
+          <button onClick={()=>setPlaceModal(null)} style={{width:'100%',padding:'11px 0',background:'white',border:'2px solid #e5e7eb',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer',color:'#555',marginTop:4}}>ביטול</button>
+        </div>
+      </div>
+    </div>}
 
     {msgTarget&&<MessageModal
       type="candidate"
@@ -3129,7 +3254,7 @@ function CandidateHunter({data}){
     const sRole=role.trim().toLowerCase();
     const sCity=city.trim().toLowerCase();
     const candidates=data.candidates.filter(c=>{
-      if(!includeHired && c.status==='הוצב') return false;
+      if(!includeHired && c.status==='השמה מוצלחת') return false;
       // hard filters — if selected must match
       if(sDomain){
         const cd=(c.domain||'').trim().toLowerCase();
@@ -3271,7 +3396,7 @@ function CandidateHunter({data}){
             style={{width:40,height:22,borderRadius:11,background:includeHired?'#e85d26':'rgba(255,255,255,0.2)',border:'none',cursor:'pointer',position:'relative',transition:'background .2s',flexShrink:0}}>
             <div style={{position:'absolute',top:3,right:includeHired?3:19,width:16,height:16,borderRadius:8,background:'white',transition:'right .2s'}}/>
           </button>
-          <span style={{fontSize:13,color:'rgba(255,255,255,0.75)'}}>כולל מועמדים שהוצבו בעבר 🏅</span>
+          <span style={{fontSize:13,color:'rgba(255,255,255,0.75)'}}>כולל מועמדים שהושמו בעבר 🏅</span>
         </div>
         <button onClick={hunt}
           style={{padding:'11px 36px',background:'#e85d26',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:800,fontSize:16,cursor:'pointer',boxShadow:'0 4px 16px rgba(232,93,38,0.4)'}}>
@@ -3301,7 +3426,7 @@ function CandidateHunter({data}){
               <div style={{display:'flex',flexDirection:'column',gap:10}}>
                 {results.map(c=>{
                   const t=tierLabel[tier(c._score)];
-                  const prevJob=c.status==='הוצב'?data.jobs.find(j=>c.appliedJobs?.includes(j.id)&&j.status!=='פתוח')||data.jobs.find(j=>c.appliedJobs?.includes(j.id)):null;
+                  const prevJob=c.status==='השמה מוצלחת'?data.jobs.find(j=>c.appliedJobs?.includes(j.id)&&j.status!=='פתוח')||data.jobs.find(j=>c.appliedJobs?.includes(j.id)):null;
                   return <div key={c.id} style={{background:'white',borderRadius:14,padding:'16px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',border:`1.5px solid ${t.border}`,display:'flex',alignItems:'center',gap:16}}>
                     {/* Score ring */}
                     <div style={{width:52,height:52,borderRadius:26,background:t.bg,border:`3px solid ${t.color}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -3312,7 +3437,7 @@ function CandidateHunter({data}){
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
                         <span style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>{c.name}</span>
                         <Tag label={c.status}/>
-                        {c.status==='הוצב'&&<span style={{fontSize:11,background:'#fef3c7',color:'#92400e',border:'1px solid #fcd34d',borderRadius:4,padding:'1px 6px',fontWeight:700}}>🏅 הוצב</span>}
+                        {c.status==='השמה מוצלחת'&&<span style={{fontSize:11,background:'#fef3c7',color:'#92400e',border:'1px solid #fcd34d',borderRadius:4,padding:'1px 6px',fontWeight:700}}>🏅 הושם</span>}
                         <span style={{fontSize:11,background:t.bg,color:t.color,border:`1px solid ${t.border}`,borderRadius:4,padding:'1px 6px',fontWeight:700}}>{t.label}</span>
                       </div>
                       <div style={{display:'flex',gap:16,fontSize:12,color:MUT,flexWrap:'wrap'}}>
@@ -3388,7 +3513,7 @@ function Settings({data,setData}){
   };
   const delUser=id=>{if(!confirm('למחוק משתמש?'))return;const updated=users.filter(u=>u.id!==id);setUsers(updated);setData(d=>({...d,users:updated}));};
   // Statuses tab state
-  const defaultStatuses={candidates:['חדש','בתהליך','ראיון נקבע','הוצב','נדחה'],jobs:['פתוח','ממתין','סגור'],employers:['פעיל','פסיבי']};
+  const defaultStatuses={candidates:['חדש','בתהליך','ראיון נקבע','השמה מוצלחת','נדחה'],jobs:['פתוח','ממתין','סגור'],employers:['פעיל','פסיבי']};
   const [statuses,setStatuses]=React.useState(()=>data.statuses||defaultStatuses);
   const DEFAULT_INDUSTRIES=['הייטק','תעשייה','פיננסים','קמעונאות','בריאות','חינוך','אחר'];
   const [industries,setIndustries]=React.useState(()=>data.industries||DEFAULT_INDUSTRIES);
@@ -3641,7 +3766,7 @@ function Settings({data,setData}){
             <div style={{fontSize:12,color:'#444',fontWeight:700,marginBottom:6}}>מועמד חדש</div>
             <select value={defaults.candidateStatus||'חדש'} onChange={e=>setDefaults(d=>({...d,candidateStatus:e.target.value}))}
               style={{width:'100%',padding:'8px 10px',border:'2px solid #333',borderRadius:4,fontFamily:'Heebo',fontSize:13}}>
-              {(data.statuses?.candidates||['חדש','בתהליך','ראיון נקבע','הוצב']).map(s=><option key={s} value={s}>{s}</option>)}
+              {(data.statuses?.candidates||['חדש','בתהליך','ראיון נקבע','השמה מוצלחת']).map(s=><option key={s} value={s}>{s}</option>)}
             </select>
           </div>
         </div>
@@ -3687,7 +3812,7 @@ function Settings({data,setData}){
 
     {tab==='notifications'&&<div className="sbox" style={{background:'#fff',padding:24,maxWidth:480}}>
       <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>הגדרות התראות</h3>
-      {['מועמד חדש נרשם','ראיון נקבע','מועמד הוצב','משרה חדשה נוספה','דדליין משרה קרוב'].map(item=><label key={item} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:'1px dashed #eee',cursor:'pointer'}}>
+      {['מועמד חדש נרשם','ראיון נקבע','מועמד הושם','משרה חדשה נוספה','דדליין משרה קרוב'].map(item=><label key={item} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:'1px dashed #eee',cursor:'pointer'}}>
         <span style={{fontSize:14}}>{item}</span>
         <div style={{display:'flex',gap:10}}>{['אימייל','מערכת'].map(ch=><label key={ch} style={{display:'flex',gap:4,fontSize:13,color:'#555'}}><input type="checkbox" defaultChecked/>{ch}</label>)}</div>
       </label>)}
