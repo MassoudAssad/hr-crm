@@ -672,44 +672,43 @@ function MessageModal({ type, person, job, employer, candidate, onClose, initial
 const NAV=[{id:'dashboard',icon:'⊞',label:'דשבורד'},{id:'employers',icon:'🏢',label:'מעסיקים'},{id:'jobs',icon:'📋',label:'משרות'},{id:'candidates',icon:'👥',label:'מועמדים'},{id:'hunter',icon:'🎯',label:'צייד מועמדים'},{id:'tasks',icon:'✅',label:'משימות'},{id:'settings',icon:'⚙',label:'הגדרות'}];
 
 function TopNav({active,onNav,pending,onPendingClick}){
-  return <div style={{background:'#1a3a6b',borderBottom:'3px solid #122a50',flexShrink:0,display:'flex',alignItems:'stretch',height:56,zIndex:50,position:'relative'}}>
+  return <div style={{background:'#1a3a6b',borderBottom:'3px solid #122a50',flexShrink:0,display:'flex',alignItems:'stretch',height:60,zIndex:200,position:'sticky',top:0,width:'100%',boxSizing:'border-box',boxShadow:'0 4px 16px rgba(0,0,0,0.25)',padding:'0 32px'}}>
     {/* Logo */}
-    <div style={{display:'flex',alignItems:'center',padding:'0 20px',borderLeft:'1px solid rgba(255,255,255,0.15)',minWidth:170,flexShrink:0}}>
+    <div style={{display:'flex',alignItems:'center',paddingLeft:0,paddingRight:24,borderLeft:'1px solid rgba(255,255,255,0.15)',flexShrink:0}}>
       <div>
-        <div style={{color:'#fff',fontSize:17,fontWeight:800,lineHeight:1.1,letterSpacing:0.3}}>טופ גרופ</div>
-        <div style={{color:'rgba(255,255,255,0.55)',fontSize:11,fontWeight:500}}>גיוס והשמה</div>
+        <div style={{color:'#fff',fontSize:18,fontWeight:900,lineHeight:1.1,letterSpacing:0.3}}>טופ גרופ</div>
+        <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,fontWeight:500}}>גיוס והשמה</div>
       </div>
     </div>
-    {/* Nav links */}
+    {/* Nav links — fill available space */}
     <nav style={{display:'flex',alignItems:'stretch',flex:1,overflowX:'auto'}}>
       {NAV.map(item=>(
         <div key={item.id} onClick={()=>onNav(item.id)}
-          style={{display:'flex',alignItems:'center',gap:6,padding:'0 16px',cursor:'pointer',
+          style={{display:'flex',alignItems:'center',gap:7,padding:'0 18px',cursor:'pointer',
             borderBottom:active===item.id?'3px solid #e85d26':'3px solid transparent',
-            color:active===item.id?'#fff':'rgba(255,255,255,0.7)',
-            fontSize:14,fontWeight:active===item.id?700:500,
-            background:active===item.id?'rgba(255,255,255,0.08)':'transparent',
-            transition:'all .15s',flexShrink:0,position:'relative',
-            marginBottom: active===item.id?0:0
+            color:active===item.id?'#fff':'rgba(255,255,255,0.72)',
+            fontSize:15,fontWeight:active===item.id?700:500,
+            background:active===item.id?'rgba(255,255,255,0.09)':'transparent',
+            transition:'all .15s',flexShrink:0,
           }}
-          onMouseEnter={e=>{if(active!==item.id){e.currentTarget.style.background='rgba(255,255,255,0.05)';e.currentTarget.style.color='#fff';}}}
-          onMouseLeave={e=>{if(active!==item.id){e.currentTarget.style.background='transparent';e.currentTarget.style.color='rgba(255,255,255,0.7)';}}}
+          onMouseEnter={e=>{if(active!==item.id){e.currentTarget.style.background='rgba(255,255,255,0.06)';e.currentTarget.style.color='#fff';}}}
+          onMouseLeave={e=>{if(active!==item.id){e.currentTarget.style.background='transparent';e.currentTarget.style.color='rgba(255,255,255,0.72)';}}}
         >
-          <span style={{fontSize:15}}>{item.icon}</span>
+          <span style={{fontSize:16}}>{item.icon}</span>
           <span>{item.label}</span>
-          {item.id==='candidates'&&pending>0&&<span style={{background:'#e85d26',color:'white',borderRadius:10,padding:'1px 6px',fontSize:10,fontWeight:800,marginRight:2}}>{pending}</span>}
+          {item.id==='candidates'&&pending>0&&<span style={{background:'#e85d26',color:'white',borderRadius:10,padding:'1px 6px',fontSize:11,fontWeight:800,marginRight:2}}>{pending}</span>}
         </div>
       ))}
     </nav>
-    {/* Right — pending bell + user */}
-    <div style={{display:'flex',alignItems:'center',gap:8,padding:'0 16px',borderRight:'1px solid rgba(255,255,255,0.15)'}}>
-      {pending>0&&<button onClick={onPendingClick} style={{background:'rgba(232,93,38,0.25)',border:'1.5px solid #e85d26',color:'white',borderRadius:8,padding:'5px 12px',fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer',display:'flex',alignItems:'center',gap:5}}>
+    {/* Left — pending bell + user */}
+    <div style={{display:'flex',alignItems:'center',gap:10,paddingRight:0,paddingLeft:0,borderRight:'1px solid rgba(255,255,255,0.15)'}}>
+      {pending>0&&<button onClick={onPendingClick} style={{background:'rgba(232,93,38,0.25)',border:'1.5px solid #e85d26',color:'white',borderRadius:8,padding:'6px 14px',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
         🔔 <span>{pending} ממתינים</span>
       </button>}
       <div style={{display:'flex',alignItems:'center',gap:8}}>
-        <Avatar name="מנהל" size={28}/>
-        <span style={{color:'rgba(255,255,255,0.7)',fontSize:12,fontWeight:500}}>מנהל</span>
-        <button onClick={async()=>{if(confirm('לצאת מהמערכת?'))await sb.auth.signOut();}} style={{background:'rgba(255,255,255,0.08)',border:'none',color:'rgba(255,255,255,0.55)',borderRadius:6,padding:'4px 8px',cursor:'pointer',fontSize:13}} title="יציאה">🚪</button>
+        <Avatar name="מנהל" size={30}/>
+        <span style={{color:'rgba(255,255,255,0.8)',fontSize:14,fontWeight:600}}>מנהל</span>
+        <button onClick={async()=>{if(confirm('לצאת מהמערכת?'))await sb.auth.signOut();}} style={{background:'rgba(255,255,255,0.08)',border:'none',color:'rgba(255,255,255,0.55)',borderRadius:6,padding:'5px 9px',cursor:'pointer',fontSize:14}} title="יציאה">🚪</button>
       </div>
     </div>
   </div>;
@@ -833,281 +832,236 @@ function Dashboard({data,onNav,setData,kpiColors:kpiColorsProp,setKpiColors:setK
   const soon7=data.jobs.filter(j=>{if(j.status==='סגור'||!j.deadline)return false;const parts=j.deadline.split('/');if(parts.length!==3)return false;const d=new Date(parts[2],parts[1]-1,parts[0]);const diff=(d-now)/(1000*60*60*24);return diff>=0&&diff<=deadlineDays;});
   const fmtMoney=n=>n>=1000000?`₪${(n/1000000).toFixed(1)}M`:n>=1000?`₪${Math.round(n/1000)}K`:`₪${Math.round(n)}`;
   const pctColor=p=>p>=80?'#16a34a':p>=40?'#f59e0b':'#e85d26';
-  return <div style={{padding:28,maxWidth:1280}} className="mobile-pad">
+  return <div style={{padding:'24px 32px',width:'100%',boxSizing:'border-box'}} className="mobile-pad">
+
+    {/* ── Header ── */}
     <div style={{marginBottom:20,display:'flex',justifyContent:'space-between',alignItems:'flex-end',flexWrap:'wrap',gap:8}}>
-      <div><h1 style={{fontSize:32,fontWeight:900,color:'#1a1a2e',marginBottom:4}}>שלום {data.displaySettings?.userName||'👋'}</h1><div style={{color:MUT,fontSize:14}}>{now.toLocaleDateString('he-IL',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></div>
-      {pendingCount>0&&<div onClick={()=>onNav('candidates')} style={{cursor:'pointer',background:'#fff5f0',border:'2px solid #e85d26',borderRadius:12,padding:'10px 18px',display:'flex',alignItems:'center',gap:10,animation:'pendingPulse 1.8s ease-in-out infinite'}}><span style={{fontSize:20}}>🔔</span><div><div style={{fontWeight:800,fontSize:15,color:'#e85d26'}}>{pendingCount} מועמדים ממתינים</div><div style={{fontSize:12,color:MUT}}>לחץ לאישור</div></div></div>}
+      <div>
+        <h1 style={{fontSize:32,fontWeight:900,color:'#1a1a2e',marginBottom:4}}>שלום {data.displaySettings?.userName||'👋'}</h1>
+        <div style={{color:MUT,fontSize:14}}>{now.toLocaleDateString('he-IL',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+      </div>
+      {pendingCount>0&&<div onClick={()=>onNav('candidates')} style={{cursor:'pointer',background:'#fff5f0',border:'2px solid #e85d26',borderRadius:12,padding:'10px 18px',display:'flex',alignItems:'center',gap:10,animation:'pendingPulse 1.8s ease-in-out infinite'}}>
+        <span style={{fontSize:20}}>🔔</span>
+        <div><div style={{fontWeight:800,fontSize:15,color:'#e85d26'}}>{pendingCount} מועמדים ממתינים</div><div style={{fontSize:12,color:MUT}}>לחץ לאישור</div></div>
+      </div>}
     </div>
 
-    {/* Year / Month selector — dropdowns */}
-    <div style={{background:'#fff',border:'2px solid #333',borderRadius:6,padding:'12px 18px',marginBottom:20,display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
-      <span style={{fontSize:13,fontWeight:800,color:'#1a1a2e'}}>📅 תקופה:</span>
-      <select value={selYear} onChange={e=>{setSelYear(parseInt(e.target.value));setSelMonth(0);}}
-        style={{padding:'7px 12px',border:'2px solid #333',borderRadius:6,fontFamily:'Heebo',fontWeight:700,fontSize:14,background:'white',cursor:'pointer',minWidth:90}}>
-        {availableYears.map(y=><option key={y} value={y}>{y}</option>)}
-      </select>
-      <select value={selMonth} onChange={e=>setSelMonth(parseInt(e.target.value))}
-        style={{padding:'7px 12px',border:'2px solid #333',borderRadius:6,fontFamily:'Heebo',fontWeight:700,fontSize:14,background:'white',cursor:'pointer',minWidth:130}}>
-        <option value={0}>כל השנה</option>
-        {MONTHS.map((m,i)=><option key={i} value={i+1}>{m}</option>)}
-      </select>
-      <span style={{fontSize:13,color:ACC,fontWeight:700,background:'#fff5f0',padding:'6px 14px',borderRadius:6,border:`1.5px solid ${ACC}`}}>
-        📊 {selMonth===0?`שנת ${selYear}`:`${MONTHS[selMonth-1]} ${selYear}`}
-      </span>
-    </div>
-
-    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,marginBottom:24}} className="mobile-grid-2">
-      {[
-        {label:'משרות פתוחות',value:openJobs,icon:'📋',fg:'white',sub:`מתוך ${data.jobs.length} סה"כ`,link:'jobs'},
-        {label:'מעסיקים פעילים',value:activeEmp,icon:'🏢',fg:'white',sub:`מתוך ${data.employers.length} סה"כ`,link:'employers'},
-        {label:'מועמדים',value:data.candidates.filter(c=>!(data.pendingCandidates||[]).includes(c.id)).length,icon:'👥',fg:'white',sub:`${pendingCount} ממתינים לאישור`,link:'candidates'},
-        {label:'השמות בתקופה',value:placedInPeriod,icon:'🏆',fg:'white',sub:`${placedTotal} סה"כ כל הזמן`,link:'candidates'},
-      ].map((s,idx)=><div key={s.label} style={{position:'relative',borderRadius:16,boxShadow:'0 4px 20px rgba(0,0,0,0.12)',background:kpiColors[idx]||defaultKpiColors[idx],transition:'transform .15s,box-shadow .15s',cursor:'pointer'}}
-        onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 10px 32px rgba(0,0,0,0.18)';}}
-        onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 4px 20px rgba(0,0,0,0.12)';}}>
-        {/* 🎨 button inside card */}
-        <button onClick={e=>{e.stopPropagation();setKpiColorPicker(kpiColorPicker===idx?null:idx);}}
-          style={{position:'absolute',top:8,left:8,zIndex:20,background:'rgba(0,0,0,0.35)',border:'2px solid rgba(255,255,255,0.5)',borderRadius:6,width:30,height:30,cursor:'pointer',fontSize:15,lineHeight:'1',padding:0,color:'white',fontFamily:'Heebo'}}>
-          🎨
-        </button>
-        {/* Color picker dropdown */}
-        {kpiColorPicker===idx&&<div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:44,left:8,zIndex:100,background:'white',border:'2px solid #333',borderRadius:10,padding:12,boxShadow:'0 8px 32px rgba(0,0,0,0.3)',minWidth:200}}>
-          <div style={{fontSize:11,fontWeight:700,color:'#444',marginBottom:8}}>בחר צבע</div>
-          <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:10}}>
-            {KPI_PRESETS.map(c=><button key={c} onClick={()=>saveKpiColor(idx,c)}
-              style={{width:28,height:28,borderRadius:6,background:c,border:`2px solid ${kpiColors[idx]===c?'#333':'transparent'}`,cursor:'pointer',transition:'transform .1s',transform:kpiColors[idx]===c?'scale(1.2)':'scale(1)'}}/>)}
-          </div>
-          <div style={{display:'flex',alignItems:'center',gap:6}}>
-            <span style={{fontSize:11,color:'#555',fontWeight:600}}>מותאם:</span>
-            <input type="color" value={(kpiColors[idx]||'#1a1a2e').replace(/linear-gradient[^)]+\)/,'#1a1a2e')} onChange={e=>saveKpiColor(idx,e.target.value)}
-              style={{width:36,height:28,border:'2px solid #333',borderRadius:4,cursor:'pointer',padding:1}}/>
-          </div>
-          <button onClick={()=>saveKpiColor(idx,defaultKpiColors[idx])}
-            style={{marginTop:8,width:'100%',padding:'5px',border:'1px dashed #ccc',borderRadius:4,background:'none',fontFamily:'Heebo',fontSize:11,color:'#888',cursor:'pointer'}}>↩ ברירת מחדל</button>
-        </div>}
-        {/* Card content */}
-        <div onClick={()=>{setKpiColorPicker(null);onNav(s.link);}} style={{padding:'20px 18px',borderRadius:16}}>
-          <div style={{fontSize:26,marginBottom:8}}>{s.icon}</div>
-          <div style={{fontSize:38,fontWeight:900,lineHeight:1,color:s.fg}}>{s.value}</div>
-          <div style={{fontSize:14,fontWeight:700,color:s.fg,marginTop:4,opacity:.9}}>{s.label}</div>
-          <div style={{fontSize:12,color:s.fg,marginTop:3,opacity:.6}}>{s.sub}</div>
-        </div>
-      </div>)}
-    </div>
+    {/* Color pickers overlay */}
     {(kpiColorPicker!==null||showCommissionPicker||pipelineColorPicker!==null)&&<div onClick={()=>{setKpiColorPicker(null);setShowCommissionPicker(false);setPipelineColorPicker(null);}} style={{position:'fixed',inset:0,zIndex:9}}/>}
-    <div style={{position:'relative',background:commissionBg,borderRadius:20,padding:'24px 28px',marginBottom:24,display:'grid',gridTemplateColumns:'auto 1fr 1fr 1fr',gap:24,alignItems:'center'}} className="mobile-grid-1">
-      {/* Commission bar color picker */}
-      <button onClick={e=>{e.stopPropagation();setShowCommissionPicker(v=>!v);}}
-        style={{position:'absolute',top:10,left:10,zIndex:20,background:'rgba(0,0,0,0.35)',border:'2px solid rgba(255,255,255,0.5)',borderRadius:6,width:30,height:30,cursor:'pointer',fontSize:15,lineHeight:'1',padding:0,color:'white',fontFamily:'Heebo'}}>
-        🎨
-      </button>
-      {showCommissionPicker&&<div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:46,left:8,zIndex:100,background:'white',border:'2px solid #333',borderRadius:10,padding:12,boxShadow:'0 8px 32px rgba(0,0,0,0.3)',minWidth:220}}>
-        <div style={{fontSize:11,fontWeight:700,color:'#444',marginBottom:8}}>בחר צבע רקע</div>
-        <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:10}}>
-          {['linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)','linear-gradient(135deg,#1e3a5f,#0f2444)','linear-gradient(135deg,#1a1a2e,#2d1b69)','linear-gradient(135deg,#064e3b,#065f46)','linear-gradient(135deg,#1e1b4b,#312e81)','#1a1a2e','#0f172a','#1e293b'].map((c,ci)=>(
-            <button key={ci} onClick={()=>saveCommissionBg(c)}
-              style={{width:32,height:32,borderRadius:6,background:c,border:`2px solid ${commissionBg===c?'white':'transparent'}`,cursor:'pointer'}}/>
+
+    {/* KPI pickers popup */}
+    {kpiColorPicker!==null&&(()=>{const kpiLabels=['\u05de\u05e9\u05e8\u05d5\u05ea','\u05de\u05e2\u05e1\u05d9\u05e7\u05d9\u05dd','\u05d4\u05e9\u05de\u05d5\u05ea','\u05e6\u05d9\u05e4\u05d9 \u05e2\u05de\u05dc\u05d5\u05ea','\u05e2\u05de\u05dc\u05d5\u05ea'];const k=kpiLabels[kpiColorPicker]||'';return <div onClick={e=>e.stopPropagation()} style={{position:'fixed',top:80,right:20,zIndex:100,background:'white',border:'2px solid #333',borderRadius:10,padding:12,boxShadow:'0 8px 32px rgba(0,0,0,0.3)',minWidth:220}}>
+      <div style={{fontSize:11,fontWeight:700,color:'#444',marginBottom:8}}>\u05e6\u05d1\u05e2 \u05dc-{k}</div>
+      <div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:8}}>{KPI_PRESETS.map(col=><button key={col} onClick={()=>saveKpiColor(kpiColorPicker,col)} style={{width:32,height:32,borderRadius:6,background:col,border:`2px solid ${kpiColors[kpiColorPicker]===col?'white':'transparent'}`,cursor:'pointer'}}/>)}</div>
+      <input type="color" onChange={e=>saveKpiColor(kpiColorPicker,e.target.value)} style={{width:'100%',height:32,border:'2px solid #333',borderRadius:6,cursor:'pointer'}}/>
+    </div>;})()}
+
+    {/* ── 2-col grid ── */}
+    <div style={{display:'grid',gridTemplateColumns:'75% 1fr',gap:28,alignItems:'start'}}>
+
+      {/* ══ LEFT MAIN COLUMN ══ */}
+      <div style={{display:'flex',flexDirection:'column',gap:24}}>
+
+        {/* Commission bar */}
+        <div style={{position:'relative',background:commissionBg,borderRadius:20,padding:'20px 24px',display:'grid',gridTemplateColumns:'auto 1fr 1fr 1fr',gap:20,alignItems:'center'}} className="mobile-grid-1">
+          <button onClick={e=>{e.stopPropagation();setShowCommissionPicker(v=>!v);}} style={{position:'absolute',top:8,left:8,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.3)',borderRadius:6,width:26,height:26,cursor:'pointer',fontSize:13,color:'white',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10}}>🎨</button>
+          {showCommissionPicker&&<div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:46,left:8,zIndex:100,background:'white',border:'2px solid #333',borderRadius:10,padding:12,boxShadow:'0 8px 32px rgba(0,0,0,0.3)',minWidth:220}}>
+            <div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:8}}>{KPI_PRESETS.map((c2,ci)=><button key={ci} onClick={()=>saveCommissionBg(c2)} style={{width:32,height:32,borderRadius:6,background:c2,border:`2px solid ${commissionBg===c2?'white':'transparent'}`,cursor:'pointer'}}/>)}</div>
+            <input type="color" value={'#1a1a2e'} onChange={e=>saveCommissionBg(e.target.value)} style={{width:'100%',height:32,border:'2px solid #333',borderRadius:6,cursor:'pointer'}}/>
+            <button onClick={()=>saveCommissionBg('linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)')} style={{marginTop:8,width:'100%',padding:'4px',border:'1px dashed #ccc',borderRadius:4,background:'none',fontFamily:'Heebo',fontSize:10,color:'#888',cursor:'pointer'}}>↩ ברירת מחדל</button>
+          </div>}
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+            <ProgressRing pct={commissionPct} color={pctColor(commissionPct)}/>
+            <div style={{fontSize:20,fontWeight:900,color:'white',lineHeight:1}}>{commissionPct}%</div>
+            <div style={{fontSize:11,color:'rgba(255,255,255,0.6)'}}>אחוז מיעד</div>
+          </div>
+          {[
+            {label:'\u05de\u05e9\u05e8\u05d5\u05ea \u05e4\u05ea\u05d5\u05d7\u05d5\u05ea',val:openJobs,color:'#3b82f6',fmt:v=>v},
+            {label:'\u05de\u05e2\u05e1\u05d9\u05e7\u05d9\u05dd \u05e4\u05e2\u05d9\u05dc\u05d9\u05dd',val:activeEmp,color:'#8b5cf6',fmt:v=>v},
+            {label:'\u05d4\u05e9\u05de\u05d5\u05ea \u05d1\u05ea\u05e7\u05d5\u05e4\u05d4',val:placedInPeriod,color:'#16a34a',fmt:v=>v},
+            {label:'\u05e6\u05d9\u05e4\u05d9 \u05e2\u05de\u05dc\u05d5\u05ea',val:expectedCommission,color:'#f59e0b',fmt:fmtMoney},
+            {label:'\u05e2\u05de\u05dc\u05d5\u05ea \u05e9\u05d4\u05d5\u05e8\u05d5\u05d5\u05d7\u05d5',val:earnedInPeriod,color:'#e85d26',fmt:fmtMoney},
+          ].map((kpi,idx)=>(
+            <div key={idx} style={{position:'relative'}}>
+              <button onClick={e=>{e.stopPropagation();setKpiColorPicker(kpiColorPicker===idx?null:idx);}} style={{position:'absolute',top:4,left:4,background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.2)',borderRadius:4,width:20,height:20,cursor:'pointer',fontSize:10,color:'white',display:'flex',alignItems:'center',justifyContent:'center',padding:0,zIndex:2}}>\U0001f3a8</button>
+              <div style={{background:`${kpiColors[idx]||kpi.color}30`,borderRadius:14,padding:'16px 18px',border:`1.5px solid ${kpiColors[idx]||kpi.color}50`}}>
+                <div style={{fontSize:12,color:'rgba(255,255,255,0.7)',marginBottom:6,fontWeight:600}}>{kpi.label}</div>
+                <div style={{fontSize:30,fontWeight:900,color:'white',lineHeight:1}}>{kpi.fmt(kpi.val)}</div>
+              </div>
+            </div>
           ))}
         </div>
-        <div style={{display:'flex',alignItems:'center',gap:6}}>
-          <span style={{fontSize:11,color:'#555',fontWeight:600}}>צבע מותאם:</span>
-          <input type="color" value={'#1a1a2e'} onChange={e=>saveCommissionBg(e.target.value)}
-            style={{width:36,height:28,border:'2px solid #333',borderRadius:4,cursor:'pointer',padding:1}}/>
-        </div>
-        <button onClick={()=>saveCommissionBg('linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)')}
-          style={{marginTop:8,width:'100%',padding:'5px',border:'1px dashed #ccc',borderRadius:4,background:'none',fontFamily:'Heebo',fontSize:11,color:'#888',cursor:'pointer'}}>↩ ברירת מחדל</button>
-      </div>}
-      <div style={{position:'relative',width:110,height:110,flexShrink:0}}>
-        <ProgressRing pct={commissionPct} color={pctColor(commissionPct)}/>
-        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-          <div style={{fontSize:20,fontWeight:900,color:'white',lineHeight:1}}>{commissionPct}%</div>
-          <div style={{fontSize:9,color:'rgba(255,255,255,0.45)',fontWeight:600,marginTop:2}}>ביצוע</div>
-        </div>
-      </div>
-      <div style={{borderRight:'1px solid rgba(255,255,255,0.1)',paddingRight:24}}>
-        <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',fontWeight:700,marginBottom:6,letterSpacing:1}}>ציפי עמלות {selMonth===0?selYear:`${MONTHS[selMonth-1]} ${selYear}`}</div>
-        <div style={{fontSize:30,fontWeight:900,color:'white'}}>{fmtMoney(expectedCommission)}</div>
-        <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginTop:3}}>מכלל המעסיקים</div>
-      </div>
-      <div style={{borderRight:'1px solid rgba(255,255,255,0.1)',paddingRight:24}}>
-        <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',fontWeight:700,marginBottom:6,letterSpacing:1}}>עמלות השנה {selMonth===0?selYear:`${MONTHS[selMonth-1]} ${selYear}`}</div>
-        <div style={{fontSize:30,fontWeight:900,color:'#e85d26'}}>{fmtMoney(earnedInPeriod)}</div>
-        <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginTop:3}}>{earnedInPeriod>0?placedInPeriod:placedTotal} הצבות{earnedInPeriod>0?' בתקופה':' סה"כ'}</div>
-      </div>
-      <div>
-        <div style={{fontSize:11,color:'rgba(255,255,255,0.45)',fontWeight:700,marginBottom:6,letterSpacing:1}}>נותר ליעד</div>
-        {(()=>{const target=data.defaults?.yearlyTarget?parseFloat(data.defaults.yearlyTarget):expectedCommission;const remaining=Math.max(0,target-earnedInPeriod);return <div style={{fontSize:30,fontWeight:900,color:target>earnedInPeriod?'#f59e0b':'#16a34a'}}>{fmtMoney(remaining)}</div>;})()}
-        <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginTop:3}}>{commissionPct>=100?'🎉 יעד הושג!':commissionPct>=80?'🚀 כמעט שם':'💪 יאללה קדימה'}</div>
-      </div>
-    </div>
-    {domainCommission.length>0&&<div style={{background:'#fff',borderRadius:20,padding:'20px 24px',marginBottom:24,boxShadow:'0 4px 20px rgba(0,0,0,0.06)'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-        <h3 style={{fontSize:16,fontWeight:800,color:'#1a1a2e'}}>💰 עמלות לפי תחום</h3>
-        <div style={{display:'flex',gap:16,fontSize:12}}>
-          <span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:12,height:12,borderRadius:3,background:'#bfdbfe',display:'inline-block'}}></span>ציפי</span>
-          <span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:12,height:12,borderRadius:3,background:'#16a34a',display:'inline-block'}}></span>בפועל</span>
-        </div>
-      </div>
-      <div style={{display:'flex',flexDirection:'column',gap:14}}>
-        {domainCommission.map(d=>{
-          const maxVal=Math.max(...domainCommission.map(x=>x.expected),1);
-          const expPct=Math.round((d.expected/maxVal)*100);
-          const earnPct=d.expected>0?Math.round((d.earned/d.expected)*100):0;
-          return <div key={d.domain}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:5}}>
-              <span style={{fontSize:13,fontWeight:700,color:'#1a1a2e'}}>{d.domain}</span>
-              <div style={{display:'flex',gap:12,fontSize:12}}>
-                <span style={{color:'#3b82f6',fontWeight:700}}>{fmtMoney(d.expected)}</span>
-                <span style={{color:'#16a34a',fontWeight:700}}>{fmtMoney(d.earned)}</span>
-                <span style={{background:earnPct>=80?'#dcfce7':earnPct>=40?'#fef3c7':'#fee2e2',color:pctColor(earnPct),borderRadius:20,padding:'1px 8px',fontWeight:800}}>{earnPct}%</span>
-              </div>
-            </div>
-            <div style={{position:'relative',height:8,background:'#f3f4f6',borderRadius:8,overflow:'hidden'}}>
-              <div style={{position:'absolute',height:'100%',width:`${expPct}%`,background:'#bfdbfe',borderRadius:8}}></div>
-              <div style={{position:'absolute',height:'100%',width:`${Math.round((d.earned/maxVal)*100)}%`,background:'#16a34a',borderRadius:8,transition:'width .6s'}}></div>
-            </div>
-          </div>;
-        })}
-      </div>
-    </div>}
-    <div style={{background:'#fff',borderRadius:20,padding:'20px 24px',boxShadow:'0 4px 20px rgba(0,0,0,0.06)',marginBottom:24}} className="desktop-only">
-      <h3 style={{fontSize:16,fontWeight:800,color:'#1a1a2e',marginBottom:16}}>🔄 פייפליין מועמדים</h3>
-      <div style={{display:'flex',gap:12,alignItems:'stretch'}}>
-        {pipeline.map((s,i)=><React.Fragment key={s.label}>
-          <div style={{flex:1,position:'relative',background:pipelineColors[i]||s.grad,borderRadius:14,padding:'18px 14px',textAlign:'center',border:`1.5px solid ${s.accent}30`}}>
-            {/* Pipeline color picker button */}
-            <button onClick={e=>{e.stopPropagation();setPipelineColorPicker(pipelineColorPicker===i?null:i);}}
-              style={{position:'absolute',top:6,left:6,zIndex:20,background:'rgba(0,0,0,0.15)',border:'1px solid rgba(0,0,0,0.2)',borderRadius:4,width:22,height:22,cursor:'pointer',fontSize:11,lineHeight:'1',padding:0}}>
-              🎨
-            </button>
-            {pipelineColorPicker===i&&<div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:30,left:0,zIndex:100,background:'white',border:'2px solid #333',borderRadius:10,padding:12,boxShadow:'0 8px 32px rgba(0,0,0,0.2)',minWidth:200,textAlign:'right'}}>
-              <div style={{fontSize:11,fontWeight:700,color:'#444',marginBottom:8}}>בחר צבע</div>
-              <div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:8}}>
-                {['linear-gradient(135deg,#f3f4f6,#e5e7eb)','linear-gradient(135deg,#dbeafe,#bfdbfe)','linear-gradient(135deg,#fef3c7,#fde68a)','linear-gradient(135deg,#dcfce7,#bbf7d0)','linear-gradient(135deg,#fce7f3,#fbcfe8)','linear-gradient(135deg,#ede9fe,#ddd6fe)','#fff5f0','#f0fdf4'].map((c,ci)=>(
-                  <button key={ci} onClick={()=>savePipelineColor(i,c)}
-                    style={{width:28,height:28,borderRadius:5,background:c,border:`2px solid ${pipelineColors[i]===c?'#333':'#e5e7eb'}`,cursor:'pointer'}}/>
-                ))}
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:6}}>
-                <span style={{fontSize:11,color:'#555',fontWeight:600}}>מותאם:</span>
-                <input type="color" value={'#f3f4f6'} onChange={e=>savePipelineColor(i,e.target.value)}
-                  style={{width:32,height:26,border:'2px solid #333',borderRadius:4,cursor:'pointer',padding:1}}/>
-              </div>
-              <button onClick={()=>savePipelineColor(i,defaultPipelineColors[i])}
-                style={{marginTop:8,width:'100%',padding:'4px',border:'1px dashed #ccc',borderRadius:4,background:'none',fontFamily:'Heebo',fontSize:10,color:'#888',cursor:'pointer'}}>↩ ברירת מחדל</button>
-            </div>}
-            <div style={{fontSize:36,fontWeight:900,color:s.accent,lineHeight:1}}>{s.count}</div>
-            <div style={{fontSize:13,fontWeight:700,color:s.accent,marginTop:6}}>{s.label}</div>
-          </div>
-          {i<3&&<div style={{display:'flex',alignItems:'center',color:'#d1d5db',fontSize:20}}>▶</div>}
-        </React.Fragment>)}
-      </div>
-    </div>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:20,marginBottom:24}} className="mobile-grid-1">
-      <div style={{background:'#fff',borderRadius:20,padding:'20px 20px',boxShadow:'0 4px 20px rgba(0,0,0,0.06)'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-          <h3 style={{fontSize:15,fontWeight:800,color:'#1a1a2e'}}>📋 משרות פתוחות</h3>
-          <span onClick={()=>onNav('jobs')} style={{fontSize:12,color:'#e85d26',cursor:'pointer',fontWeight:700}}>כל המשרות ←</span>
-        </div>
-        {openJobsList.slice(0,5).map(job=><div key={job.id} style={{marginBottom:12}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
-            <div style={{fontSize:13,fontWeight:700,color:'#1a1a2e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'65%'}}>{job.publishTitle||job.title}</div>
-            <div style={{fontSize:12,color:'#e85d26',fontWeight:700}}>{job.cCount} מועמדים</div>
-          </div>
-          <div style={{fontSize:11,color:MUT,marginBottom:4}}>{job.empName}{job.location?` · ${job.location}`:''}</div>
-          <div style={{background:'#f3f4f6',borderRadius:6,height:5,overflow:'hidden'}}>
-            <div style={{height:'100%',width:`${job.barPct||5}%`,background:'linear-gradient(90deg,#e85d26,#f59e0b)',borderRadius:6,transition:'width .5s'}}></div>
-          </div>
-        </div>)}
-        {!openJobsList.length&&<div style={{color:MUT,fontSize:13,textAlign:'center',padding:20}}>אין משרות פתוחות</div>}
-      </div>
-      <div style={{background:'#fff',borderRadius:20,padding:'20px 20px',boxShadow:'0 4px 20px rgba(0,0,0,0.06)'}}>
-        <h3 style={{fontSize:15,fontWeight:800,color:'#1a1a2e',marginBottom:16}}>🏷️ התפלגות לפי תחום</h3>
-        {jobsByDomain.length>0?<>
-          <div style={{display:'flex',height:12,borderRadius:8,overflow:'hidden',marginBottom:16,gap:2}}>
-            {jobsByDomain.map(d=><div key={d.domain} style={{flex:d.count,background:d.color}} title={`${d.domain}: ${d.count}`}></div>)}
-          </div>
-          {jobsByDomain.map(d=><div key={d.domain} style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-            <div style={{width:10,height:10,borderRadius:3,background:d.color,flexShrink:0}}></div>
-            <div style={{flex:1,fontSize:13,fontWeight:600,color:'#1a1a2e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.domain}</div>
-            <div style={{fontSize:12,fontWeight:800,color:d.color}}>{d.count}</div>
-            <div style={{fontSize:11,color:MUT}}>{Math.round((d.count/totalOpenDomain)*100)}%</div>
-          </div>)}
-        </>:<div style={{color:MUT,fontSize:13,textAlign:'center',padding:20}}>אין נתונים</div>}
-      </div>
-      <div style={{background:'#fff',borderRadius:20,padding:'20px 20px',boxShadow:'0 4px 20px rgba(0,0,0,0.06)'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-          <h3 style={{fontSize:15,fontWeight:800,color:'#1a1a2e'}}>🏢 מעסיקים מובילים</h3>
-          <span onClick={()=>onNav('employers')} style={{fontSize:12,color:'#3b82f6',cursor:'pointer',fontWeight:700}}>כולם ←</span>
-        </div>
-        {topEmployers.length>0?topEmployers.map((emp,i)=><div key={emp.id} style={{marginBottom:12}}>
-          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-            <div style={{width:22,height:22,borderRadius:11,background:['#e85d26','#3b82f6','#8b5cf6','#16a34a','#f59e0b'][i%5],display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:900,color:'white',flexShrink:0}}>{i+1}</div>
-            <div style={{flex:1,fontSize:13,fontWeight:700,color:'#1a1a2e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{emp.name}</div>
-            <div style={{fontSize:12,fontWeight:800,color:'#3b82f6',flexShrink:0}}>{fmtMoney(emp.expFee)}</div>
-          </div>
-          <div style={{background:'#f3f4f6',borderRadius:6,height:5,overflow:'hidden',marginRight:30}}>
-            <div style={{height:'100%',width:`${Math.round((emp.expFee/maxEmpFee)*100)}%`,background:['linear-gradient(90deg,#e85d26,#f59e0b)','linear-gradient(90deg,#3b82f6,#06b6d4)','linear-gradient(90deg,#8b5cf6,#ec4899)','linear-gradient(90deg,#16a34a,#84cc16)','linear-gradient(90deg,#f59e0b,#ef4444)'][i%5],borderRadius:6,transition:'width .6s'}}></div>
-          </div>
-        </div>):<div style={{color:MUT,fontSize:13,textAlign:'center',padding:20}}>אין נתונים</div>}
-      </div>
-    </div>
-    {/* Monthly bar chart */}
-    {selMonth===0&&<div style={{background:'#fff',borderRadius:20,padding:'20px 24px',boxShadow:'0 4px 20px rgba(0,0,0,0.06)',marginBottom:24}}>
-      <h3 style={{fontSize:15,fontWeight:800,color:'#1a1a2e',marginBottom:16}}>📊 עמלות חודשיות — {selYear}</h3>
-      <div style={{display:'flex',alignItems:'flex-end',gap:6,height:120,paddingBottom:4}}>
-        {monthlyData.map((m,i)=>{
-          const barH=maxEarned>0?Math.round((m.earned/maxEarned)*100):0;
-          const isCurrentMonth=i===now.getMonth()&&selYear===curYear;
-          return <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
-            <div style={{fontSize:10,color:'#888',fontWeight:600,whiteSpace:'nowrap'}}>{m.earned>0?fmtMoney(m.earned):''}</div>
-            <div style={{width:'100%',display:'flex',flexDirection:'column',justifyContent:'flex-end',height:80,position:'relative'}}>
-              <div title={`${m.month}: ${fmtMoney(m.earned)} | ${m.placed} הצבות`}
-                style={{width:'100%',height:`${Math.max(barH,m.placed>0?4:0)}%`,background:isCurrentMonth?'#e85d26':'linear-gradient(180deg,#3b82f6,#1d4ed8)',borderRadius:'4px 4px 0 0',transition:'height .5s',cursor:'default',minHeight:m.placed>0?4:0}}>
-              </div>
-            </div>
-            {m.placed>0&&<div style={{fontSize:9,background:'#dcfce7',color:'#16a34a',borderRadius:3,padding:'1px 4px',fontWeight:700}}>+{m.placed}</div>}
-            <div style={{fontSize:10,color:isCurrentMonth?'#e85d26':'#888',fontWeight:isCurrentMonth?800:600}}>{m.shortMonth}</div>
-          </div>;
-        })}
-      </div>
-      <div style={{display:'flex',gap:16,marginTop:8,fontSize:11,color:MUT}}>
-        <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:10,height:10,background:'linear-gradient(180deg,#3b82f6,#1d4ed8)',borderRadius:2,display:'inline-block'}}></span>עמלות חודשיות</span>
-        <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:10,height:10,background:'#e85d26',borderRadius:2,display:'inline-block'}}></span>חודש נוכחי</span>
-        <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{background:'#dcfce7',color:'#16a34a',borderRadius:3,padding:'0 4px',fontWeight:700,fontSize:10}}>+N</span>הצבות</span>
-      </div>
-    </div>}
 
-    <div style={{background:'#fff',borderRadius:20,padding:'20px 24px',boxShadow:'0 4px 20px rgba(0,0,0,0.06)',marginBottom:soon7.length?24:0}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-        <h3 style={{fontSize:15,fontWeight:800,color:'#1a1a2e'}}>⚡ היסטוריית פעולות</h3>
-        <span style={{fontSize:11,color:MUT,fontWeight:600}}>{(data.activityLog||[]).length} פעולות</span>
-      </div>
-      {(data.activityLog||[]).length===0&&<div style={{color:MUT,fontSize:13,textAlign:'center',padding:20}}>אין פעילות עדיין</div>}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 24px'}} className="mobile-grid-1">
-        {(data.activityLog||[]).slice(0,10).map((a,i)=>{
-          const bg={candidate:'#fff5f0',job:'#f0f7ff',employer:'#f0fdf4',pending:'#fffbeb'}[a.type]||'#f9fafb';
-          const actionColor={added:'#16a34a',updated:'#3b82f6',deleted:'#dc2626',approved:'#16a34a',rejected:'#dc2626'}[a.action]||MUT;
-          const d=new Date(a.timestamp);const now2=new Date();const diffMin=Math.floor((now2-d)/60000);
-          const timeStr=diffMin<1?'עכשיו':diffMin<60?(diffMin+' דק'):diffMin<1440?(Math.floor(diffMin/60)+' ש'):d.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'});
-          return <div key={a.id} style={{display:'flex',gap:10,alignItems:'center',padding:'8px 0',borderBottom:'1px solid #f3f4f6'}}>
-            <div style={{width:32,height:32,borderRadius:10,background:bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>{LOG_ICONS[a.type]||'📌'}</div>
-            <div style={{flex:1,minWidth:0}}><div style={{fontSize:13,fontWeight:700,color:'#1a1a2e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.label}</div><div style={{fontSize:11,color:actionColor,fontWeight:600}}>{LOG_ACTIONS[a.action]||a.action}</div></div>
-            <div style={{fontSize:11,color:MUT,flexShrink:0}}>{timeStr}</div>
-          </div>;
-        })}
-      </div>
-    </div>
-    {soon7.length>0&&<div style={{background:'#fff',borderRadius:20,padding:'20px 24px',boxShadow:'0 4px 20px rgba(0,0,0,0.06)',border:'2px solid #fcd5c0'}}>
-      <h3 style={{fontSize:16,fontWeight:800,color:'#c94d1a',marginBottom:12}}>⚠️ דדליינים השבוע</h3>
-      <div style={{display:'flex',flexWrap:'wrap',gap:10}}>
-        {soon7.map(j=>{const parts=j.deadline.split('/');const d=new Date(parts[2],parts[1]-1,parts[0]);const daysLeft=Math.ceil((d-now)/(1000*60*60*24));const emp=data.employers.find(e=>e.id===j.employerId);return <div key={j.id} style={{background:'linear-gradient(135deg,#fff5f0,#fde8dc)',border:'1.5px solid #fcd5c0',borderRadius:12,padding:'12px 16px',minWidth:200}}>
-          <div style={{fontWeight:700,fontSize:14,color:'#1a1a2e'}}>{j.publishTitle||j.title}</div>
-          <div style={{fontSize:12,color:MUT,marginTop:2}}>{emp?.name||''}</div>
-          <div style={{fontSize:13,fontWeight:800,color:daysLeft<=2?'#dc2626':'#c94d1a',marginTop:8}}>{daysLeft===0?'⚡ היום!':daysLeft===1?'⚡ מחר!':`📅 ${daysLeft} ימים`}</div>
-        </div>;})}
-      </div>
-    </div>}
+        {/* 2 Charts side by side */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+
+          {/* עמלות לפי תחום */}
+          {domainCommission.length>0&&<div style={{background:'white',borderRadius:16,padding:'18px 20px',boxShadow:'0 2px 12px rgba(0,0,0,0.06)',border:'1px solid #f0f0f0'}}>
+            <h3 style={{fontSize:15,fontWeight:800,color:'#1a1a2e',marginBottom:14}}>💰 עמלות לפי תחום</h3>
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              {domainCommission.map(d=>{
+                const maxVal=Math.max(...domainCommission.map(x=>x.expected),1);
+                const expPct=Math.round((d.expected/maxVal)*100);
+                const earnPct=d.expected>0?Math.round((d.earned/d.expected)*100):0;
+                return <div key={d.domain}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
+                    <span style={{fontSize:13,fontWeight:700,color:'#1a1a2e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'50%'}}>{d.domain}</span>
+                    <div style={{display:'flex',gap:8}}>
+                      <span style={{color:'#3b82f6',fontWeight:700,fontSize:12}}>{fmtMoney(d.expected)}</span>
+                      <span style={{color:'#16a34a',fontWeight:700,fontSize:12}}>{fmtMoney(d.earned)}</span>
+                      <span style={{background:earnPct>=80?'#dcfce7':earnPct>=40?'#fef3c7':'#fee2e2',color:pctColor(earnPct),borderRadius:20,padding:'1px 6px',fontWeight:800,fontSize:11}}>{earnPct}%</span>
+                    </div>
+                  </div>
+                  <div style={{position:'relative',height:7,background:'#f3f4f6',borderRadius:8,overflow:'hidden'}}>
+                    <div style={{position:'absolute',height:'100%',width:`${expPct}%`,background:'#bfdbfe',borderRadius:8}}></div>
+                    <div style={{position:'absolute',height:'100%',width:`${Math.round((d.earned/maxVal)*100)}%`,background:'#16a34a',borderRadius:8,transition:'width .6s'}}></div>
+                  </div>
+                </div>;
+              })}
+            </div>
+          </div>}
+
+          {/* התפלגות לפי תחום */}
+          <div style={{background:'white',borderRadius:16,padding:'18px 20px',boxShadow:'0 2px 12px rgba(0,0,0,0.06)',border:'1px solid #f0f0f0'}}>
+            <h3 style={{fontSize:15,fontWeight:800,color:'#1a1a2e',marginBottom:14}}>🏷️ התפלגות לפי תחום</h3>
+            {jobsByDomain.length>0?<>
+              <div style={{display:'flex',height:12,borderRadius:8,overflow:'hidden',marginBottom:14,gap:2}}>
+                {jobsByDomain.map(d=><div key={d.domain} style={{flex:d.count,background:d.color}} title={`${d.domain}: ${d.count}`}></div>)}
+              </div>
+              {jobsByDomain.map(d=><div key={d.domain} style={{display:'flex',alignItems:'center',gap:8,marginBottom:9}}>
+                <div style={{width:10,height:10,borderRadius:3,background:d.color,flexShrink:0}}></div>
+                <div style={{flex:1,fontSize:13,fontWeight:600,color:'#1a1a2e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.domain}</div>
+                <div style={{fontSize:13,fontWeight:800,color:d.color}}>{d.count}</div>
+                <div style={{fontSize:11,color:MUT}}>{Math.round((d.count/totalOpenDomain)*100)}%</div>
+              </div>)}
+            </>:<div style={{color:MUT,fontSize:13,textAlign:'center',padding:20}}>אין נתונים</div>}
+          </div>
+        </div>
+
+        {/* Pipeline */}
+        <div style={{background:'white',borderRadius:16,padding:'18px 20px',boxShadow:'0 2px 12px rgba(0,0,0,0.06)',border:'1px solid #f0f0f0'}} className="desktop-only">
+          <h3 style={{fontSize:15,fontWeight:800,color:'#1a1a2e',marginBottom:14}}>🔄 פייפליין מועמדים</h3>
+          <div style={{display:'flex',gap:10,alignItems:'stretch'}}>
+            {pipeline.map((s,i)=><React.Fragment key={s.label}>
+              <div style={{flex:1,position:'relative',background:pipelineColors[i]||s.grad,borderRadius:14,padding:'16px 12px',textAlign:'center',border:`1.5px solid ${s.accent}30`}}>
+                <button onClick={e=>{e.stopPropagation();setPipelineColorPicker(pipelineColorPicker===i?null:i);}} style={{position:'absolute',top:6,left:6,zIndex:20,background:'rgba(0,0,0,0.15)',border:'1px solid rgba(0,0,0,0.2)',borderRadius:4,width:22,height:22,cursor:'pointer',fontSize:11,padding:0}}>🎨</button>
+                {pipelineColorPicker===i&&<div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:30,left:0,zIndex:100,background:'white',border:'2px solid #333',borderRadius:10,padding:12,boxShadow:'0 8px 32px rgba(0,0,0,0.2)',minWidth:180,textAlign:'right'}}>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:8}}>{['linear-gradient(135deg,#f3f4f6,#e5e7eb)','linear-gradient(135deg,#dbeafe,#bfdbfe)','linear-gradient(135deg,#fef3c7,#fde68a)','linear-gradient(135deg,#dcfce7,#bbf7d0)','linear-gradient(135deg,#fce7f3,#fbcfe8)','linear-gradient(135deg,#ede9fe,#ddd6fe)'].map((col,ci)=><button key={ci} onClick={()=>savePipelineColor(i,col)} style={{width:26,height:26,borderRadius:5,background:col,border:`2px solid ${pipelineColors[i]===col?'#333':'#e5e7eb'}`,cursor:'pointer'}}/>)}</div>
+                  <input type="color" value={'#f3f4f6'} onChange={e=>savePipelineColor(i,e.target.value)} style={{width:'100%',height:26,border:'2px solid #333',borderRadius:4,cursor:'pointer',padding:1}}/>
+                  <button onClick={()=>savePipelineColor(i,defaultPipelineColors[i])} style={{marginTop:6,width:'100%',padding:'4px',border:'1px dashed #ccc',borderRadius:4,background:'none',fontFamily:'Heebo',fontSize:10,color:'#888',cursor:'pointer'}}>↩ ברירת מחדל</button>
+                </div>}
+                <div style={{fontSize:32,fontWeight:900,color:s.accent,lineHeight:1}}>{s.count}</div>
+                <div style={{fontSize:13,fontWeight:700,color:s.accent,marginTop:5}}>{s.label}</div>
+              </div>
+              {i<3&&<div style={{display:'flex',alignItems:'center',color:'#d1d5db',fontSize:18}}>▶</div>}
+            </React.Fragment>)}
+          </div>
+        </div>
+
+        {/* Monthly bar chart */}
+        {selMonth===0&&<div style={{background:'white',borderRadius:16,padding:'18px 20px',boxShadow:'0 2px 12px rgba(0,0,0,0.06)',border:'1px solid #f0f0f0'}}>
+          <h3 style={{fontSize:15,fontWeight:800,color:'#1a1a2e',marginBottom:14}}>📊 עמלות חודשיות — {selYear}</h3>
+          <div style={{display:'flex',alignItems:'flex-end',gap:5,height:110,paddingBottom:4}}>
+            {monthlyData.map((m,i)=>{
+              const barH=maxEarned>0?Math.round((m.earned/maxEarned)*100):0;
+              const isCurrentMonth=i===now.getMonth()&&selYear===curYear;
+              return <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                <div style={{fontSize:9,color:'#888',fontWeight:600,whiteSpace:'nowrap'}}>{m.earned>0?fmtMoney(m.earned):''}</div>
+                <div style={{width:'100%',display:'flex',flexDirection:'column',justifyContent:'flex-end',height:75}}>
+                  <div title={`${m.month}: ${fmtMoney(m.earned)}`} style={{width:'100%',height:`${Math.max(barH,m.placed>0?4:0)}%`,background:isCurrentMonth?'#e85d26':'linear-gradient(180deg,#3b82f6,#1d4ed8)',borderRadius:'4px 4px 0 0',transition:'height .5s',minHeight:m.placed>0?3:0}}></div>
+                </div>
+                {m.placed>0&&<div style={{fontSize:9,background:'#dcfce7',color:'#16a34a',borderRadius:3,padding:'1px 3px',fontWeight:700}}>+{m.placed}</div>}
+                <div style={{fontSize:9,color:isCurrentMonth?'#e85d26':'#888',fontWeight:isCurrentMonth?800:600}}>{m.shortMonth}</div>
+              </div>;
+            })}
+          </div>
+        </div>}
+
+        {/* Top jobs + employers */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+          <div style={{background:'white',borderRadius:16,padding:'18px 20px',boxShadow:'0 2px 12px rgba(0,0,0,0.06)',border:'1px solid #f0f0f0'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+              <h3 style={{fontSize:15,fontWeight:800,color:'#1a1a2e'}}>📋 משרות פתוחות</h3>
+              <span onClick={()=>onNav('jobs')} style={{fontSize:12,color:'#e85d26',cursor:'pointer',fontWeight:700}}>כל המשרות ←</span>
+            </div>
+            {openJobsList.slice(0,5).map(job=><div key={job.id} style={{marginBottom:10}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}}>
+                <div style={{fontSize:13,fontWeight:700,color:'#1a1a2e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'65%'}}>{job.publishTitle||job.title}</div>
+                <div style={{fontSize:12,color:'#e85d26',fontWeight:700}}>{job.cCount} מועמדים</div>
+              </div>
+              <div style={{fontSize:11,color:MUT,marginBottom:3}}>{job.empName}{job.location?` · ${job.location}`:''}</div>
+              <div style={{background:'#f3f4f6',borderRadius:6,height:4,overflow:'hidden'}}>
+                <div style={{height:'100%',width:`${job.barPct||5}%`,background:'linear-gradient(90deg,#e85d26,#f59e0b)',borderRadius:6,transition:'width .5s'}}></div>
+              </div>
+            </div>)}
+            {!openJobsList.length&&<div style={{color:MUT,fontSize:13,textAlign:'center',padding:16}}>אין משרות פתוחות</div>}
+          </div>
+          <div style={{background:'white',borderRadius:16,padding:'18px 20px',boxShadow:'0 2px 12px rgba(0,0,0,0.06)',border:'1px solid #f0f0f0'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+              <h3 style={{fontSize:15,fontWeight:800,color:'#1a1a2e'}}>🏢 מעסיקים מובילים</h3>
+              <span onClick={()=>onNav('employers')} style={{fontSize:12,color:'#3b82f6',cursor:'pointer',fontWeight:700}}>כולם ←</span>
+            </div>
+            {topEmployers.length>0?topEmployers.map((emp,i)=><div key={emp.id} style={{marginBottom:10}}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:3}}>
+                <div style={{width:20,height:20,borderRadius:10,background:['#e85d26','#3b82f6','#8b5cf6','#16a34a','#f59e0b'][i%5],display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:900,color:'white',flexShrink:0}}>{i+1}</div>
+                <div style={{flex:1,fontSize:13,fontWeight:700,color:'#1a1a2e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{emp.name}</div>
+                <div style={{fontSize:12,fontWeight:800,color:'#3b82f6',flexShrink:0}}>{fmtMoney(emp.expFee)}</div>
+              </div>
+              <div style={{background:'#f3f4f6',borderRadius:6,height:4,overflow:'hidden',marginRight:28}}>
+                <div style={{height:'100%',width:`${Math.round((emp.expFee/maxEmpFee)*100)}%`,background:['linear-gradient(90deg,#e85d26,#f59e0b)','linear-gradient(90deg,#3b82f6,#06b6d4)','linear-gradient(90deg,#8b5cf6,#ec4899)','linear-gradient(90deg,#16a34a,#84cc16)','linear-gradient(90deg,#f59e0b,#ef4444)'][i%5],borderRadius:6,transition:'width .6s'}}></div>
+              </div>
+            </div>):<div style={{color:MUT,fontSize:13,textAlign:'center',padding:16}}>אין נתונים</div>}
+          </div>
+        </div>
+
+      </div>{/* end main col */}
+
+      {/* ══ RIGHT SIDEBAR ══ */}
+      <div style={{display:'flex',flexDirection:'column',gap:24,position:'sticky',top:24}}>
+
+        {/* Activity */}
+        <div style={{background:'white',borderRadius:18,padding:'20px 22px',boxShadow:'0 4px 20px rgba(0,0,0,0.08)',border:'1px solid #eeeeee'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+            <h3 style={{fontSize:15,fontWeight:800,color:'#1a1a2e'}}>⚡ היסטוריית פעילות</h3>
+            <span style={{fontSize:11,color:MUT,fontWeight:600}}>{(data.activityLog||[]).length} פעולות</span>
+          </div>
+          {(data.activityLog||[]).length===0&&<div style={{color:MUT,fontSize:13,textAlign:'center',padding:16}}>אין פעילות עדיין</div>}
+          <div style={{maxHeight:400,overflowY:'auto',display:'flex',flexDirection:'column',gap:0}}>
+            {(data.activityLog||[]).slice(0,20).map((a,i)=>{
+              const bg={candidate:'#fff5f0',job:'#f0f7ff',employer:'#f0fdf4',pending:'#fffbeb'}[a.type]||'#f9fafb';
+              const actionColor={added:'#16a34a',updated:'#3b82f6',deleted:'#dc2626',approved:'#16a34a',rejected:'#dc2626'}[a.action]||MUT;
+              const d=new Date(a.timestamp);const now2=new Date();const diffMin=Math.floor((now2-d)/60000);
+              const timeStr=diffMin<1?'עכשיו':diffMin<60?(diffMin+' דק'):diffMin<1440?(Math.floor(diffMin/60)+' ש'):d.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'});
+              return <div key={a.id} style={{display:'flex',gap:10,alignItems:'center',padding:'9px 0',borderBottom:'1px solid #f3f4f6'}}>
+                <div style={{width:32,height:32,borderRadius:10,background:bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>{LOG_ICONS[a.type]||'📌'}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:700,color:'#1a1a2e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.label}</div>
+                  <div style={{fontSize:11,color:actionColor,fontWeight:600}}>{LOG_ACTIONS[a.action]||a.action}</div>
+                </div>
+                <div style={{fontSize:11,color:MUT,flexShrink:0}}>{timeStr}</div>
+              </div>;
+            })}
+          </div>
+        </div>
+
+        {/* Deadlines */}
+        {soon7.length>0&&<div style={{background:'white',borderRadius:18,padding:'20px 22px',boxShadow:'0 4px 20px rgba(0,0,0,0.08)',border:'2px solid #fcd5c0'}}>
+          <h3 style={{fontSize:15,fontWeight:800,color:'#c94d1a',marginBottom:12}}>⚠️ דדליינים השבוע</h3>
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {soon7.map(j=>{
+              const parts=j.deadline.split('/');const d=new Date(parts[2],parts[1]-1,parts[0]);const daysLeft=Math.ceil((d-now)/(1000*60*60*24));const emp=data.employers.find(e=>e.id===j.employerId);
+              return <div key={j.id} style={{background:'linear-gradient(135deg,#fff5f0,#fde8dc)',border:'1.5px solid #fcd5c0',borderRadius:12,padding:'10px 14px'}}>
+                <div style={{fontWeight:700,fontSize:14,color:'#1a1a2e'}}>{j.publishTitle||j.title}</div>
+                <div style={{fontSize:12,color:MUT,marginTop:2}}>{emp?.name||''}</div>
+                <div style={{fontSize:13,fontWeight:800,color:daysLeft<=2?'#dc2626':'#c94d1a',marginTop:6}}>{daysLeft===0?'⚡ היום!':daysLeft===1?'⚡ מחר!':'📅 '+daysLeft+' ימים'}</div>
+              </div>;
+            })}
+          </div>
+        </div>}
+
+      </div>{/* end sidebar */}
+
+    </div>{/* end grid */}
   </div>;
 }
 
@@ -1381,212 +1335,132 @@ function Employers({data,setData}){
     {detail&&(()=>{
       const empJobs=data.jobs.filter(j=>j.employerId===detail.id);
       const {tc,tf}=totals(detail);
-      return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(4px)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={()=>setDetail(null)}>
-        <div style={{background:'#f8f7f4',borderRadius:20,width:'96vw',maxWidth:1400,maxHeight:'96vh',overflow:'hidden',boxShadow:'0 32px 100px rgba(0,0,0,0.35)',display:'flex',flexDirection:'column'}} onClick={e=>e.stopPropagation()}>
-
-          {/* Header */}
-          <div style={{background:'#1a1a2e',borderRadius:'20px 20px 0 0',padding:'14px 28px',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-            <div style={{display:'flex',gap:14,alignItems:'center'}}>
-              <Avatar name={detail.name} size={52}/>
-              <div>
-                <div style={{color:'white',fontWeight:800,fontSize:22}}>{detail.name}</div>
-                <div style={{color:'rgba(255,255,255,0.6)',fontSize:14,marginTop:2}}>{detail.industry} · {detail.city}</div>
-              </div>
-              <div style={{marginRight:8}}><Tag label={detail.status}/></div>
-            </div>
-            <button onClick={()=>setDetail(null)} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'white',width:36,height:36,borderRadius:18,cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+      const Field=({label,value})=>value?<div style={{display:'grid',gridTemplateColumns:'130px 1fr',alignItems:'baseline',gap:12,padding:'9px 4px',borderBottom:'1px solid #f3f4f6'}}>
+        <div style={{fontSize:13,fontWeight:700,color:'#333'}}>{label}</div>
+        <div style={{fontSize:15,fontWeight:600,color:'#111'}}>{value}</div>
+      </div>:null;
+      return <div style={{position:'fixed',inset:0,background:'#f0f2f5',zIndex:999,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+        <div style={{background:'#1a3a6b',padding:'0 20px',height:56,flexShrink:0,display:'flex',alignItems:'center',gap:12,borderBottom:'3px solid #122a50'}}>
+          <button onClick={()=>setDetail(null)} style={{display:'flex',alignItems:'center',gap:8,padding:'9px 20px',background:'white',border:'none',borderRadius:10,cursor:'pointer',fontFamily:'Heebo',fontWeight:800,fontSize:15,color:'#1a3a6b',boxShadow:'0 2px 8px rgba(0,0,0,0.2)',flexShrink:0}}>← חזרה לרשימה</button>
+          <Avatar name={detail.name} size={38}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{color:'white',fontWeight:800,fontSize:20}}>{detail.name}</div>
+            <div style={{color:'rgba(255,255,255,0.6)',fontSize:12}}>{detail.industry}{detail.city?' · '+detail.city:''}</div>
           </div>
-
-          {/* Body — 2 columns */}
-          <div style={{overflow:'auto',flex:1,padding:'14px 22px'}}>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14}}>
-
-              {/* COL 1 */}
-              <div style={{display:'flex',flexDirection:'column',gap:16}}>
-
-                {/* פרטי מעסיק */}
-                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
-                    <div style={{width:32,height:32,borderRadius:8,background:'#fff5f0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🏢</div>
-                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>פרטי המעסיק</div>
-                  </div>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-                    {[['ענף',detail.industry],['איש קשר',detail.contact],['טלפון',detail.phone],['אימייל',detail.email],['עיר',detail.city]].map(([k,v])=>v?<div key={k} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
-                      <div style={{fontSize:12,color:'#444',fontWeight:700,marginBottom:3}}>{k}</div>
-                      <div style={{fontSize:13,fontWeight:600,color:'#1a1a2e'}}>{v}</div>
-                    </div>:null)}
-                  </div>
-                </div>
-
-                {/* צרכי כח אדם */}
-                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
-                    <div style={{width:32,height:32,borderRadius:8,background:'#eff6ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>👷</div>
-                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>צרכי כח אדם</div>
-                  </div>
-                  {(detail.needs||[]).map((n,i)=><div key={i} style={{display:'flex',gap:8,alignItems:'center',padding:'8px 10px',background:'#f8f7f4',border:'1px dashed #ddd',borderRadius:8,marginBottom:6}}>
-                    <div style={{flex:1}}><span style={{fontWeight:700,fontSize:13}}>{n.role||'—'}</span>{n.domain&&<span style={{fontSize:11,color:MUT,marginRight:6}}>({n.domain})</span>}</div>
-                    <span style={{background:'#cce5ff',border:'1px solid #333',borderRadius:3,padding:'1px 8px',fontSize:12}}>{n.count} עובד/ת</span>
-                    <span style={{background:'#d4edda',border:'1px solid #333',borderRadius:3,padding:'1px 8px',fontSize:12}}>₪{fmtNum(n.fee||'0')}</span>
-                  </div>)}
-                  {(!detail.needs||!detail.needs.length)&&<div style={{color:MUT,fontSize:13}}>לא הוגדרו צרכים</div>}
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:10,padding:10,background:'#fff5f0',borderRadius:8,border:'1px solid #fcd5c0'}}>
-                    <div><div style={{fontSize:11,color:MUT}}>סה"כ עובדים</div><div style={{fontSize:20,fontWeight:700,color:ACC}}>{tc}</div></div>
-                    <div><div style={{fontSize:11,color:MUT}}>ציפי הכנסה</div><div style={{fontSize:20,fontWeight:700,color:ACC}}>₪{fmtNum(tf)}</div></div>
-                  </div>
-                </div>
-
-                {/* הערות */}
-                {detail.notes&&<div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-                    <div style={{width:32,height:32,borderRadius:8,background:'#fffbeb',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📝</div>
-                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>הערות</div>
-                  </div>
-                  <div style={{fontSize:14,color:'#374151',lineHeight:1.7,background:'#fffbeb',borderRadius:8,padding:'12px 14px',fontStyle:'italic'}}>"{detail.notes}"</div>
-                </div>}
-
-              </div>{/* end col1 */}
-
-              {/* COL 2 */}
-              <div style={{display:'flex',flexDirection:'column',gap:16}}>
-
-                {/* משרות */}
-                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
-                    <div style={{width:32,height:32,borderRadius:8,background:'#faf5ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📋</div>
-                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>משרות ({empJobs.length})</div>
-                  </div>
-                  {empJobs.map(j=><div key={j.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 12px',background:'#f8f7f4',borderRadius:8,marginBottom:6}}>
-                    <div><div style={{fontWeight:600,fontSize:13}}>{j.title}</div><div style={{fontSize:11,color:MUT}}>{j.jobNumber} · {j.location}</div></div>
-                    <Tag label={j.status}/>
-                  </div>)}
-                  {!empJobs.length&&<div style={{color:MUT,fontSize:13}}>אין משרות</div>}
-                </div>
-
-                {/* הסכם השמה */}
-                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
-                    <div style={{width:32,height:32,borderRadius:8,background:'#f0fdf4',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📄</div>
-                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>הסכם השמה</div>
-                  </div>
-                  {detail.agreementUrl
-                    ?<div style={{display:'flex',gap:10,alignItems:'center',background:'#f0fdf4',border:'1px solid #86efac',borderRadius:8,padding:'10px 14px'}}>
-                        <span style={{fontSize:20}}>📋</span>
-                        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14,color:'#15803d'}}>הסכם מצורף</div><div style={{fontSize:12,color:'#6b7280'}}>{detail.agreementName||'קובץ הסכם'}</div></div>
-                        <a href={detail.agreementUrl} target="_blank" rel="noreferrer" style={{padding:'7px 14px',background:'#16a34a',color:'white',borderRadius:8,textDecoration:'none',fontWeight:700,fontSize:13}}>פתח</a>
-                        <a href={detail.agreementUrl} download style={{padding:'7px 10px',background:'#1a1a2e',color:'white',borderRadius:8,textDecoration:'none',fontWeight:700,fontSize:13}}>⬇️</a>
-                      </div>
-                    :<div style={{color:'#555',fontSize:13,background:'#f9fafb',borderRadius:8,padding:'10px 14px',border:'1px dashed #d1d5db'}}>לא צורף הסכם השמה עדיין</div>
-                  }
-                </div>
-
-              </div>{/* end col2 */}
-
-              {/* COL 3 */}
-              <div style={{display:'flex',flexDirection:'column',gap:16}}>
-
-                {/* יצירת קשר */}
-                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
-                    <div style={{width:32,height:32,borderRadius:8,background:'#f0f9ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>✉️</div>
-                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>יצירת קשר</div>
-                  </div>
-                  {(()=>{
-                    const contacts=(detail.contacts&&detail.contacts.length>0)?detail.contacts
-                      :[{id:'legacy',name:detail.contact||'',role:'',phone:detail.phone||'',mobile:detail.phone||'',email:detail.email||'',isPrimary:true}];
-                    return contacts.map(c=>(
-                      <div key={c.id} style={{background:'#f8fafc',border:`1.5px solid ${c.isPrimary?'#fcd5c0':'#e5e7eb'}`,borderRadius:10,padding:'12px 14px',marginBottom:10}}>
-                        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-                          <div style={{width:30,height:30,borderRadius:15,background:c.isPrimary?'#e85d26':'#6b7280',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontWeight:800,fontSize:13,flexShrink:0}}>
-                            {c.name?c.name[0]:'?'}
-                          </div>
-                          <div>
-                            <div style={{display:'flex',alignItems:'center',gap:6}}>
-                              <span style={{fontWeight:700,fontSize:13,color:'#1a1a2e'}}>{c.name||'—'}</span>
-                              {c.isPrimary&&<span style={{fontSize:10,background:'#fff5f0',color:'#c94d1a',border:'1px solid #fcd5c0',borderRadius:4,padding:'1px 5px',fontWeight:700}}>ראשי</span>}
-                            </div>
-                            {c.role&&<div style={{fontSize:11,color:'#6b7280'}}>{c.role}</div>}
-                          </div>
-                        </div>
-                        <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                          {c.email&&<button onClick={()=>setMsgTarget({emp:detail,contactId:c.id})}
-                            style={{width:'100%',padding:'8px 0',background:'#eff6ff',border:'1.5px solid #bfdbfe',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer',color:'#1d4ed8'}}>
-                            📧 {c.email}
-                          </button>}
-                          {(c.mobile||c.phone)&&<button onClick={()=>{const p=(c.mobile||c.phone||'').replace(/[-\s]/g,'').replace(/^0/,'972');window.open(`https://wa.me/${p}`,'_blank');}}
-                            style={{width:'100%',padding:'8px 0',background:'#f0fdf4',border:'1.5px solid #86efac',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer',color:'#15803d'}}>
-                            💬 {c.mobile||c.phone}
-                          </button>}
-                          <button onClick={()=>setMsgTarget({emp:detail,contactId:c.id})}
-                            style={{width:'100%',padding:'8px 0',background:'#fff5f0',border:'1.5px solid #fcd5c0',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer',color:'#c94d1a'}}>
-                            ✉️ הודעה עם תבנית
-                          </button>
-                        </div>
-                      </div>
-                    ));
-                  })()}
-                </div>
-
-                <StatusHistoryBlock item={detail}/>
-
-                {/* כפתורי פעולה */}
-                <div style={{display:'flex',gap:10}}>
-                  <button onClick={()=>{
-                    const title=prompt('כותרת המשימה:');
-                    if(!title) return;
-                    const t={id:'t'+Date.now(),title,description:'',dueDate:'',priority:'בינוני',status:'פתוח',candidateId:'',employerId:detail.id,createdAt:new Date().toISOString()};
-                    setData(d=>({...d,tasks:[t,...(d.tasks||[])]}));
-                    alert('✅ משימה נוספה!');
-                  }} style={{flex:1,padding:'10px 0',background:'#eff6ff',border:'1.5px solid #bfdbfe',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#1d4ed8'}}>
-                    + הוסף משימה
-                  </button>
-                  <button onClick={()=>{setDetail(null);openEdit(detail);}} style={{flex:1,padding:'10px 0',background:'#1a1a2e',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>
-                    ✏️ עריכה
-                  </button>
-                  <button onClick={()=>del(detail.id)} style={{padding:'10px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>
-                    🗑
-                  </button>
-                </div>
-
-              </div>{/* end col3 */}
-            </div>{/* end grid */}
-
-            {/* ── רצועת משרות לפי סטטוס ── */}
+          <Tag label={detail.status}/>
+          <div style={{display:'flex',gap:8}}>
+            <button onClick={()=>{setDetail(null);openEdit(detail);}} style={{padding:'7px 16px',background:'white',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Heebo',fontWeight:800,fontSize:13,color:'#1a3a6b'}}>✏️ עריכה</button>
+            <button onClick={()=>{const title=prompt('כותרת:');if(!title)return;const t={id:'t'+Date.now(),title,description:'',dueDate:'',priority:'בינוני',status:'פתוח',candidateId:'',employerId:detail.id,createdAt:new Date().toISOString()};setData(d=>({...d,tasks:[t,...(d.tasks||[])]}));alert('✅');}} style={{padding:'7px 14px',background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.3)',color:'white',borderRadius:8,cursor:'pointer',fontFamily:'Heebo',fontWeight:700,fontSize:13}}>+ משימה</button>
+          </div>
+        </div>
+        <div style={{display:'flex',flex:1,overflow:'hidden',minHeight:0}}>
+          <div style={{flex:'0 0 40%',overflowY:'auto',borderLeft:'1px solid #dde1e7',background:'#fff',padding:'20px 28px 20px 20px'}}>
+            <div style={{background:'white',borderRadius:12,border:'1px solid #e5e7eb',overflow:'hidden',marginBottom:14}}>
+              <div style={{background:'#fff5f0',padding:'10px 16px',borderBottom:'1px solid #e5e7eb',fontWeight:800,fontSize:14,color:'#111'}}>🏢 פרטי המעסיק</div>
+              <div style={{padding:'4px 16px 12px'}}>
+                <Field label='ענף' value={detail.industry}/>
+                <Field label='טלפון' value={detail.phone}/>
+                <Field label='אימייל' value={detail.email}/>
+                <Field label='עיר' value={detail.city}/>
+              </div>
+            </div>
             {(()=>{
-              const STATUS_ORDER=['פתוח','בתהליך','ממתין','ראיון נקבע','השמה מוצלחת','סגור'];
-              const STATUS_STYLE={
-                'פתוח':      {bg:'#f0fdf4',border:'#86efac',icon:'📂',label:'פתוחות'},
-                'בתהליך':    {bg:'#eff6ff',border:'#bfdbfe',icon:'⚙️',label:'בתהליך'},
-                'ממתין':     {bg:'#fffbeb',border:'#fde68a',icon:'⏳',label:'ממתינות'},
-                'ראיון נקבע':{bg:'#faf5ff',border:'#d8b4fe',icon:'📅',label:'ראיון נקבע'},
-                'השמה מוצלחת':{bg:'#fff7ed',border:'#fdba74',icon:'🏅',label:'השמה מוצלחת'},
-                'סגור':      {bg:'#f3f4f6',border:'#d1d5db',icon:'🔒',label:'סגורות'},
-              };
+              const contacts=(detail.contacts&&detail.contacts.length>0)?detail.contacts:[{id:'legacy',name:detail.contact||'',role:'',phone:detail.phone||'',mobile:detail.phone||'',email:detail.email||'',isPrimary:true}];
+              return <div style={{background:'white',borderRadius:12,border:'1px solid #e5e7eb',overflow:'hidden',marginBottom:14}}>
+                <div style={{background:'#f0f9ff',padding:'10px 16px',borderBottom:'1px solid #e5e7eb',fontWeight:800,fontSize:14,color:'#111'}}>✉️ אנשי קשר</div>
+                <div style={{padding:'10px 16px',display:'flex',flexDirection:'column',gap:8}}>
+                  {contacts.map(c=><div key={c.id} style={{background:'#f8fafc',border:'1.5px solid '+(c.isPrimary?'#fcd5c0':'#e5e7eb'),borderRadius:10,padding:'12px 14px'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                      <div style={{width:32,height:32,borderRadius:16,background:c.isPrimary?'#e85d26':'#6b7280',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontWeight:800,fontSize:14}}>{c.name?c.name[0]:'?'}</div>
+                      <div>
+                        <span style={{fontWeight:700,fontSize:14,color:'#111'}}>{c.name||'—'}</span>
+                        {c.isPrimary&&<span style={{fontSize:10,background:'#fff5f0',color:'#c94d1a',border:'1px solid #fcd5c0',borderRadius:4,padding:'1px 5px',fontWeight:700,marginRight:6}}>ראשי</span>}
+                        {c.role&&<div style={{fontSize:12,color:'#6b7280'}}>{c.role}</div>}
+                      </div>
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                      {c.email&&<button onClick={()=>setMsgTarget({emp:detail,contactId:c.id})} style={{width:'100%',padding:'8px 0',background:'#eff6ff',border:'1.5px solid #bfdbfe',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#1d4ed8'}}>{'📧 '+c.email}</button>}
+                      {(c.mobile||c.phone)&&<button onClick={()=>{const p=(c.mobile||c.phone||'').replace(/[- ]/g,'').replace(/^0/,'972');window.open('https://wa.me/'+p,'_blank');}} style={{width:'100%',padding:'8px 0',background:'#f0fdf4',border:'1.5px solid #86efac',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#15803d'}}>{'💬 '+(c.mobile||c.phone)}</button>}
+                    </div>
+                  </div>)}
+                </div>
+              </div>;
+            })()}
+            <div style={{background:'white',borderRadius:12,border:'1px solid #e5e7eb',overflow:'hidden',marginBottom:14}}>
+              <div style={{background:'#eff6ff',padding:'10px 16px',borderBottom:'1px solid #e5e7eb',fontWeight:800,fontSize:14,color:'#111'}}>👷 צרכי כח אדם</div>
+              <div style={{padding:'10px 16px'}}>
+                {(detail.needs||[]).map((n,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:i%2===0?'#f8f9fb':'white',borderRadius:8,marginBottom:4}}>
+                  <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14,color:'#111'}}>{n.role||'—'}</div></div>
+                  <span style={{background:'#dbeafe',color:'#1d4ed8',borderRadius:8,padding:'4px 12px',fontSize:13,fontWeight:700}}>{n.count} עובד/ת</span>
+                  <span style={{background:'#dcfce7',color:'#15803d',borderRadius:8,padding:'4px 12px',fontSize:13,fontWeight:700}}>{'₪'+fmtNum(n.fee||'0')}</span>
+                </div>)}
+                {(!detail.needs||!detail.needs.length)&&<div style={{color:'#888',fontSize:14}}>לא הוגדרו צרכים</div>}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:12}}>
+                  <div style={{background:'#fff5f0',border:'1.5px solid #fcd5c0',borderRadius:10,padding:'12px 16px',textAlign:'center'}}>
+                    <div style={{fontSize:12,color:'#c94d1a',fontWeight:700,marginBottom:4}}>סה"כ עובדים</div>
+                    <div style={{fontSize:24,fontWeight:800,color:'#e85d26'}}>{tc}</div>
+                  </div>
+                  <div style={{background:'#f0fdf4',border:'1.5px solid #86efac',borderRadius:10,padding:'12px 16px',textAlign:'center'}}>
+                    <div style={{fontSize:12,color:'#15803d',fontWeight:700,marginBottom:4}}>ציפי הכנסה</div>
+                    <div style={{fontSize:24,fontWeight:800,color:'#16a34a'}}>{'₪'+fmtNum(tf)}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {detail.agreementUrl&&<div style={{background:'#f0fdf4',border:'1px solid #86efac',borderRadius:10,padding:'10px 14px',marginBottom:14,display:'flex',gap:10,alignItems:'center'}}>
+              <div style={{flex:1,fontWeight:700,fontSize:14,color:'#15803d'}}>הסכם מצורף</div>
+              <a href={detail.agreementUrl} target='_blank' rel='noreferrer' style={{padding:'7px 14px',background:'#16a34a',color:'white',borderRadius:8,textDecoration:'none',fontWeight:700,fontSize:13}}>פתח</a>
+            </div>}
+            {detail.notes&&<div style={{background:'#fffbeb',borderRadius:12,border:'1px solid #fde68a',padding:'12px 16px',marginBottom:14}}>
+              <div style={{fontWeight:800,fontSize:14,color:'#92400e',marginBottom:6}}>📝 הערות</div>
+              <div style={{fontSize:15,color:'#222',lineHeight:1.7}}>{detail.notes}</div>
+            </div>}
+            <StatusHistoryBlock item={detail}/>
+            <button onClick={()=>del(detail.id)} style={{width:'100%',padding:'10px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer',marginTop:4}}>🗑 מחק מעסיק</button>
+          </div>
+          <div style={{flex:'0 0 60%',overflowY:'auto',background:'#f8f9fb',padding:'20px 24px'}}>
+            <div style={{background:'white',borderRadius:12,border:'1px solid #e5e7eb',overflow:'hidden',marginBottom:16}}>
+              <div style={{background:'#faf5ff',padding:'10px 16px',borderBottom:'1px solid #e5e7eb',fontWeight:800,fontSize:14,color:'#7c3aed'}}>📋 משרות ({empJobs.length})</div>
+              <div style={{padding:'8px 16px'}}>
+                {empJobs.length===0&&<div style={{color:'#888',fontSize:14,padding:'8px 0'}}>אין משרות</div>}
+                {empJobs.map(j=>{
+                  const jCands=data.candidates.filter(c=>(c.appliedJobs||[]).includes(j.id));
+                  return <div key={j.id} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:'#faf5ff',borderRadius:9,marginBottom:6,border:'1px solid #e9d5ff',cursor:'pointer'}}
+                    onMouseEnter={e=>e.currentTarget.style.filter='brightness(0.97)'}
+                    onMouseLeave={e=>e.currentTarget.style.filter=''}>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:700,fontSize:14,color:'#111'}}>{j.publishTitle||j.title}</div>
+                      <div style={{fontSize:12,color:'#555'}}>{j.jobNumber}{j.location?' · '+j.location:''}</div>
+                    </div>
+                    <span style={{fontSize:12,background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:20,padding:'2px 10px',color:'#1d4ed8',fontWeight:600}}>{jCands.length} 👥</span>
+                    <Tag label={j.status}/>
+                  </div>;
+                })}
+              </div>
+            </div>
+            {(()=>{
+              const SO=['פתוח','בתהליך','ממתין','ראיון נקבע','השמה מוצלחת','סגור'];
+              const SS={'פתוח':{bg:'#f0fdf4',border:'#86efac'},'בתהליך':{bg:'#eff6ff',border:'#bfdbfe'},'ממתין':{bg:'#fffbeb',border:'#fde68a'},'ראיון נקבע':{bg:'#faf5ff',border:'#d8b4fe'},'השמה מוצלחת':{bg:'#fff7ed',border:'#fdba74'},'סגור':{bg:'#f3f4f6',border:'#d1d5db'}};
               const grouped={};
-              empJobs.forEach(j=>{
-                const s=j.status||'אחר';
-                if(!grouped[s]) grouped[s]=[];
-                grouped[s].push(j);
-              });
-              const sections=STATUS_ORDER.filter(s=>grouped[s]&&grouped[s].length>0);
+              empJobs.forEach(j=>{const s=j.status||'other';if(!grouped[s])grouped[s]=[];grouped[s].push(j);});
+              const sections=SO.filter(s=>grouped[s]&&grouped[s].length>0);
               if(!sections.length) return null;
-              return <div style={{marginTop:18,borderTop:'2px dashed #e0dbd0',paddingTop:18}}>
-                <div style={{fontSize:13,fontWeight:800,color:'#888',marginBottom:12,letterSpacing:1}}>כל המשרות לפי סטטוס</div>
-                <div style={{display:'flex',flexDirection:'column',gap:12}}>
+              return <div>
+                <div style={{fontSize:13,fontWeight:800,color:'#888',marginBottom:10}}>כל המשרות לפי סטטוס</div>
+                <div style={{display:'flex',flexDirection:'column',gap:10}}>
                   {sections.map(status=>{
-                    const st=STATUS_STYLE[status]||{bg:'#f8f7f4',border:'#e0dbd0',icon:'📋',label:status};
-                    const jobs=grouped[status];
-                    return <div key={status} style={{background:st.bg,border:`1.5px solid ${st.border}`,borderRadius:12,padding:'14px 18px'}}>
-                      <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                        {jobs.map(j=><EmployerJobCard key={j.id} j={j} candidates={data.candidates} fmtNum={fmtNum} onCandClick={setViewCand}/>)}
+                    const st=SS[status]||{bg:'#f8f7f4',border:'#e0dbd0'};
+                    return <div key={status} style={{background:st.bg,border:'1.5px solid '+st.border,borderRadius:12,padding:'12px 16px'}}>
+                      <div style={{fontWeight:800,fontSize:13,color:'#555',marginBottom:8}}>{status}</div>
+                      <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                        {grouped[status].map(j=><EmployerJobCard key={j.id} j={j} candidates={data.candidates} fmtNum={fmtNum} onCandClick={setViewCand}/>)}
                       </div>
                     </div>;
                   })}
                 </div>
               </div>;
             })()}
-
-          </div>{/* end body */}
+          </div>
         </div>
       </div>;
     })()}
@@ -1857,6 +1731,7 @@ function Jobs({data,setData}){
   const [modal,setModal]=React.useState(null);
   const [form,setForm]=React.useState({});
   const [detail,setDetail]=React.useState(null);
+  const [candDetail,setCandDetail]=React.useState(null); // מועמד שנפתח מתוך משרה
   const [pubJob,setPubJob]=React.useState(null);
   const [confirmDel,setConfirmDel]=React.useState(null);
 
@@ -2072,6 +1947,72 @@ function Jobs({data,setData}){
       })}
     </div>
 
+        {/* מסך מועמד מלא — נפתח מתוך משרה */}
+        {candDetail&&(()=>{
+          const cd=candDetail;
+          const cdJobs=data.jobs.filter(j=>(cd.appliedJobs||[]).includes(j.id));
+          const iStyle={width:'100%',fontFamily:'Heebo',fontSize:15,fontWeight:600,color:'#111',background:'white',border:'2px solid #d1d5db',borderRadius:8,padding:'8px 12px',outline:'none'};
+          const onF=e=>{e.target.style.borderColor='#1a3a6b';};
+          const onB=e=>{e.target.style.borderColor='#d1d5db';};
+          return <div style={{position:'fixed',inset:0,background:'#f0f2f5',zIndex:1100,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+            {/* TopBar */}
+            <div style={{background:'#1a3a6b',padding:'0 20px',height:56,flexShrink:0,display:'flex',alignItems:'center',gap:12,borderBottom:'3px solid #122a50'}}>
+              <button onClick={()=>setCandDetail(null)}
+                style={{display:'flex',alignItems:'center',gap:8,padding:'9px 20px',background:'white',border:'none',borderRadius:10,cursor:'pointer',fontFamily:'Heebo',fontWeight:800,fontSize:15,color:'#1a3a6b',boxShadow:'0 2px 8px rgba(0,0,0,0.2)',flexShrink:0}}>
+                ← חזרה למשרה
+              </button>
+              <div style={{width:38,height:38,borderRadius:19,background:'#e85d26',color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontSize:16,flexShrink:0}}>{cd.name.charAt(0)}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{color:'white',fontWeight:800,fontSize:18,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{cd.name}</div>
+                <div style={{color:'rgba(255,255,255,0.6)',fontSize:12}}>{cd.domain&&cd.role?`${cd.domain} › ${cd.role}`:cd.role||cd.domain||''}</div>
+              </div>
+              <Tag label={cd.status}/>
+              {cd.phone&&<button onClick={()=>{const p=(cd.phone||'').replace(/[-\s]/g,'').replace(/^0/,'972');window.open(`https://wa.me/${p}`,'_blank');}} style={{background:'#25D366',border:'none',color:'white',borderRadius:8,padding:'7px 14px',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>💬 WA</button>}
+            </div>
+            {/* Body */}
+            <div style={{display:'flex',flex:1,overflow:'hidden',minHeight:0}}>
+              {/* פרטים */}
+              <div style={{flex:'0 0 45%',overflowY:'auto',borderLeft:'1px solid #dde1e7',background:'#fff',padding:'16px 28px 16px 20px'}}>
+                {[
+                  {title:'👤 פרטים אישיים',color:'#fff5f0',fields:[['שם',cd.name],['טלפון',cd.phone],['אימייל',cd.email],['עיר',cd.city],['ת.ז.',cd.idNumber],['מין',cd.gender],['מצב משפחתי',cd.maritalStatus],['רישיון',cd.drivingLicense],['נידות',cd.mobility],['מקור ליד',cd.leadSource],['ציון מבחן',cd.testScore]]},
+                  {title:'💼 פרופיל מקצועי',color:'#eff6ff',fields:[['תחום',cd.domain],['תפקיד',cd.role],['ניסיון',cd.experience],['השכלה',cd.education],['שכר מינ׳',cd.minSalary?`₪${cd.minSalary}`:''],['שכר מקס׳',cd.maxSalary?`₪${cd.maxSalary}`:''],['סטטוס',cd.status]]},
+                  {title:'🌐 שפות',color:'#f0fdf4',fields:[['עברית',cd.langHebrew],['אנגלית',cd.langEnglish],['ערבית',cd.langArabic],['רוסית',cd.langRussian],['אמהרית',cd.langAmharic]]},
+                ].map(sec=><div key={sec.title} style={{background:'white',borderRadius:12,border:'1px solid #e5e7eb',overflow:'hidden',marginBottom:14}}>
+                  <div style={{background:sec.color,padding:'10px 16px',borderBottom:'1px solid #e5e7eb',fontWeight:800,fontSize:14,color:'#111'}}>{sec.title}</div>
+                  <div style={{padding:'4px 16px 10px'}}>
+                    {sec.fields.filter(([,v])=>v).map(([k,v])=><div key={k} style={{display:'grid',gridTemplateColumns:'130px 1fr',alignItems:'baseline',gap:12,padding:'8px 4px',borderBottom:'1px solid #f3f4f6'}}>
+                      <div style={{fontSize:13,fontWeight:700,color:'#333'}}>{k}</div>
+                      <div style={{fontSize:15,fontWeight:600,color:'#111'}}>{v}</div>
+                    </div>)}
+                  </div>
+                </div>)}
+                {cd.notes&&<div style={{background:'white',borderRadius:12,border:'1px solid #fde68a',overflow:'hidden',marginBottom:14}}>
+                  <div style={{background:'#fffbeb',padding:'10px 16px',borderBottom:'1px solid #fde68a',fontWeight:800,fontSize:14}}>📝 הערות</div>
+                  <div style={{padding:'12px 16px',fontSize:15,color:'#222',lineHeight:1.7}}>{cd.notes}</div>
+                </div>}
+              </div>
+              {/* CV */}
+              <div style={{flex:'0 0 55%',display:'flex',flexDirection:'column',background:'#fff',overflow:'hidden'}}>
+                <div style={{padding:'10px 16px',borderBottom:'1px solid #e5e7eb',display:'flex',alignItems:'center',gap:10,flexShrink:0,background:'#f8f9fb'}}>
+                  <div style={{fontWeight:700,fontSize:14,color:'#111',flex:1}}>📄 קורות חיים</div>
+                  {cd.cvUrl&&<a href={cd.cvUrl} target="_blank" rel="noreferrer" style={{padding:'6px 14px',background:'#e85d26',color:'white',borderRadius:7,textDecoration:'none',fontWeight:700,fontSize:13}}>פתח</a>}
+                </div>
+                <div style={{flex:1,overflow:'auto'}}>
+                  {cd.cvUrl
+                    ?cd.cvUrl.toLowerCase().endsWith('.pdf')
+                      ?<iframe src={cd.cvUrl} style={{width:'100%',height:'100%',border:'none',minHeight:'calc(100vh - 110px)'}} title="CV"/>
+                      :<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%'}}><a href={cd.cvUrl} target="_blank" rel="noreferrer" style={{padding:'12px 24px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:16}}>📂 פתח קורות חיים</a></div>
+                    :<div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:8,color:'#aaa'}}>
+                      <div style={{fontSize:56,opacity:.2}}>📄</div>
+                      <div style={{fontSize:15,fontWeight:600}}>לא צורף CV</div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>;
+        })()}
+
         {pubJob&&<Modal title={`פרסום – ${pubJob.jobNumber}`} onClose={()=>setPubJob(null)}>
       <div style={{textAlign:'center',padding:'10px 0'}}>
         <div style={{fontSize:48,marginBottom:8}}>🔗</div>
@@ -2100,117 +2041,130 @@ function Jobs({data,setData}){
     {detail&&(()=>{
       const emp=data.employers.find(e=>e.id===detail.employerId);
       const cands=data.candidates.filter(c=>c.appliedJobs.includes(detail.id));
-      return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(4px)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={()=>setDetail(null)}>
-        <div style={{background:'#f8f7f4',borderRadius:20,width:'90vw',maxWidth:1100,maxHeight:'92vh',overflow:'hidden',boxShadow:'0 32px 100px rgba(0,0,0,0.35)',display:'flex',flexDirection:'column'}} onClick={e=>e.stopPropagation()}>
+      const Field=({label,value})=>value?<div style={{display:'grid',gridTemplateColumns:'130px 1fr',alignItems:'baseline',gap:12,padding:'9px 4px',borderBottom:'1px solid #f3f4f6'}}>
+        <div style={{fontSize:13,fontWeight:700,color:'#333'}}>{label}</div>
+        <div style={{fontSize:15,fontWeight:600,color:'#111'}}>{value}</div>
+      </div>:null;
+      const Section=({title,color,children})=><div style={{background:'white',borderRadius:12,border:'1px solid #e5e7eb',overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.05)',marginBottom:14}}>
+        <div style={{background:color||'#f8f9fb',padding:'10px 16px',borderBottom:'1px solid #e5e7eb',fontWeight:800,fontSize:14,color:'#111'}}>{title}</div>
+        <div style={{padding:'4px 16px 12px'}}>{children}</div>
+      </div>;
+      return <div style={{position:'fixed',inset:0,background:'#f0f2f5',zIndex:999,display:'flex',flexDirection:'column',overflow:'hidden'}}>
 
-          {/* Header */}
-          <div style={{background:'#1a1a2e',borderRadius:'20px 20px 0 0',padding:'22px 32px',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-            <div style={{display:'flex',gap:14,alignItems:'center'}}>
-              {(detail.image||detail.imageUrl)&&<img src={detail.image||detail.imageUrl} alt="" style={{width:52,height:52,objectFit:'cover',borderRadius:10,border:'2px solid rgba(255,255,255,0.2)',flexShrink:0}}/>}
-              <div>
-                <div style={{color:'#e85d26',fontSize:12,fontWeight:700,marginBottom:2}}>{detail.jobNumber}</div>
-                <div style={{color:'white',fontWeight:800,fontSize:22}}>{detail.publishTitle||detail.title}</div>
-                <div style={{color:'rgba(255,255,255,0.6)',fontSize:13,marginTop:2}}>{emp?.name||''}{detail.location?` · 📍${detail.location}`:''}</div>
-              </div>
-              <div style={{marginRight:8}}><Tag label={detail.status}/></div>
+        {/* ── TOP BAR ── */}
+        <div style={{background:'#1a3a6b',padding:'0 20px',height:56,flexShrink:0,display:'flex',alignItems:'center',gap:12,borderBottom:'3px solid #122a50'}}>
+          <button onClick={()=>setDetail(null)}
+            style={{display:'flex',alignItems:'center',gap:8,padding:'9px 20px',background:'white',border:'none',borderRadius:10,cursor:'pointer',fontFamily:'Heebo',fontWeight:800,fontSize:15,color:'#1a3a6b',boxShadow:'0 2px 8px rgba(0,0,0,0.2)',flexShrink:0}}>
+            ← חזרה לרשימה
+          </button>
+          {(detail.image||detail.imageUrl)&&<img src={detail.image||detail.imageUrl} alt="" style={{width:36,height:36,objectFit:'cover',borderRadius:8,flexShrink:0}}/>}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <span style={{color:'#e85d26',fontSize:12,fontWeight:700,background:'rgba(232,93,38,0.2)',borderRadius:6,padding:'2px 8px',flexShrink:0}}>{detail.jobNumber}</span>
+              <span style={{color:'white',fontWeight:800,fontSize:18,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{detail.publishTitle||detail.title}</span>
+              <Tag label={detail.status}/>
             </div>
-            <div style={{display:'flex',gap:8,alignItems:'center'}}>
-              <button onClick={()=>setPubJob(detail)} style={{background:'rgba(255,255,255,0.15)',border:'none',color:'white',padding:'8px 14px',borderRadius:8,cursor:'pointer',fontFamily:'Heebo',fontWeight:700,fontSize:13}}>🔗 פרסום</button>
-              <button onClick={()=>setDetail(null)} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'white',width:36,height:36,borderRadius:18,cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+            <div style={{color:'rgba(255,255,255,0.6)',fontSize:12,marginTop:2}}>{emp?.name||''}{detail.location?` · 📍${detail.location}`:''}</div>
+          </div>
+          <div style={{display:'flex',gap:8,flexShrink:0}}>
+            <button onClick={()=>setPubJob(detail)} style={{background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.3)',color:'white',padding:'7px 14px',borderRadius:8,cursor:'pointer',fontFamily:'Heebo',fontWeight:700,fontSize:13}}>🔗 פרסום</button>
+            <button onClick={()=>{setDetail(null);openEdit(detail);}} style={{background:'white',border:'none',color:'#1a3a6b',padding:'7px 16px',borderRadius:8,cursor:'pointer',fontFamily:'Heebo',fontWeight:800,fontSize:13,display:'flex',alignItems:'center',gap:6}}>✏️ עריכה</button>
+          </div>
+        </div>
+
+        {/* ── BODY ── */}
+        <div style={{display:'flex',flex:1,overflow:'hidden',minHeight:0}}>
+
+          {/* ימין 45% — פרטי משרה */}
+          <div style={{flex:'0 0 45%',overflowY:'auto',borderLeft:'1px solid #dde1e7',background:'#fff',padding:'20px 28px 20px 20px'}}>
+
+            <Section title="📋 פרטי המשרה" color="#fff5f0">
+              <Field label="מעסיק" value={emp?.name}/>
+              <Field label="תחום" value={detail.domain}/>
+              <Field label="תפקיד" value={detail.role}/>
+              <Field label="סוג משרה" value={detail.type}/>
+              <Field label="מיקום" value={detail.location}/>
+              <Field label="שכר" value={detail.salary?`₪${fmtNum(detail.salary)}`:null}/>
+              <Field label="אחוז עמלה" value={detail.commissionPct?`${detail.commissionPct}%`:null}/>
+              <Field label="דמי השמה" value={detail.fee?`₪${fmtNum(detail.fee)}`:null}/>
+              <Field label="תאריך יצירה" value={detail.createdAt}/>
+              <Field label="דדליין" value={detail.deadline}/>
+            </Section>
+
+            {(detail.reqExperience||detail.reqEducation||detail.reqLicense||detail.reqMobility||detail.reqGender||detail.reqLangHebrew||detail.reqLangEnglish||detail.reqLangArabic||detail.reqLangRussian)&&
+            <Section title="🎯 דרישות מועמד" color="#fef3c7">
+              <Field label="ניסיון נדרש" value={detail.reqExperience}/>
+              <Field label="השכלה נדרשת" value={detail.reqEducation}/>
+              <Field label="רישיון נהיגה" value={detail.reqLicense}/>
+              <Field label="נידות" value={detail.reqMobility}/>
+              <Field label="מין מועדף" value={detail.reqGender}/>
+              <Field label="עברית" value={detail.reqLangHebrew}/>
+              <Field label="אנגלית" value={detail.reqLangEnglish}/>
+              <Field label="ערבית" value={detail.reqLangArabic}/>
+              <Field label="רוסית" value={detail.reqLangRussian}/>
+            </Section>}
+
+            <StatusHistoryBlock item={detail}/>
+
+            <div style={{display:'flex',gap:10,marginTop:4}}>
+              <button onClick={()=>del(detail.id)} style={{padding:'10px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>🗑 מחק משרה</button>
             </div>
+
           </div>
 
-          {/* Body — 2 columns */}
-          <div style={{overflow:'auto',flex:1,padding:'24px 32px'}}>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+          {/* שמאל 55% — תוכן + מועמדים */}
+          <div style={{flex:'0 0 55%',overflowY:'auto',background:'#f8f9fb',padding:'20px 24px'}}>
 
-              {/* COL 1 */}
-              <div style={{display:'flex',flexDirection:'column',gap:16}}>
-
-                {/* פרטי משרה */}
-                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
-                    <div style={{width:32,height:32,borderRadius:8,background:'#fff5f0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📋</div>
-                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>פרטי המשרה</div>
-                  </div>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-                    {[['מעסיק',emp?.name],['תחום',detail.domain],['תפקיד',detail.role],['סוג',detail.type],['שכר',detail.salary?`₪${fmtNum(detail.salary)}`:null],['אחוז עמלה',detail.commissionPct?`${detail.commissionPct}%`:null],['דמי השמה',detail.fee?`₪${fmtNum(detail.fee)}`:null],['מיקום',detail.location],['נוצרה',detail.createdAt],['דדליין',detail.deadline]].map(([k,v])=>v?<div key={k} style={{background:'#f8f7f4',borderRadius:8,padding:'10px 12px'}}>
-                      <div style={{fontSize:12,color:'#444',fontWeight:700,marginBottom:3}}>{k}</div>
-                      <div style={{fontSize:13,fontWeight:600,color:'#1a1a2e'}}>{v}</div>
-                    </div>:null)}
-                  </div>
-                </div>
-
-                {/* דרישות מועמד */}
-                {(detail.reqExperience||detail.reqEducation||detail.reqLicense||detail.reqMobility||detail.reqGender||detail.reqLangHebrew||detail.reqLangEnglish||detail.reqLangArabic||detail.reqLangRussian)&&
-                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
-                    <div style={{width:32,height:32,borderRadius:8,background:'#fef3c7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🎯</div>
-                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>דרישות מועמד</div>
-                  </div>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-                    {[
-                      ['ניסיון נדרש',detail.reqExperience],
-                      ['השכלה נדרשת',detail.reqEducation],
-                      ['רישיון נהיגה',detail.reqLicense],
-                      ['נידות',detail.reqMobility],
-                      ['מין מועדף',detail.reqGender],
-                      ['עברית',detail.reqLangHebrew],
-                      ['אנגלית',detail.reqLangEnglish],
-                      ['ערבית',detail.reqLangArabic],
-                      ['רוסית',detail.reqLangRussian],
-                    ].map(([k,v])=>v?<div key={k} style={{background:'#fffbeb',borderRadius:8,padding:'10px 12px',border:'1px solid #fde68a'}}>
-                      <div style={{fontSize:12,color:'#92400e',fontWeight:700,marginBottom:3}}>{k}</div>
-                      <div style={{fontSize:13,fontWeight:600,color:'#1a1a2e'}}>{v}</div>
-                    </div>:null)}
-                  </div>
+            {/* תוכן המשרה */}
+            {(detail.description||detail.requirements||detail.benefits)&&
+            <div style={{background:'white',borderRadius:12,border:'1px solid #e5e7eb',overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.05)',marginBottom:16}}>
+              <div style={{background:'#fffbeb',padding:'10px 16px',borderBottom:'1px solid #e5e7eb',fontWeight:800,fontSize:14,color:'#111'}}>📝 תוכן המשרה</div>
+              <div style={{padding:'16px 20px',display:'flex',flexDirection:'column',gap:16}}>
+                {detail.description&&<div>
+                  <div style={{fontWeight:800,fontSize:14,color:'#1a3a6b',marginBottom:6}}>תיאור</div>
+                  <div style={{fontSize:15,color:'#222',lineHeight:1.8,whiteSpace:'pre-wrap'}}>{detail.description}</div>
                 </div>}
-
-                {/* תוכן המשרה */}
-                {(detail.description||detail.requirements||detail.benefits)&&
-                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
-                    <div style={{width:32,height:32,borderRadius:8,background:'#fffbeb',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📝</div>
-                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>תוכן המשרה</div>
-                  </div>
-                  {detail.description&&<div style={{marginBottom:12}}><div style={{fontWeight:700,fontSize:13,color:'#374151',marginBottom:4}}>תיאור</div><div style={{fontSize:13,color:'#555',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{detail.description}</div></div>}
-                  {detail.requirements&&<div style={{marginBottom:12}}><div style={{fontWeight:700,fontSize:13,color:'#374151',marginBottom:4}}>דרישות</div><div style={{fontSize:13,color:'#555',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{detail.requirements}</div></div>}
-                  {detail.benefits&&<div><div style={{fontWeight:700,fontSize:13,color:'#374151',marginBottom:4}}>יתרונות</div><div style={{fontSize:13,color:'#555',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{detail.benefits}</div></div>}
+                {detail.requirements&&<div>
+                  <div style={{fontWeight:800,fontSize:14,color:'#1a3a6b',marginBottom:6}}>דרישות</div>
+                  <div style={{fontSize:15,color:'#222',lineHeight:1.8,whiteSpace:'pre-wrap'}}>{detail.requirements}</div>
                 </div>}
+                {detail.benefits&&<div>
+                  <div style={{fontWeight:800,fontSize:14,color:'#1a3a6b',marginBottom:6}}>יתרונות</div>
+                  <div style={{fontSize:15,color:'#222',lineHeight:1.8,whiteSpace:'pre-wrap'}}>{detail.benefits}</div>
+                </div>}
+              </div>
+            </div>}
 
-              </div>{/* end col1 */}
+            {/* מועמדים */}
+            <div style={{background:'white',borderRadius:12,border:'1px solid #e5e7eb',overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+              <div style={{background:'#eff6ff',padding:'10px 16px',borderBottom:'1px solid #e5e7eb',fontWeight:800,fontSize:14,color:'#1d4ed8'}}>👥 מועמדים ({cands.length})</div>
+              <div style={{padding:'8px 16px'}}>
+                {cands.length===0&&<div style={{color:'#888',fontSize:14,padding:'12px 0'}}>אין מועמדים משויכים למשרה זו</div>}
+                {cands.map(c=>{
+                  const statusColors={'השמה מוצלחת':'#f0fdf4','ראיון נקבע':'#faf5ff','בתהליך':'#eff6ff','חדש':'#f8f9fb'};
+                  const statusBorders={'השמה מוצלחת':'#86efac','ראיון נקבע':'#d8b4fe','בתהליך':'#bfdbfe','חדש':'#e5e7eb'};
+                  return <div key={c.id}
+                    onClick={()=>setCandDetail(c)}
+                    style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'11px 14px',background:statusColors[c.status]||'#f8f9fb',borderRadius:9,marginBottom:6,border:`1px solid ${statusBorders[c.status]||'#e5e7eb'}`,cursor:'pointer',transition:'filter .15s'}}
+                    onMouseEnter={e=>e.currentTarget.style.filter='brightness(0.95)'}
+                    onMouseLeave={e=>e.currentTarget.style.filter=''}>
+                    <div style={{display:'flex',alignItems:'center',gap:10}}>
+                      <Avatar name={c.name} size={34}/>
+                      <div>
+                        <div style={{fontWeight:700,fontSize:14,color:'#111'}}>{c.name}</div>
+                        <div style={{fontSize:12,color:'#555'}}>{c.domain?`${c.domain} › ${c.role}`:c.role||''}</div>
+                      </div>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <Tag label={c.status}/>
+                      <span style={{color:'#aaa',fontSize:14}}>›</span>
+                    </div>
+                  </div>;
+                })}
+              </div>
+            </div>
 
-              {/* COL 2 */}
-              <div style={{display:'flex',flexDirection:'column',gap:16}}>
-
-                {/* מועמדים */}
-                <div style={{background:'white',borderRadius:14,padding:'18px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
-                    <div style={{width:32,height:32,borderRadius:8,background:'#eff6ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>👥</div>
-                    <div style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>מועמדים ({cands.length})</div>
-                  </div>
-                  {cands.map(c=><div key={c.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 12px',background:'#f8f7f4',borderRadius:8,marginBottom:6}}>
-                    <div style={{display:'flex',alignItems:'center',gap:8}}><Avatar name={c.name} size={28}/><div><div style={{fontWeight:600,fontSize:13}}>{c.name}</div><div style={{fontSize:11,color:MUT}}>{c.domain?`${c.domain} › ${c.role}`:c.role}</div></div></div>
-                    <Tag label={c.status}/>
-                  </div>)}
-                  {!cands.length&&<div style={{color:MUT,fontSize:13,padding:'8px 0'}}>אין מועמדים עדיין</div>}
-                </div>
-
-                {/* כפתורי פעולה */}
-                <div style={{display:'flex',gap:10}}>
-                  <button onClick={()=>{setDetail(null);openEdit(detail);}} style={{flex:1,padding:'11px 0',background:'#1a1a2e',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
-                    ✏️ ערוך משרה
-                  </button>
-                  <button onClick={()=>del(detail.id)} style={{padding:'11px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
-                    🗑
-                  </button>
-                </div>
-
-                <StatusHistoryBlock item={detail}/>
-
-              </div>{/* end col2 */}
-            </div>{/* end grid */}
-          </div>{/* end body */}
+          </div>
         </div>
       </div>;
     })()}
@@ -2694,197 +2648,174 @@ function Candidates({data,setData}){
       </table>
     </div>
 
-        {detail&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',backdropFilter:'blur(3px)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center',padding:'12px'}} onClick={()=>setDetail(null)}>
-      <div style={{background:'#f0f2f5',borderRadius:16,width:'92vw',maxWidth:1300,maxHeight:'94vh',overflow:'hidden',boxShadow:'0 24px 80px rgba(0,0,0,0.35)',display:'flex',flexDirection:'column'}} onClick={e=>e.stopPropagation()}>
+        {detail&&<div style={{position:'fixed',inset:0,background:'#f0f2f5',zIndex:999,display:'flex',flexDirection:'column',overflow:'hidden'}}>
 
-        {/* ── HEADER ── */}
-        <div style={{background:'#1a3a6b',padding:'14px 20px',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <div style={{display:'flex',gap:12,alignItems:'center'}}>
-            <div style={{width:44,height:44,borderRadius:22,background:'#e85d26',color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontSize:18,flexShrink:0}}>
-              {detail.name.charAt(0)}
+          {/* ── TOP BAR ── */}
+          <div style={{background:'#1a3a6b',padding:'0 20px',height:56,flexShrink:0,display:'flex',alignItems:'center',gap:12,borderBottom:'3px solid #122a50'}}>
+            {/* כפתור חזרה */}
+            <button onClick={()=>{setDetail(null);setDetailForm(null);}}
+              style={{display:'flex',alignItems:'center',gap:8,padding:'9px 20px',background:'white',border:'none',borderRadius:10,cursor:'pointer',fontFamily:'Heebo',fontWeight:800,fontSize:15,color:'#1a3a6b',boxShadow:'0 2px 8px rgba(0,0,0,0.2)',flexShrink:0}}>
+              ← חזרה לרשימה
+            </button>
+            {/* שם + תפקיד */}
+            <div style={{display:'flex',alignItems:'center',gap:10,flex:1,minWidth:0}}>
+              <div style={{width:40,height:40,borderRadius:20,background:'#e85d26',color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontSize:18,flexShrink:0}}>{detail.name.charAt(0)}</div>
+              <div style={{minWidth:0}}>
+                <div style={{color:'white',fontWeight:800,fontSize:20,lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{detail.name}</div>
+                <div style={{color:'rgba(255,255,255,0.65)',fontSize:13}}>{detail.domain&&detail.role?`${detail.domain} › ${detail.role}`:detail.role||detail.domain||''}</div>
+              </div>
+              <Tag label={detail.status}/>
+              {pendingIds.has(detail.id)&&<span style={{background:'#fde8dc',color:'#c94d1a',borderRadius:8,padding:'3px 10px',fontSize:12,fontWeight:700}}>⏳ ממתין</span>}
             </div>
-            <div>
-              <div style={{color:'white',fontWeight:800,fontSize:18,lineHeight:1.2}}>{detail.name}</div>
-              <div style={{color:'rgba(255,255,255,0.6)',fontSize:12,marginTop:2}}>{detail.domain&&detail.role?`${detail.domain} › ${detail.role}`:detail.role||detail.domain||'—'}</div>
+            {/* פעולות */}
+            <div style={{display:'flex',gap:8,flexShrink:0}}>
+              {detail.phone&&<button onClick={()=>{const p=(detail.phone||'').replace(/[-\s]/g,'').replace(/^0/,'972');window.open(`https://wa.me/${p}`,'_blank');}} style={{background:'#25D366',border:'none',color:'white',borderRadius:8,padding:'7px 14px',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>💬 WA</button>}
+              {detail.email&&<button onClick={()=>setMsgTarget({c:detail})} style={{background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.3)',color:'white',borderRadius:8,padding:'7px 14px',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>📧 מייל</button>}
+              {detail.status!=='השמה מוצלחת'&&<button onClick={()=>triggerPlace(detail)} style={{background:'#16a34a',border:'none',color:'white',borderRadius:8,padding:'7px 14px',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>🏅 השמה</button>}
             </div>
-            <Tag label={detail.status}/>
-            {pendingIds.has(detail.id)&&<span style={{background:'#fde8dc',color:'#c94d1a',borderRadius:8,padding:'3px 10px',fontSize:11,fontWeight:700}}>⏳ ממתין לאישור</span>}
           </div>
-          <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            <button onClick={()=>{setDetail(null);openEdit(detail);}} style={{padding:'7px 14px',background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.3)',color:'white',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>✏️ עריכה</button>
-            {detail.status!=='השמה מוצלחת'&&<button onClick={()=>triggerPlace(detail)} style={{padding:'7px 14px',background:'#16a34a',border:'none',color:'white',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>🏅 השמה</button>}
-            <button onClick={()=>setDetail(null)} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'white',width:32,height:32,borderRadius:16,cursor:'pointer',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
-          </div>
-        </div>
 
-        {/* ── BODY: שמאל = פרטים, ימין = CV ── */}
-        <div style={{display:'flex',flex:1,overflow:'hidden',minHeight:0}}>
+          {/* ── BODY ── */}
+          <div style={{display:'flex',flex:1,overflow:'hidden',minHeight:0}}>
 
-          {/* עמודה שמאל — פרטים (טופס ישיר) */}
-          <div style={{flex:'0 0 45%',overflow:'auto',display:'flex',flexDirection:'column',borderLeft:'1px solid #dde1e7'}}>
+            {/* עמודה שמאל — פרטים (גלילה) */}
+            <div style={{flex:'0 0 45%',overflowY:'auto',borderLeft:'1px solid #dde1e7',display:'flex',flexDirection:'column',background:'#fff'}}>
 
-            {/* פס קשר + תקשורת */}
-            <div style={{background:'#1a3a6b',padding:'10px 16px',display:'flex',gap:12,flexWrap:'wrap',flexShrink:0,alignItems:'center'}}>
-              {detail.phone&&<a href={`tel:${detail.phone}`} style={{color:'rgba(255,255,255,0.9)',fontSize:12,textDecoration:'none'}}>📞 {detail.phone}</a>}
-              {detail.email&&<a href={`mailto:${detail.email}`} style={{color:'rgba(255,255,255,0.9)',fontSize:12,textDecoration:'none'}}>✉️ {detail.email}</a>}
-              {detail.city&&<span style={{color:'rgba(255,255,255,0.7)',fontSize:12}}>📍 {detail.city}</span>}
-              <div style={{flex:1}}/>
-              {detail.phone&&<button onClick={()=>{const p=(detail.phone||'').replace(/[-\s]/g,'').replace(/^0/,'972');window.open(`https://wa.me/${p}`,'_blank');}} style={{background:'#25D366',border:'none',color:'white',borderRadius:6,padding:'3px 10px',fontSize:11,fontWeight:700,cursor:'pointer'}}>💬 WA</button>}
-              {detail.email&&<button onClick={()=>setMsgTarget({c:detail})} style={{background:'rgba(255,255,255,0.15)',border:'none',color:'white',borderRadius:6,padding:'3px 10px',fontSize:11,fontWeight:700,cursor:'pointer'}}>📧 מייל</button>}
-            </div>
+              {/* שמירה */}
+              <div style={{background:'#1a3a6b',padding:'10px 20px',display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
+                <span style={{fontSize:13,color:'rgba(255,255,255,0.7)',flex:1}}>✏️ ערוך ישירות ולחץ שמור</span>
+                <button onClick={saveDetailForm} style={{padding:'8px 22px',background:'#e85d26',color:'white',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:800,fontSize:14,cursor:'pointer'}}>💾 שמור</button>
+              </div>
 
-            {/* כפתור שמירה תמידי */}
-            <div style={{background:'#f8f9fb',borderBottom:'1px solid #e5e7eb',padding:'8px 14px',display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
-              <span style={{fontSize:12,color:'#555',flex:1}}>✏️ ערוך פרטים ולחץ שמור</span>
-              <button onClick={saveDetailForm} style={{padding:'6px 18px',background:'#e85d26',color:'white',border:'none',borderRadius:7,fontFamily:'Heebo',fontWeight:800,fontSize:13,cursor:'pointer'}}>💾 שמור</button>
-            </div>
+              {detailForm&&<div style={{padding:'16px 28px 16px 20px',display:'flex',flexDirection:'column',gap:14}}>
 
-            {detailForm&&<div style={{padding:'12px 14px',display:'flex',flexDirection:'column',gap:10,overflow:'auto'}}>
-
-              {/* helper inline */}
-              {(()=>{
-                const iStyle={width:'100%',fontFamily:'Heebo',fontSize:13,fontWeight:600,color:'#1a1a2e',background:'white',border:'1.5px solid #d1d5db',borderRadius:6,padding:'5px 8px',outline:'none'};
-                const onFocus=e=>{e.target.style.borderColor='#1a3a6b';e.target.style.boxShadow='0 0 0 2px rgba(26,58,107,0.12)';};
-                const onBlur=e=>{e.target.style.borderColor='#d1d5db';e.target.style.boxShadow='none';};
-                const Row=({label,field,type='text',opts})=>(
-                  <div style={{padding:'6px 12px',borderBottom:'1px solid #f3f4f6',display:'grid',gridTemplateColumns:'90px 1fr',alignItems:'center',gap:8}}>
-                    <div style={{fontSize:11,color:'#6b7280',fontWeight:700,textTransform:'uppercase'}}>{label}</div>
-                    {type==='select'
-                      ?<select value={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} onFocus={onFocus} onBlur={onBlur} style={{...iStyle,cursor:'pointer'}}>
-                          {opts.map(o=><option key={o} value={o}>{o||'—'}</option>)}
-                        </select>
-                      :type==='textarea'
-                      ?<textarea value={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} onFocus={onFocus} onBlur={onBlur} rows={2} style={{...iStyle,resize:'vertical'}}/>
-                      :<input type={type} value={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} onFocus={onFocus} onBlur={onBlur} style={iStyle}/>
-                    }
-                  </div>
-                );
-
-                return <>
-                  {/* פרטים אישיים */}
-                  <div style={{background:'white',borderRadius:10,border:'1px solid #e5e7eb',overflow:'hidden'}}>
-                    <div style={{background:'#f8f9fb',padding:'7px 14px',borderBottom:'1px solid #e5e7eb',fontWeight:700,fontSize:12,color:'#374151'}}>👤 פרטים אישיים</div>
-                    <Row label="שם מלא" field="name"/>
-                    <Row label="טלפון" field="phone"/>
-                    <Row label="אימייל" field="email" type="email"/>
-                    <Row label="עיר" field="city"/>
-                    <Row label="ת.ז." field="idNumber"/>
-                    <Row label="ת. לידה" field="birthDate" type="date"/>
-                    <Row label="מין" field="gender" type="select" opts={['','זכר','נקבה','אחר']}/>
-                    <Row label="מצב משפחתי" field="maritalStatus" type="select" opts={['','רווק/ה','נשוי/אה','גרוש/ה','אלמן/ה']}/>
-                    <Row label="רישיון" field="drivingLicense" type="select" opts={['','יש','אין']}/>
-                    <Row label="נידות" field="mobility" type="select" opts={['','כן','לא','חלקית']}/>
-                    <Row label="מקור ליד" field="leadSource"/>
-                    <Row label="ציון מבחן" field="testScore"/>
-                  </div>
-
-                  {/* פרופיל מקצועי */}
-                  <div style={{background:'white',borderRadius:10,border:'1px solid #e5e7eb',overflow:'hidden'}}>
-                    <div style={{background:'#eff6ff',padding:'7px 14px',borderBottom:'1px solid #e5e7eb',fontWeight:700,fontSize:12,color:'#1d4ed8'}}>💼 פרופיל מקצועי</div>
-                    <Row label="תחום" field="domain"/>
-                    <Row label="תפקיד" field="role"/>
-                    <Row label="ניסיון" field="experience"/>
-                    <Row label="השכלה" field="education"/>
-                    <Row label="שכר מינ׳" field="minSalary"/>
-                    <Row label="שכר מקס׳" field="maxSalary"/>
-                    <Row label="סטטוס" field="status" type="select" opts={data.statuses?.candidates?.length?[''].concat(data.statuses.candidates):['','חדש','בתהליך','ראיון נקבע','השמה מוצלחת']}/>
-                    <Row label="ת. הגשה" field="appliedAt" type="date"/>
-                  </div>
-
-                  {/* שפות */}
-                  <div style={{background:'white',borderRadius:10,border:'1px solid #e5e7eb',overflow:'hidden'}}>
-                    <div style={{background:'#f0fdf4',padding:'7px 14px',borderBottom:'1px solid #e5e7eb',fontWeight:700,fontSize:12,color:'#15803d'}}>🌐 שליטה בשפות</div>
-                    <Row label="עברית" field="langHebrew" type="select" opts={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
-                    <Row label="אנגלית" field="langEnglish" type="select" opts={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
-                    <Row label="ערבית" field="langArabic" type="select" opts={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
-                    <Row label="רוסית" field="langRussian" type="select" opts={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
-                    <Row label="ספרדית" field="langSpanish" type="select" opts={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
-                    <Row label="צרפתית" field="langFrench" type="select" opts={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
-                    <Row label="אמהרית" field="langAmharic" type="select" opts={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
-                  </div>
-
-                  {/* הערות */}
-                  <div style={{background:'white',borderRadius:10,border:'1px solid #e5e7eb',overflow:'hidden'}}>
-                    <div style={{background:'#fffbeb',padding:'7px 14px',borderBottom:'1px solid #e5e7eb',fontWeight:700,fontSize:12,color:'#92400e'}}>📝 הערות</div>
-                    <div style={{padding:'8px 12px'}}>
-                      <textarea value={detailForm.notes||''} onChange={e=>dfSet('notes',e.target.value)} onFocus={onFocus} onBlur={onBlur}
-                        rows={3} placeholder="הוסף הערה..."
-                        style={{...iStyle,width:'100%',resize:'vertical'}}/>
+                {(()=>{
+                  const iStyle={width:'100%',fontFamily:'Heebo',fontSize:15,fontWeight:600,color:'#111',background:'white',border:'2px solid #d1d5db',borderRadius:8,padding:'8px 12px',outline:'none'};
+                  const onFocus=e=>{e.target.style.borderColor='#1a3a6b';e.target.style.boxShadow='0 0 0 3px rgba(26,58,107,0.12)';};
+                  const onBlur=e=>{e.target.style.borderColor='#d1d5db';e.target.style.boxShadow='none';};
+                  const Row=({label,field,type='text',opts})=>(
+                    <div style={{display:'grid',gridTemplateColumns:'130px 1fr',alignItems:'center',gap:12,padding:'9px 4px',borderBottom:'1px solid #f3f4f6'}}>
+                      <div style={{fontSize:13,color:'#333',fontWeight:700}}>{label}</div>
+                      {type==='select'
+                        ?<select value={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} onFocus={onFocus} onBlur={onBlur} style={{...iStyle,cursor:'pointer'}}>
+                            {opts.map(o=><option key={o} value={o}>{o||'—'}</option>)}
+                          </select>
+                        :type==='textarea'
+                        ?<textarea value={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} onFocus={onFocus} onBlur={onBlur} rows={3} style={{...iStyle,resize:'vertical'}}/>
+                        :<input type={type} value={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} onFocus={onFocus} onBlur={onBlur} style={iStyle}/>
+                      }
                     </div>
-                  </div>
+                  );
 
-                  {/* משרות מוקצות */}
-                  <div style={{background:'white',borderRadius:10,border:'1px solid #e5e7eb',overflow:'hidden'}}>
-                    <div style={{background:'#faf5ff',padding:'7px 14px',borderBottom:'1px solid #e5e7eb',fontWeight:700,fontSize:12,color:'#7c3aed'}}>🔗 משרות מוקצות</div>
-                    <div style={{padding:'8px 12px'}}>
+                  const Section=({title,color,children})=>(
+                    <div style={{background:'white',borderRadius:12,border:'1px solid #e5e7eb',overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+                      <div style={{background:color||'#f8f9fb',padding:'10px 16px',borderBottom:'1px solid #e5e7eb',fontWeight:800,fontSize:14,color:'#111'}}>{title}</div>
+                      <div style={{padding:'4px 16px 12px'}}>{children}</div>
+                    </div>
+                  );
+
+                  return <>
+                    <Section title="👤 פרטים אישיים" color="#fff5f0">
+                      <Row label="שם מלא" field="name"/>
+                      <Row label="טלפון" field="phone"/>
+                      <Row label="אימייל" field="email" type="email"/>
+                      <Row label="עיר" field="city"/>
+                      <Row label="ת.ז." field="idNumber"/>
+                      <Row label="תאריך לידה" field="birthDate" type="date"/>
+                      <Row label="מין" field="gender" type="select" opts={['','זכר','נקבה','אחר']}/>
+                      <Row label="מצב משפחתי" field="maritalStatus" type="select" opts={['','רווק/ה','נשוי/אה','גרוש/ה','אלמן/ה']}/>
+                      <Row label="רישיון נהיגה" field="drivingLicense" type="select" opts={['','יש','אין']}/>
+                      <Row label="נידות" field="mobility" type="select" opts={['','כן','לא','חלקית']}/>
+                      <Row label="מקור ליד" field="leadSource"/>
+                      <Row label="ציון מבחן" field="testScore"/>
+                    </Section>
+
+                    <Section title="💼 פרופיל מקצועי" color="#eff6ff">
+                      <Row label="תחום" field="domain"/>
+                      <Row label="תפקיד" field="role"/>
+                      <Row label="ניסיון" field="experience"/>
+                      <Row label="השכלה" field="education"/>
+                      <Row label="שכר מינ׳" field="minSalary"/>
+                      <Row label="שכר מקס׳" field="maxSalary"/>
+                      <Row label="סטטוס" field="status" type="select" opts={data.statuses?.candidates?.length?[''].concat(data.statuses.candidates):['','חדש','בתהליך','ראיון נקבע','השמה מוצלחת']}/>
+                      <Row label="תאריך הגשה" field="appliedAt" type="date"/>
+                    </Section>
+
+                    <Section title="🌐 שליטה בשפות" color="#f0fdf4">
+                      <Row label="עברית" field="langHebrew" type="select" opts={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
+                      <Row label="אנגלית" field="langEnglish" type="select" opts={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
+                      <Row label="ערבית" field="langArabic" type="select" opts={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
+                      <Row label="רוסית" field="langRussian" type="select" opts={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
+                      <Row label="ספרדית" field="langSpanish" type="select" opts={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
+                      <Row label="צרפתית" field="langFrench" type="select" opts={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
+                      <Row label="אמהרית" field="langAmharic" type="select" opts={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
+                    </Section>
+
+                    <Section title="📝 הערות" color="#fffbeb">
+                      <div style={{paddingTop:8}}>
+                        <textarea value={detailForm.notes||''} onChange={e=>dfSet('notes',e.target.value)} onFocus={e=>{e.target.style.borderColor='#1a3a6b';}} onBlur={e=>{e.target.style.borderColor='#d1d5db';}}
+                          rows={4} placeholder="הוסף הערה..."
+                          style={{width:'100%',fontFamily:'Heebo',fontSize:15,color:'#111',background:'white',border:'2px solid #d1d5db',borderRadius:8,padding:'8px 12px',outline:'none',resize:'vertical'}}/>
+                      </div>
+                    </Section>
+
+                    <Section title="🔗 משרות מוקצות" color="#faf5ff">
                       {(detail.appliedJobs||[]).length===0
-                        ?<div style={{color:'#aaa',fontSize:12}}>לא שויך למשרות עדיין</div>
+                        ?<div style={{color:'#888',fontSize:14,padding:'8px 0'}}>לא שויך למשרות עדיין</div>
                         :data.jobs.filter(j=>(detail.appliedJobs||[]).includes(j.id)).map(j=>{
                           const emp=data.employers.find(x=>x.id===j.employerId);
-                          const isPlaced=detail.status==='השמה מוצלחת'&&detail.placedJobId===j.id;
-                          return <div key={j.id} style={{padding:'7px 10px',background:isPlaced?'#f0fdf4':'#f8f9fb',borderRadius:8,marginBottom:6,border:`1px solid ${isPlaced?'#86efac':'#e5e7eb'}`,display:'flex',alignItems:'center',gap:8}}>
+                          return <div key={j.id} style={{padding:'10px 0',borderBottom:'1px solid #f3f4f6',display:'flex',alignItems:'center',gap:10}}>
                             <div style={{flex:1}}>
-                              <div style={{fontWeight:700,fontSize:12,color:'#1a1a2e'}}>{j.publishTitle||j.title}</div>
-                              <div style={{fontSize:11,color:'#555'}}>{emp?.name||''}{j.location?` · ${j.location}`:''} · {j.jobNumber}</div>
+                              <div style={{fontWeight:700,fontSize:14,color:'#111'}}>{j.publishTitle||j.title}</div>
+                              <div style={{fontSize:12,color:'#555'}}>{emp?.name||''}{j.location?` · ${j.location}`:''} · {j.jobNumber}</div>
                             </div>
-                            <Tag label={j.status}/>{isPlaced&&<span>🏅</span>}
+                            <Tag label={j.status}/>
                           </div>;
                         })
                       }
+                    </Section>
+
+                    {pendingIds.has(detail.id)&&<div style={{background:'#f0fdf4',border:'2px solid #86efac',borderRadius:10,padding:'14px 16px',display:'flex',gap:10,alignItems:'center'}}>
+                      <span style={{flex:1,fontSize:14,color:'#15803d',fontWeight:700}}>ממתין לאישורך</span>
+                      <button onClick={()=>{approvePendingLocal(detail.id);setDetail(null);}} style={{padding:'8px 18px',background:'#16a34a',color:'white',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>✅ אשר</button>
+                      <button onClick={()=>rejectPendingLocal(detail.id)} style={{padding:'8px 14px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>✕ דחה</button>
+                    </div>}
+
+                    <div style={{display:'flex',gap:10}}>
+                      <button onClick={()=>{const title=prompt('כותרת המשימה:');if(!title)return;const t={id:'t'+Date.now(),title,description:'',dueDate:'',priority:'בינוני',status:'פתוח',candidateId:detail.id,employerId:'',createdAt:new Date().toISOString()};setData(d=>({...d,tasks:[t,...(d.tasks||[])]}));alert('✅ משימה נוספה!');}}
+                        style={{flex:1,padding:'11px 0',background:'#eff6ff',border:'2px solid #bfdbfe',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer',color:'#1d4ed8'}}>+ משימה</button>
+                      <button onClick={()=>del(detail.id)}
+                        style={{padding:'11px 16px',background:'#fde8dc',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer',color:'#c94d1a'}}>🗑 מחק</button>
                     </div>
-                  </div>
 
-                  {/* אישור ממתין */}
-                  {pendingIds.has(detail.id)&&<div style={{background:'#f0fdf4',border:'1.5px solid #86efac',borderRadius:10,padding:'10px 14px',display:'flex',gap:8,alignItems:'center'}}>
-                    <span style={{flex:1,fontSize:12,color:'#15803d',fontWeight:600}}>ממתין לאישורך</span>
-                    <button onClick={()=>{approvePendingLocal(detail.id);setDetail(null);}} style={{padding:'6px 12px',background:'#16a34a',color:'white',border:'none',borderRadius:7,fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer'}}>✅ אשר</button>
-                    <button onClick={()=>rejectPendingLocal(detail.id)} style={{padding:'6px 10px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:7,fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer'}}>✕ דחה</button>
-                  </div>}
-
-                  {/* פעולות */}
-                  <div style={{display:'flex',gap:8}}>
-                    <button onClick={()=>{const title=prompt('כותרת המשימה:');if(!title)return;const t={id:'t'+Date.now(),title,description:'',dueDate:'',priority:'בינוני',status:'פתוח',candidateId:detail.id,employerId:'',createdAt:new Date().toISOString()};setData(d=>({...d,tasks:[t,...(d.tasks||[])]}));alert('✅ משימה נוספה!');}}
-                      style={{flex:1,padding:'8px 0',background:'#eff6ff',border:'1.5px solid #bfdbfe',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer',color:'#1d4ed8'}}>+ משימה</button>
-                    <button onClick={()=>del(detail.id)}
-                      style={{padding:'8px 14px',background:'#fde8dc',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer',color:'#c94d1a'}}>🗑 מחק</button>
-                  </div>
-
-                  <StatusHistoryBlock item={detail}/>
-                </>;
-              })()}
-            </div>}
-          </div>
-
-          {/* עמודה ימין — CV */}
-          <div style={{flex:'0 0 55%',display:'flex',flexDirection:'column',background:'#fff',overflow:'hidden'}}>
-            {/* CV toolbar */}
-            <div style={{padding:'10px 16px',borderBottom:'1px solid #e5e7eb',display:'flex',alignItems:'center',gap:10,flexShrink:0,background:'#f8f9fb'}}>
-              <div style={{fontWeight:700,fontSize:13,color:'#374151',flex:1}}>📄 קורות חיים</div>
-              {detail.cvUrl&&<>
-                <a href={detail.cvUrl} target="_blank" rel="noreferrer" style={{padding:'5px 12px',background:'#e85d26',color:'white',borderRadius:7,textDecoration:'none',fontWeight:700,fontSize:12}}>פתח</a>
-                <a href={detail.cvUrl} download style={{padding:'5px 10px',background:'#1a3a6b',color:'white',borderRadius:7,textDecoration:'none',fontWeight:700,fontSize:12}}>⬇️</a>
-              </>}
+                    <StatusHistoryBlock item={detail}/>
+                  </>;
+                })()}
+              </div>}
             </div>
-            {/* CV viewer */}
-            <div style={{flex:1,overflow:'auto'}}>
-              {detail.cvUrl
-                ? detail.cvUrl.toLowerCase().endsWith('.pdf')
-                  ? <iframe src={detail.cvUrl} style={{width:'100%',height:'100%',border:'none',minHeight:500}} title="קורות חיים"/>
-                  : <div style={{padding:20,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:16}}>
-                      <div style={{fontSize:48}}>📄</div>
-                      <div style={{fontWeight:700,fontSize:15,color:'#1a1a2e'}}>קורות חיים מצורפים</div>
-                      <div style={{display:'flex',gap:10}}>
-                        <a href={detail.cvUrl} target="_blank" rel="noreferrer" style={{padding:'10px 20px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14}}>📂 פתח קובץ</a>
-                        <a href={detail.cvUrl} download style={{padding:'10px 16px',background:'#1a1a2e',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14}}>⬇️ הורד</a>
+
+            {/* עמודה ימין — CV (sticky) */}
+            <div style={{flex:'0 0 55%',display:'flex',flexDirection:'column',background:'#fff',overflow:'hidden'}}>
+              <div style={{padding:'10px 16px',borderBottom:'1px solid #e5e7eb',display:'flex',alignItems:'center',gap:10,flexShrink:0,background:'#f8f9fb'}}>
+                <div style={{fontWeight:700,fontSize:14,color:'#111',flex:1}}>📄 קורות חיים</div>
+                {detail.cvUrl&&<>
+                  <a href={detail.cvUrl} target="_blank" rel="noreferrer" style={{padding:'6px 14px',background:'#e85d26',color:'white',borderRadius:7,textDecoration:'none',fontWeight:700,fontSize:13}}>פתח</a>
+                  <a href={detail.cvUrl} download style={{padding:'6px 10px',background:'#1a3a6b',color:'white',borderRadius:7,textDecoration:'none',fontWeight:700,fontSize:13}}>⬇️</a>
+                </>}
+              </div>
+              <div style={{flex:1,overflow:'auto'}}>
+                {detail.cvUrl
+                  ? detail.cvUrl.toLowerCase().endsWith('.pdf')
+                    ? <iframe src={detail.cvUrl} style={{width:'100%',height:'100%',border:'none',minHeight:'calc(100vh - 110px)'}} title="קורות חיים"/>
+                    : <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:16,padding:24}}>
+                        <div style={{fontSize:56}}>📄</div>
+                        <a href={detail.cvUrl} target="_blank" rel="noreferrer" style={{padding:'12px 24px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:16}}>📂 פתח קורות חיים</a>
                       </div>
-                    </div>
-                : <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:12,padding:24}}>
-                    <div style={{fontSize:48,opacity:.3}}>📄</div>
-                    <div style={{color:'#aaa',fontSize:14,fontWeight:600}}>לא צורף קובץ CV</div>
-                    <div style={{marginTop:8,width:'100%',maxWidth:320}}>
-                      <label style={{display:'block',fontSize:12,fontWeight:700,marginBottom:6,color:'#555'}}>העלה CV:</label>
+                  : <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:12,padding:24}}>
+                      <div style={{fontSize:56,opacity:.2}}>📄</div>
+                      <div style={{color:'#888',fontSize:15,fontWeight:600}}>לא צורף קובץ CV</div>
                       <input type="file" accept=".pdf,.doc,.docx" onChange={async(e)=>{
-                        const file=e.target.files[0]; if(!file) return;
+                        const file=e.target.files[0];if(!file)return;
                         const ext=file.name.split('.').pop();
                         const fname=`cv-${detail.id}.${ext}`;
                         const {error}=await sb.storage.from('job-images').upload(fname,file,{upsert:true,contentType:file.type});
@@ -2892,17 +2823,16 @@ function Candidates({data,setData}){
                           const {data:urlData}=sb.storage.from('job-images').getPublicUrl(fname);
                           setData(d=>({...d,candidates:d.candidates.map(c=>c.id===detail.id?{...c,cv:true,cvUrl:urlData.publicUrl}:c)}));
                           setDetail(prev=>({...prev,cv:true,cvUrl:urlData.publicUrl}));
+                          setDetailForm(prev=>({...prev,cv:true,cvUrl:urlData.publicUrl}));
                         }
-                      }} style={{width:'100%',padding:'8px',border:'1.5px dashed #d1d5db',borderRadius:8,fontSize:12,cursor:'pointer'}}/>
+                      }} style={{padding:'10px',border:'2px dashed #d1d5db',borderRadius:8,fontSize:14,cursor:'pointer'}}/>
                     </div>
-                  </div>
-              }
+                }
+              </div>
             </div>
-          </div>
 
-        </div>{/* end body */}
-      </div>
-    </div>}
+          </div>{/* end body */}
+        </div>}
 
     {(modal==='add'||modal==='edit')&&<Modal title={modal==='add'?'מועמד חדש':'עריכת מועמד'} onClose={()=>setModal(null)} wide={true}>
       <div style={{display:'grid',gridTemplateColumns:'1fr 55%',gap:14,alignItems:'start'}}>
