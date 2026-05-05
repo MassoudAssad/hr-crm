@@ -1269,7 +1269,7 @@ const EmployerDetail=React.memo(function EmployerDetail({data,setData,detail,det
 
             <EmpCard title="🏢 פרטי המעסיק" color="#fff5f0">
               <EF label="שם מעסיק" field="name"/>
-              <EF label="ענף" field="industry" type="searchselect" searchOpts={(data.statuses?.industries||['הייטק','בריאות','חינוך','פיננסים','תעשייה','מסחר','בינוי','שירותים','אחר'])}/>
+              <EF label="ענף" field="industry" type="searchselect" searchOpts={(data.industries||['הייטק','בריאות','חינוך','פיננסים','תעשייה','מסחר','בינוי','שירותים','אחר'])} placeholder="חפש ענף..."/>
               <EF label="עיר" field="city"/>
               <EF label="סטטוס" field="status" type="select" opts={data.statuses?.employers||['פעיל','לא פעיל','ממתין']}/>
             </EmpCard>
@@ -3393,63 +3393,109 @@ const PRIORITY_TEXT={'גבוה':'#c94d1a','בינוני':'#92400e','נמוך':'#
 const STATUS_COLORS={'פתוח':'#eff6ff','בתהליך':'#fff3cd','הושלם':'#f0fdf4'};
 const STATUS_TEXT={'פתוח':'#1d4ed8','בתהליך':'#92400e','הושלם':'#15803d'};
 
+function SearchSelect({value,onChange,options,placeholder,disabled,inputStyle}){
+  const [search,setSearch]=React.useState('');
+  const [open,setOpen]=React.useState(false);
+  const getVal=o=>typeof o==='object'&&o!==null?o.value:o;
+  const getLabel=o=>typeof o==='object'&&o!==null?o.label:o;
+  const found=(options||[]).find(o=>getVal(o)===value);
+  const displayVal=value?(found?getLabel(found):value):'';
+  const term=search.trim().toLowerCase();
+  const filtered=React.useMemo(()=>(options||[]).filter(o=>!term||String(getLabel(o)).toLowerCase().includes(term)),[options,term]);
+  const IS={...inputStyle,paddingLeft:32,textAlign:'right',direction:'rtl',cursor:disabled?'not-allowed':'pointer',opacity:disabled?0.45:1};
+  return <div style={{position:'relative'}}>
+    <input disabled={disabled} value={open?search:displayVal}
+      onChange={e=>setSearch(e.target.value)}
+      onFocus={()=>{setSearch('');setOpen(true);}}
+      onBlur={()=>setTimeout(()=>{setOpen(false);setSearch('');},200)}
+      placeholder={placeholder||'-- בחר --'} style={IS}/>
+    <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',pointerEvents:'none',color:'#64748b',fontSize:11}}>▼</span>
+    {open&&!disabled&&<div style={{position:'absolute',top:'100%',right:0,left:0,background:'white',border:'2px solid #94a3b8',borderRadius:10,zIndex:500,maxHeight:250,overflowY:'auto',boxShadow:'0 8px 24px rgba(0,0,0,0.13)',marginTop:3}}>
+      <div onMouseDown={()=>{onChange('');setSearch('');setOpen(false);}} style={{padding:'10px 14px',cursor:'pointer',fontSize:14,color:'#6b7280',borderBottom:'1px solid #f1f5f9'}} onMouseEnter={e=>e.currentTarget.style.background='#f8fafc'} onMouseLeave={e=>e.currentTarget.style.background='white'}>{placeholder||'-- הכל --'}</div>
+      {filtered.length===0&&<div style={{padding:'10px 14px',color:'#94a3b8',fontSize:13}}>לא נמצאו תוצאות</div>}
+      {filtered.map(o=><div key={getVal(o)} onMouseDown={()=>{onChange(getVal(o));setSearch('');setOpen(false);}}
+        style={{padding:'10px 14px',cursor:'pointer',fontSize:14,color:'#000',borderBottom:'1px solid #f1f5f9',background:value===getVal(o)?'#fff5f0':'white',fontWeight:value===getVal(o)?700:400}}
+        onMouseEnter={e=>e.currentTarget.style.background=value===getVal(o)?'#fff5f0':'#f8fafc'}
+        onMouseLeave={e=>e.currentTarget.style.background=value===getVal(o)?'#fff5f0':'white'}>{getLabel(o)}</div>)}
+    </div>}
+  </div>;
+}
+
 function TaskModal({task,data,onSave,onClose,initialStatus}){
   const [form,setForm]=React.useState(task||{title:'',description:'',dueDate:'',priority:'בינוני',status:initialStatus||'פתוח',candidateId:'',employerId:''});
   const set=k=>v=>setForm(f=>({...f,[k]:v}));
   const isValid=form.title.trim();
-  return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={onClose}>
-    <div style={{background:'white',borderRadius:16,width:'100%',maxWidth:520,boxShadow:'0 24px 80px rgba(0,0,0,0.25)',overflow:'hidden'}} onClick={e=>e.stopPropagation()}>
-      <div style={{background:'#1a1a2e',padding:'18px 24px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <div style={{color:'white',fontWeight:800,fontSize:18}}>{task?.id?'עריכת משימה':'משימה חדשה'}</div>
-        <button onClick={onClose} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'white',width:30,height:30,borderRadius:15,cursor:'pointer',fontSize:16}}>✕</button>
+  const IS={width:'100%',padding:'10px 14px',border:'2px solid #94a3b8',borderRadius:8,fontFamily:'Heebo',fontSize:14,outline:'none',boxSizing:'border-box',color:'#111'};
+  const onF=e=>{e.target.style.borderColor='#1a3a6b';e.target.style.boxShadow='0 0 0 3px rgba(26,58,107,0.1)';};
+  const onB=e=>{e.target.style.borderColor='#94a3b8';e.target.style.boxShadow='none';};
+  const Lbl=({t})=><label style={{display:'block',fontSize:12,fontWeight:700,marginBottom:5,color:'#6b7280',textTransform:'uppercase',letterSpacing:'0.4px'}}>{t}</label>;
+  const SS_IS={...IS,paddingLeft:32,paddingRight:14};
+  return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={onClose}>
+    <div style={{background:'white',borderRadius:16,width:'100%',maxWidth:900,minHeight:600,boxShadow:'0 24px 80px rgba(0,0,0,0.3)',overflow:'visible',display:'flex',flexDirection:'column'}} onClick={e=>e.stopPropagation()}>
+      {/* Header */}
+      <div style={{background:'#1a3a6b',padding:'16px 24px',borderRadius:'16px 16px 0 0',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+        <div style={{color:'white',fontWeight:800,fontSize:17}}>{task?.id?'✏️ עריכת משימה':'+ משימה חדשה'}</div>
+        <button onClick={onClose} style={{background:'rgba(255,255,255,0.15)',border:'none',color:'white',width:32,height:32,borderRadius:16,cursor:'pointer',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
       </div>
-      <div style={{padding:24}}>
-        <div style={{marginBottom:14}}>
-          <label style={{display:'block',fontSize:13,fontWeight:700,marginBottom:5,color:'#374151'}}>כותרת *</label>
-          <input value={form.title} onChange={e=>set('title')(e.target.value)} placeholder="תיאור קצר של המשימה..." style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:15,outline:'none'}} onFocus={e=>e.target.style.borderColor='#e85d26'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+      {/* Body */}
+      <div style={{padding:'24px',display:'flex',flexDirection:'column',gap:18,flex:1,overflowY:'auto'}}>
+
+        {/* Row 1: כותרת - full width */}
+        <div>
+          <Lbl t="כותרת *"/>
+          <input value={form.title} onChange={e=>set('title')(e.target.value)} onFocus={onF} onBlur={onB}
+            placeholder="תיאור קצר של המשימה..." style={IS}/>
         </div>
-        <div style={{marginBottom:14}}>
-          <label style={{display:'block',fontSize:13,fontWeight:700,marginBottom:5,color:'#374151'}}>תיאור</label>
-          <textarea value={form.description} onChange={e=>set('description')(e.target.value)} placeholder="פרטים נוספים..." style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:14,outline:'none',resize:'vertical',minHeight:80}} onFocus={e=>e.target.style.borderColor='#e85d26'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+
+        {/* Row 2: מעסיק + מועמד */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+          <div style={{position:'relative',zIndex:100}}>
+            <Lbl t="שייך למעסיק"/>
+            <SearchSelect value={form.employerId||''} onChange={v=>set('employerId')(v)}
+              options={[{value:'',label:'— ללא שיוך —'},...data.employers.map(e=>({value:e.id,label:e.name}))]}
+              placeholder="— ללא שיוך —" inputStyle={SS_IS}/>
+          </div>
+          <div style={{position:'relative',zIndex:100}}>
+            <Lbl t="שייך למועמד"/>
+            <SearchSelect value={form.candidateId||''} onChange={v=>set('candidateId')(v)}
+              options={[{value:'',label:'— ללא שיוך —'},...data.candidates.map(c=>({value:c.id,label:c.name}))]}
+              placeholder="— ללא שיוך —" inputStyle={SS_IS}/>
+          </div>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,marginBottom:14}}>
+
+        {/* Row 3: תאריך + עדיפות + סטטוס */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}}>
           <div>
-            <label style={{display:'block',fontSize:13,fontWeight:700,marginBottom:5,color:'#374151'}}>תאריך יעד</label>
-            <input type="date" value={form.dueDate} onChange={e=>set('dueDate')(e.target.value)} style={{width:'100%',padding:'9px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,outline:'none'}}/>
+            <Lbl t="תאריך יעד"/>
+            <input type="date" value={form.dueDate||''} onChange={e=>set('dueDate')(e.target.value)} onFocus={onF} onBlur={onB} style={IS}/>
           </div>
           <div>
-            <label style={{display:'block',fontSize:13,fontWeight:700,marginBottom:5,color:'#374151'}}>עדיפות</label>
-            <select value={form.priority} onChange={e=>set('priority')(e.target.value)} style={{width:'100%',padding:'9px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,outline:'none'}}>
+            <Lbl t="עדיפות"/>
+            <select value={form.priority} onChange={e=>set('priority')(e.target.value)} onFocus={onF} onBlur={onB} style={{...IS,cursor:'pointer'}}>
               {['גבוה','בינוני','נמוך'].map(p=><option key={p}>{p}</option>)}
             </select>
           </div>
           <div>
-            <label style={{display:'block',fontSize:13,fontWeight:700,marginBottom:5,color:'#374151'}}>סטטוס</label>
-            <select value={form.status} onChange={e=>set('status')(e.target.value)} style={{width:'100%',padding:'9px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,outline:'none'}}>
+            <Lbl t="סטטוס"/>
+            <select value={form.status} onChange={e=>set('status')(e.target.value)} onFocus={onF} onBlur={onB} style={{...IS,cursor:'pointer'}}>
               {['פתוח','בתהליך','הושלם'].map(s=><option key={s}>{s}</option>)}
             </select>
           </div>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:20}}>
-          <div>
-            <label style={{display:'block',fontSize:13,fontWeight:700,marginBottom:5,color:'#374151'}}>שייך למועמד</label>
-            <select value={form.candidateId||''} onChange={e=>set('candidateId')(e.target.value)} style={{width:'100%',padding:'9px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,outline:'none'}}>
-              <option value="">— ללא שיוך —</option>
-              {data.candidates.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{display:'block',fontSize:13,fontWeight:700,marginBottom:5,color:'#374151'}}>שייך למעסיק</label>
-            <select value={form.employerId||''} onChange={e=>set('employerId')(e.target.value)} style={{width:'100%',padding:'9px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontSize:13,outline:'none'}}>
-              <option value="">— ללא שיוך —</option>
-              {data.employers.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
-            </select>
-          </div>
+
+        {/* Row 4: תיאור - full width */}
+        <div>
+          <Lbl t="תיאור"/>
+          <textarea value={form.description||''} onChange={e=>set('description')(e.target.value)} onFocus={onF} onBlur={onB}
+            placeholder="פרטים נוספים, הנחיות, קישורים..."
+            style={{...IS,minHeight:120,resize:'vertical'}}/>
         </div>
-        <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
-          <button onClick={onClose} style={{padding:'10px 20px',background:'#f3f4f6',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:600,fontSize:14,cursor:'pointer'}}>ביטול</button>
-          <button onClick={()=>isValid&&onSave(form)} disabled={!isValid} style={{padding:'10px 24px',background:isValid?'#e85d26':'#d1d5db',color:'white',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:isValid?'pointer':'not-allowed'}}>שמירה</button>
-        </div>
+      </div>
+      {/* Footer */}
+      <div style={{padding:'16px 24px',borderTop:'1px solid #f3f4f6',display:'flex',gap:10,justifyContent:'flex-end',flexShrink:0}}>
+        <button onClick={onClose} style={{padding:'10px 22px',background:'white',border:'2px solid #e5e7eb',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer',color:'#374151'}}>ביטול</button>
+        <button onClick={()=>isValid&&onSave(form)} disabled={!isValid}
+          style={{padding:'10px 28px',background:isValid?'#e85d26':'#d1d5db',color:'white',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:800,fontSize:14,cursor:isValid?'pointer':'not-allowed'}}>שמירה</button>
       </div>
     </div>
   </div>;
@@ -3509,410 +3555,142 @@ function KanbanBoard({tasks,data,onEdit,onDel,onStatusChange,onAddInCol}){
 }
 
 function Tasks({data,setData}){
-  const [modal,setModal]=React.useState(null); // null | {task?}
+  const [modal,setModal]=React.useState(null);
   const [filter,setFilter]=React.useState('הכל');
   const [priorityFilter,setPriorityFilter]=React.useState('הכל');
+  const [viewMode,setViewMode]=React.useState('kanban');
+  const [dragId,setDragId]=React.useState(null);
   const tasks=data.tasks||[];
 
-  const [viewMode,setViewMode]=React.useState('kanban');
   const saveTask=form=>{
     const isNew=!form.id;
     const t=isNew?{...form,id:'t'+Date.now(),createdAt:new Date().toISOString()}:{...form};
     setData(d=>({...d,tasks:isNew?[t,...(d.tasks||[])]:(d.tasks||[]).map(x=>x.id===t.id?t:x)}));
     setModal(null);
   };
-  const delTask=id=>{if(confirm('למחוק משימה?'))setData(d=>({...d,tasks:(d.tasks||[]).filter(t=>t.id!==id)}));};
-  const changeStatus=(t,s)=>setData(d=>({...d,tasks:(d.tasks||[]).map(x=>x.id===t.id?{...x,status:s}:x)}));
-  const toggleStatus=t=>{const next=t.status==='פתוח'?'בתהליך':t.status==='בתהליך'?'הושלם':'פתוח';changeStatus(t,next);};
+  const delTask=id=>setData(d=>({...d,tasks:(d.tasks||[]).filter(t=>t.id!==id)}));
+  const moveTask=(id,newStatus)=>setData(d=>({...d,tasks:(d.tasks||[]).map(t=>t.id===id?{...t,status:newStatus}:t)}));
 
-  const filtered=tasks.filter(t=>(filter==='הכל'||t.status===filter)&&(priorityFilter==='הכל'||t.priority===priorityFilter));
-  const openCount=tasks.filter(t=>t.status==='פתוח').length;
-  const inProgCount=tasks.filter(t=>t.status==='בתהליך').length;
-  const doneCount=tasks.filter(t=>t.status==='הושלם').length;
+  const COLS=[
+    {key:'פתוח',label:'פתוח',color:'#3b82f6',bg:'#eff6ff',icon:'\u{1F4CB}'},
+    {key:'בתהליך',label:'בתהליך',color:'#f59e0b',bg:'#fffbeb',icon:'⏳'},
+    {key:'הושלם',label:'הושלם',color:'#10b981',bg:'#f0fdf4',icon:'✅'},
+  ];
+  const PRIO_COLOR={'גבוה':'#ef4444','בינוני':'#f59e0b','נמוך':'#3b82f6'};
+  const PRIO_BG={'גבוה':'#fef2f2','בינוני':'#fffbeb','נמוך':'#eff6ff'};
 
-  const fmtDue=d=>{
-    if(!d)return null;
-    const date=new Date(d);
-    const today=new Date(); today.setHours(0,0,0,0);
-    const diff=Math.ceil((date-today)/(1000*60*60*24));
-    if(diff<0) return {text:`${Math.abs(diff)} ימים באיחור`,color:'#dc2626'};
-    if(diff===0) return {text:'היום',color:'#e85d26'};
-    if(diff===1) return {text:'מחר',color:'#f59e0b'};
-    return {text:date.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'}),color:'#6b7280'};
+  const filtered=tasks.filter(t=>{
+    if(filter!=='הכל'&&t.status!==filter)return false;
+    if(priorityFilter!=='הכל'&&t.priority!==priorityFilter)return false;
+    return true;
+  });
+
+  const TaskCard=({t})=>{
+    const emp=data.employers.find(e=>e.id===t.employerId);
+    const cand=data.candidates.find(c=>c.id===t.candidateId);
+    const pc=PRIO_COLOR[t.priority]||'#94a3b8';
+    const due=t.dueDate?new Date(t.dueDate):null;
+    const overdue=due&&due<new Date()&&t.status!=='הושלם';
+    return <div draggable onDragStart={()=>setDragId(t.id)} onDragEnd={()=>setDragId(null)}
+      style={{background:'white',borderRadius:10,border:'1px solid #e5e7eb',boxShadow:'0 2px 6px rgba(0,0,0,0.07)',
+        marginBottom:8,overflow:'hidden',opacity:dragId===t.id?0.5:1,cursor:'grab',position:'relative'}}>
+      {/* Priority bar */}
+      <div style={{position:'absolute',top:0,bottom:0,right:0,width:4,background:pc,borderRadius:'0 10px 10px 0'}}/>
+      <div style={{padding:'10px 14px 10px 10px'}}>
+        <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:700,fontSize:14,color:'#111',lineHeight:1.3}}>{t.title}</div>
+            {t.description&&<div style={{fontSize:12,color:'#6b7280',marginTop:3,lineHeight:1.4}}>{t.description}</div>}
+          </div>
+          <div style={{display:'flex',gap:4,flexShrink:0}}>
+            <button onClick={()=>setModal(t)} style={{background:'none',border:'none',cursor:'pointer',padding:3,color:'#94a3b8',fontSize:13}}>✏️</button>
+            <button onClick={()=>{if(confirm('למחוק?'))delTask(t.id);}} style={{background:'none',border:'none',cursor:'pointer',padding:3,color:'#fca5a5',fontSize:13}}>🗑</button>
+          </div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+          <span style={{fontSize:11,background:PRIO_BG[t.priority]||'#f3f4f6',color:pc,borderRadius:6,padding:'1px 7px',fontWeight:700}}>{t.priority||'רגיל'}</span>
+          {emp&&<span style={{fontSize:11,background:'#f0f9ff',color:'#0369a1',borderRadius:6,padding:'1px 7px'}}>🏢 {emp.name}</span>}
+          {cand&&<span style={{fontSize:11,background:'#fdf4ff',color:'#7c3aed',borderRadius:6,padding:'1px 7px'}}>👤 {cand.name}</span>}
+          {due&&<span style={{fontSize:11,background:overdue?'#fef2f2':'#f1f5f9',color:overdue?'#ef4444':'#64748b',borderRadius:6,padding:'1px 7px'}}>📅 {t.dueDate}</span>}
+        </div>
+      </div>
+    </div>;
   };
 
-  return <div style={{padding:28}} className="mobile-pad">
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:10}}>
+;
+
+  return <div style={{padding:'24px 32px',background:'#f3f4f6',minHeight:'calc(100vh - 60px)'}}>
+    {/* Header */}
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20,flexWrap:'wrap',gap:10}}>
       <div>
-        <h1 style={{fontSize:28,fontWeight:900,color:'#1a1a2e',marginBottom:4}}>✅ משימות</h1>
-        <div style={{fontSize:13,color:'#6b7280'}}>{openCount} פתוחות · {inProgCount} בתהליך · {doneCount} הושלמו</div>
+        <h1 style={{fontSize:26,fontWeight:900,color:'#111827',marginBottom:4}}>✅ משימות</h1>
+        <div style={{fontSize:13,color:'#6b7280'}}>{tasks.filter(t=>t.status==='פתוח').length} פתוח · {tasks.filter(t=>t.status==='בתהליך').length} בתהליך · {tasks.filter(t=>t.status==='הושלם').length} הושלם</div>
       </div>
-      <div style={{display:'flex',gap:8,alignItems:'center'}}>
-        <div style={{display:'flex',border:'2px solid #333',borderRadius:8,overflow:'hidden'}}>
-          <button onClick={()=>setViewMode('kanban')} style={{padding:'7px 14px',background:viewMode==='kanban'?'#1a1a2e':'white',color:viewMode==='kanban'?'white':'#333',border:'none',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>🗂 Kanban</button>
-          <button onClick={()=>setViewMode('list')} style={{padding:'7px 14px',background:viewMode==='list'?'#1a1a2e':'white',color:viewMode==='list'?'white':'#333',border:'none',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>☰ רשימה</button>
+      <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+        <button onClick={()=>setModal({initialStatus:'פתוח'})} style={{padding:'9px 20px',background:'#e85d26',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer',boxShadow:'0 4px 12px rgba(232,93,38,0.3)'}}>+ משימה חדשה</button>
+        <div style={{display:'flex',background:'white',border:'1px solid #e5e7eb',borderRadius:8,overflow:'hidden'}}>
+          <button onClick={()=>setViewMode('kanban')} style={{padding:'7px 14px',background:viewMode==='kanban'?'#1a3a6b':'white',color:viewMode==='kanban'?'white':'#374151',border:'none',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>Kanban</button>
+          <button onClick={()=>setViewMode('list')} style={{padding:'7px 14px',background:viewMode==='list'?'#1a3a6b':'white',color:viewMode==='list'?'white':'#374151',border:'none',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer'}}>☰ רשימה</button>
         </div>
-        <button onClick={()=>setModal({initialStatus:'פתוח'})} style={{padding:'10px 20px',background:'#e85d26',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:15,cursor:'pointer',boxShadow:'0 4px 12px rgba(232,93,38,0.3)'}}>+ משימה חדשה</button>
       </div>
     </div>
 
-    {viewMode==='list'&&<div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>
-      {['הכל','פתוח','בתהליך','הושלם'].map(s=><button key={s} onClick={()=>setFilter(s)} style={{padding:'6px 14px',border:'2px solid',borderColor:filter===s?'#e85d26':'#e5e7eb',borderRadius:20,background:filter===s?'#e85d26':'white',color:filter===s?'white':'#374151',fontFamily:'Heebo',fontWeight:600,fontSize:13,cursor:'pointer'}}>{s}</button>)}
+    {/* Filters */}
+    <div style={{display:'flex',gap:6,marginBottom:20,flexWrap:'wrap'}}>
+      {['הכל','פתוח','בתהליך','הושלם'].map(s=><button key={s} onClick={()=>setFilter(s)} style={{padding:'5px 14px',border:'2px solid',borderColor:filter===s?'#1a3a6b':'#e5e7eb',borderRadius:20,background:filter===s?'#1a3a6b':'white',color:filter===s?'white':'#374151',fontFamily:'Heebo',fontWeight:600,fontSize:13,cursor:'pointer'}}>{s}</button>)}
       <div style={{width:1,background:'#e5e7eb',margin:'0 4px'}}/>
-      {['הכל','גבוה','בינוני','נמוך'].map(p=><button key={p} onClick={()=>setPriorityFilter(p)} style={{padding:'6px 14px',border:'2px solid',borderColor:priorityFilter===p?'#1a1a2e':'#e5e7eb',borderRadius:20,background:priorityFilter===p?'#1a1a2e':'white',color:priorityFilter===p?'white':'#374151',fontFamily:'Heebo',fontWeight:600,fontSize:13,cursor:'pointer'}}>{p==='הכל'?'כל עדיפות':p}</button>)}
-    </div>}
+      {['הכל','גבוה','בינוני','נמוך'].map(p=><button key={p} onClick={()=>setPriorityFilter(p)} style={{padding:'5px 14px',border:'2px solid',borderColor:priorityFilter===p?PRIO_COLOR[p]||'#1a3a6b':'#e5e7eb',borderRadius:20,background:priorityFilter===p?(PRIO_BG[p]||'#f3f4f6'):'white',color:priorityFilter===p?(PRIO_COLOR[p]||'#1a3a6b'):'#374151',fontFamily:'Heebo',fontWeight:600,fontSize:13,cursor:'pointer'}}>{p==='הכל'?'כל עדיפות':p}</button>)}
+    </div>
 
-    {viewMode==='kanban'&&(tasks.length===0
-      ?<div style={{textAlign:'center',padding:'60px 0',color:'#9ca3af'}}><div style={{fontSize:48,marginBottom:12}}>📋</div><div style={{fontSize:18,fontWeight:700}}>אין משימות</div><div style={{fontSize:14,marginTop:4}}>לחץ "+ משימה חדשה" להתחיל</div></div>
-      :<KanbanBoard tasks={tasks} data={data} onEdit={t=>setModal({task:t})} onDel={delTask} onStatusChange={changeStatus} onAddInCol={s=>setModal({initialStatus:s})}/>
-    )}
-    {viewMode==='list'&&(<div style={{display:'flex',flexDirection:'column',gap:10}}>
-      {filtered.map(t=>{
-        const due=fmtDue(t.dueDate);
-        const cand=t.candidateId?data.candidates.find(c=>c.id===t.candidateId):null;
-        const emp=t.employerId?data.employers.find(e=>e.id===t.employerId):null;
-        const done=t.status==='הושלם';
-        return <div key={t.id} style={{background:'white',borderRadius:14,padding:'16px 20px',boxShadow:'0 2px 12px rgba(0,0,0,0.06)',border:`1.5px solid ${done?'#e5e7eb':'#f3f4f6'}`,opacity:done?0.75:1,display:'flex',gap:14,alignItems:'flex-start'}}>
-          {/* Checkbox */}
-          <button onClick={()=>toggleStatus(t)} style={{width:24,height:24,borderRadius:12,border:`2px solid ${done?'#16a34a':t.status==='בתהליך'?'#f59e0b':'#d1d5db'}`,background:done?'#16a34a':t.status==='בתהליך'?'#fffbeb':'white',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:2,color:'white',fontSize:13,transition:'all .2s'}}>
-            {done?'✓':t.status==='בתהליך'?'…':''}
-          </button>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:10,marginBottom:6}}>
-              <div style={{fontWeight:700,fontSize:15,color:done?'#9ca3af':'#1a1a2e',textDecoration:done?'line-through':'none',flex:1}}>{t.title}</div>
-              <div style={{display:'flex',gap:6,flexShrink:0,alignItems:'center'}}>
-                <span style={{fontSize:11,fontWeight:700,padding:'3px 8px',borderRadius:20,background:PRIORITY_COLORS[t.priority]||'#f3f4f6',color:PRIORITY_TEXT[t.priority]||'#6b7280'}}>{t.priority}</span>
-                <span style={{fontSize:11,fontWeight:700,padding:'3px 8px',borderRadius:20,background:STATUS_COLORS[t.status]||'#f3f4f6',color:STATUS_TEXT[t.status]||'#6b7280'}}>{t.status}</span>
-              </div>
-            </div>
-            {t.description&&<div style={{fontSize:13,color:'#6b7280',marginBottom:8,lineHeight:1.6}}>{t.description}</div>}
-            <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
-              {due&&<span style={{fontSize:12,fontWeight:600,color:due.color}}>📅 {due.text}</span>}
-              {cand&&<span style={{fontSize:12,background:'#fff5f0',border:'1px solid #fcd5c0',borderRadius:6,padding:'2px 8px',color:'#c94d1a',fontWeight:600}}>👤 {cand.name}</span>}
-              {emp&&<span style={{fontSize:12,background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:6,padding:'2px 8px',color:'#1d4ed8',fontWeight:600}}>🏢 {emp.name}</span>}
-            </div>
+    {/* Kanban */}
+    {viewMode==='kanban'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,alignItems:'start'}}>
+      {COLS.map(col=>{
+        const colTasks=filtered.filter(t=>t.status===col.key);
+        return <div key={col.key}
+          onDragOver={e=>{e.preventDefault();e.currentTarget.style.background=col.bg;}}
+          onDragLeave={e=>e.currentTarget.style.background='#f8fafc'}
+          onDrop={e=>{e.currentTarget.style.background='#f8fafc';if(dragId)moveTask(dragId,col.key);}}
+          style={{background:'#f8fafc',borderRadius:14,border:'2px solid #e5e7eb',padding:'12px',minHeight:200,transition:'background .2s'}}>
+          {/* Column header */}
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14,padding:'6px 4px'}}>
+            <span style={{fontSize:18}}>{col.icon}</span>
+            <span style={{fontWeight:800,fontSize:15,color:'#111827',flex:1}}>{col.label}</span>
+            <span style={{background:col.color,color:'white',borderRadius:12,padding:'1px 9px',fontSize:12,fontWeight:800}}>{colTasks.length}</span>
           </div>
-          <div style={{display:'flex',gap:6,flexShrink:0}}>
-            <button onClick={()=>setModal({task:t})} style={{padding:'6px 10px',background:'#f3f4f6',border:'none',borderRadius:6,cursor:'pointer',fontSize:13}}>✏️</button>
-            <button onClick={()=>delTask(t.id)} style={{padding:'6px 10px',background:'#fde8dc',border:'none',borderRadius:6,cursor:'pointer',fontSize:13}}>🗑</button>
-          </div>
-        </div>
+          {/* Tasks */}
+          {colTasks.map(t=><TaskCard key={t.id} t={t}/>)}
+          {/* Add button */}
+          <button onClick={()=>setModal({initialStatus:col.key})} style={{width:'100%',padding:'7px 0',background:'transparent',border:'2px dashed #d1d5db',borderRadius:8,fontFamily:'Heebo',fontWeight:600,fontSize:13,color:'#9ca3af',cursor:'pointer',marginTop:4,transition:'all .15s'}} onMouseEnter={e=>{e.target.style.borderColor=col.color;e.target.style.color=col.color;}} onMouseLeave={e=>{e.target.style.borderColor='#d1d5db';e.target.style.color='#9ca3af';}}>+ הוסף</button>
+        </div>;
       })}
-    </div>)}
-  {modal!==null&&<TaskModal task={modal.task} initialStatus={modal.initialStatus} data={data} onSave={saveTask} onClose={()=>setModal(null)}/>}
-  </div>
-}
-
-
-// ── CANDIDATE HUNTER ──────────────────────────────────────────────────────────
-
-function SearchSelect({value,onChange,options,placeholder,disabled,inputStyle}){
-  const [search,setSearch]=React.useState('');
-  const [open,setOpen]=React.useState(false);
-  const filtered=options.filter(o=>(o.label||o).includes(search));
-  const IS={...inputStyle,paddingLeft:32,textAlign:'right',direction:'rtl',cursor:disabled?'not-allowed':'pointer',opacity:disabled?0.45:1};
-  const displayVal=value?(options.find(o=>(o.value||o)===value)?.(o=>o.label||o)||value):'';
-  // handle object options {value,label} or plain strings
-  const getVal=o=>typeof o==='object'?o.value:o;
-  const getLabel=o=>typeof o==='object'?o.label:o;
-  return <div style={{position:'relative'}}>
-    <input value={displayVal||search} disabled={disabled}
-      onFocus={()=>{setOpen(true);if(value)setSearch('');}}
-      onChange={e=>{setSearch(e.target.value);onChange('');setOpen(true);}}
-      onBlur={()=>setTimeout(()=>{setOpen(false);if(!value)setSearch('');},160)}
-      placeholder={placeholder||'-- בחר --'} style={IS}/>
-    <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',pointerEvents:'none',color:'#64748b',fontSize:11}}>▼</span>
-    {open&&!disabled&&<div style={{position:'absolute',top:'100%',right:0,left:0,background:'white',border:'2px solid #94a3b8',borderRadius:10,zIndex:500,maxHeight:240,overflowY:'auto',boxShadow:'0 8px 24px rgba(0,0,0,0.13)',marginTop:3}}>
-      <div onMouseDown={()=>{onChange('');setSearch('');setOpen(false);}} style={{padding:'10px 14px',cursor:'pointer',fontSize:14,color:'#6b7280',borderBottom:'1px solid #f1f5f9'}} onMouseEnter={e=>e.currentTarget.style.background='#f8fafc'} onMouseLeave={e=>e.currentTarget.style.background='white'}>{placeholder||'-- הכל --'}</div>
-      {filtered.length===0&&<div style={{padding:'10px 14px',color:'#94a3b8',fontSize:13}}>לא נמצאו תוצאות</div>}
-      {filtered.map(o=><div key={getVal(o)} onMouseDown={()=>{onChange(getVal(o));setSearch('');setOpen(false);}}
-        style={{padding:'10px 14px',cursor:'pointer',fontSize:14,color:'#000',borderBottom:'1px solid #f1f5f9',background:value===getVal(o)?'#fff5f0':'white',fontWeight:value===getVal(o)?700:400}}
-        onMouseEnter={e=>e.currentTarget.style.background=value===getVal(o)?'#fff5f0':'#f8fafc'}
-        onMouseLeave={e=>e.currentTarget.style.background=value===getVal(o)?'#fff5f0':'white'}>{getLabel(o)}</div>)}
     </div>}
-  </div>;
-}
 
-function CandidateHunter({data}){
-  const [domain,setDomain]=React.useState('');
-  const [role,setRole]=React.useState('');
-  const [city,setCity]=React.useState('');
-  const [freeText,setFreeText]=React.useState('');
-  const [includeHired,setIncludeHired]=React.useState(true);
-  const [selJob,setSelJob]=React.useState('');
-  const [results,setResults]=React.useState(null);
-  const [searched,setSearched]=React.useState(false);
-
-  const allCities=[...new Set(data.candidates.map(c=>c.city).filter(Boolean))].sort();
-  const allDomains=[...new Set([
-    ...(data.jobDomains||[]).map(d=>d.name),
-    ...data.candidates.map(c=>c.domain).filter(Boolean)
-  ])].sort();
-  const allRoles=[...new Set([
-    ...(data.jobDomains||[]).flatMap(d=>d.roles||[]),
-    ...data.candidates.map(c=>c.role).filter(Boolean)
-  ])].filter(r=>!domain||(data.jobDomains||[]).find(d=>d.name===domain)?.roles.includes(r)||data.candidates.some(c=>c.domain===domain&&c.role===r)).sort();
-
-  // Load from job
-  const loadFromJob=()=>{
-    const job=data.jobs.find(j=>j.id===selJob);
-    if(!job) return;
-    setDomain(job.domain||'');
-    setRole(job.role||'');
-    setCity('');
-    setFreeText('');
-  };
-
-  // Scoring
-  const score=(c,ft)=>{
-    let s=0;
-    const cDomain=(c.domain||'').trim().toLowerCase();
-    const cRole=(c.role||'').trim().toLowerCase();
-    const cCity=(c.city||'').trim().toLowerCase();
-    const sDomain=domain.trim().toLowerCase();
-    const sRole=role.trim().toLowerCase();
-    const sCity=city.trim().toLowerCase();
-
-    if(sDomain){
-      if(cDomain===sDomain) s+=35;
-      else if(cDomain.includes(sDomain)||sDomain.includes(cDomain)) s+=15;
-    } else {
-      s+=35; // no domain filter = full points
-    }
-    if(sRole){
-      if(cRole===sRole) s+=25;
-      else if(cRole.includes(sRole)||sRole.includes(cRole)) s+=12;
-    } else {
-      s+=25; // no role filter = full points
-    }
-    if(sCity){
-      if(cCity===sCity||cCity.includes(sCity)||sCity.includes(cCity)) s+=20;
-    } else {
-      s+=20; // no city filter = full points
-    }
-    if(ft){
-      const hay=[c.name,c.role,c.domain,c.city,c.experience,c.education,c.notes].join(' ').toLowerCase();
-      if(hay.includes(ft.toLowerCase())) s+=15;
-    }
-    return s;
-  };
-
-  const hunt=()=>{
-    const ft=freeText.trim();
-    if(!domain&&!role&&!city&&!ft){alert('יש להזין לפחות קריטריון אחד');return;}
-    const sDomain=domain.trim().toLowerCase();
-    const sRole=role.trim().toLowerCase();
-    const sCity=city.trim().toLowerCase();
-    const candidates=data.candidates.filter(c=>{
-      if(!includeHired && c.status==='השמה מוצלחת') return false;
-      // hard filters — if selected must match
-      if(sDomain){
-        const cd=(c.domain||'').trim().toLowerCase();
-        if(!cd.includes(sDomain)&&!sDomain.includes(cd)) return false;
-      }
-      if(sRole){
-        const cr=(c.role||'').trim().toLowerCase();
-        if(!cr.includes(sRole)&&!sRole.includes(cr)) return false;
-      }
-      if(sCity){
-        const cc=(c.city||'').trim().toLowerCase();
-        if(!cc.includes(sCity)&&!sCity.includes(cc)) return false;
-      }
-      if(ft){
-        const hay=[c.name,c.role,c.domain,c.city,c.experience,c.education,c.notes].join(' ').toLowerCase();
-        if(!hay.includes(ft.toLowerCase())) return false;
-      }
-      return true;
-    });
-    const scored=candidates
-      .map(c=>({...c,_score:score(c,ft)}))
-      .sort((a,b)=>b._score-a._score);
-    setResults(scored);
-    setSearched(true);
-  };
-
-  const reset=()=>{setDomain('');setRole('');setCity('');setFreeText('');setRoleSearch('');setRoleOpen(false);setSelJob('');setResults(null);setSearched(false);};
-
-  const tier=(s)=>s>=70?'high':s>=40?'mid':'low';
-  const tierLabel={high:{label:'התאמה גבוהה',color:'#16a34a',bg:'#f0fdf4',border:'#86efac'},mid:{label:'התאמה חלקית',color:'#d97706',bg:'#fffbeb',border:'#fcd34d'},low:{label:'התאמה חלשה',color:'#6b7280',bg:'#f9fafb',border:'#e5e7eb'}};
-
-  const high=results?results.filter(c=>tier(c._score)==='high'):[];
-  const mid=results?results.filter(c=>tier(c._score)==='mid'):[];
-
-  const [msgTarget,setMsgTarget]=React.useState(null);
-  const [roleSearch,setRoleSearch]=React.useState('');
-  const [roleOpen,setRoleOpen]=React.useState(false);
-
-  const filteredRoles=allRoles.filter(r=>!roleSearch||r.includes(roleSearch));
-
-  const inputStyle={width:'100%',padding:'10px 14px',borderRadius:9,border:'2px solid #94a3b8',background:'white',color:'#111827',fontFamily:'Heebo',fontSize:15,outline:'none',transition:'border-color .15s'};
-  const labelStyle={fontSize:15,color:'#000000',fontWeight:800,marginBottom:7,display:'block'};
-
-  return <div style={{padding:28,background:'#f1f5f9',minHeight:'calc(100vh - 60px)'}} className="mobile-pad">
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-      <h1 style={{fontSize:28,fontWeight:800,color:'#111827'}}>🎯 צייד מועמדים</h1>
-      {searched&&<Btn onClick={reset}>🔄 חיפוש חדש</Btn>}
-    </div>
-
-    {/* Search panel */}
-    <div style={{background:'white',borderRadius:16,padding:'24px 28px',marginBottom:24,border:'1px solid #e2e8f0',boxShadow:'0 8px 24px rgba(0,0,0,0.10)'}}>
-      <div style={{fontWeight:900,fontSize:16,marginBottom:20,display:'flex',alignItems:'center',gap:8,color:'#000000'}}>
-        <span>🔍</span> הגדר דרישות לצייד
-      </div>
-
-      {/* Grid 3 columns */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:18,marginBottom:18}}>
-
-        {/* Domain */}
-        <div>
-          <label style={labelStyle}>תחום מקצועי</label>
-          <SearchSelect value={domain} onChange={v=>{setDomain(v);setRole('');}} options={allDomains} placeholder="-- כל התחומים --" inputStyle={inputStyle}/>
-        </div>
-
-        {/* Role */}
-        <div>
-          <label style={labelStyle}>תפקיד</label>
-          <SearchSelect value={role} onChange={setRole} options={allRoles} placeholder={domain?'-- כל התפקידים --':'בחר תחום תחילה'} disabled={!domain} inputStyle={inputStyle}/>
-        </div>
-
-        {/* City */}
-        <div>
-          <label style={labelStyle}>אזור / עיר</label>
-          <SearchSelect value={city} onChange={setCity} options={allCities} placeholder="-- כל האזורים --" inputStyle={inputStyle}/>
-        </div>
-      </div>
-
-      {/* Row 2: Load from job + free text */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18,marginBottom:18}}>
-
-        {/* Load from job */}
-        <div>
-          <label style={labelStyle}>טען ממשרה קיימת</label>
-          <div style={{display:'flex',gap:8}}>
-            <div style={{flex:1}}>
-              <SearchSelect value={selJob} onChange={setSelJob}
-                options={data.jobs.map(j=>({value:j.id,label:`${j.jobNumber} — ${j.title}`}))}
-                placeholder="-- בחר משרה --" inputStyle={inputStyle}/>
-            </div>
-            <button onClick={loadFromJob} disabled={!selJob}
-              style={{padding:'10px 18px',background:selJob?'#1a3a6b':'#e2e8f0',color:selJob?'white':'#94a3b8',border:'none',borderRadius:9,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:selJob?'pointer':'not-allowed',flexShrink:0}}>
-              טען
-            </button>
+    {/* List view */}
+    {viewMode==='list'&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
+      {filtered.length===0&&<div style={{textAlign:'center',padding:'40px 0',color:'#9ca3af',fontSize:15}}>אין משימות</div>}
+      {filtered.map(t=>{
+        const emp=data.employers.find(e=>e.id===t.employerId);
+        const cand=data.candidates.find(c=>c.id===t.candidateId);
+        const pc=PRIO_COLOR[t.priority]||'#94a3b8';
+        const col=COLS.find(c=>c.key===t.status)||COLS[0];
+        return <div key={t.id} style={{background:'white',borderRadius:10,border:'1px solid #e5e7eb',boxShadow:'0 2px 6px rgba(0,0,0,0.05)',padding:'12px 16px',display:'flex',alignItems:'center',gap:12,borderRight:`4px solid ${pc}`}}>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:700,fontSize:14,color:'#111'}}>{t.title}</div>
+            <div style={{fontSize:12,color:'#6b7280',marginTop:2}}>{t.description}</div>
           </div>
-        </div>
-
-        {/* Free text */}
-        <div>
-          <label style={labelStyle}>🔎 חיפוש חופשי</label>
-          <input value={freeText} onChange={e=>setFreeText(e.target.value)}
-            placeholder="שם, השכלה, הערות..."
-            onKeyDown={e=>e.key==='Enter'&&hunt()}
-            style={inputStyle}/>
-        </div>
-      </div>
-      {/* Bottom row: toggle + hunt */}
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-        <div style={{display:'flex',alignItems:'center',gap:10}}>
-          <button onClick={()=>setIncludeHired(v=>!v)}
-            style={{width:40,height:22,borderRadius:11,background:includeHired?'#e85d26':'#cbd5e1',border:'none',cursor:'pointer',position:'relative',transition:'background .2s',flexShrink:0}}>
-            <div style={{position:'absolute',top:3,right:includeHired?3:19,width:16,height:16,borderRadius:8,background:'white',transition:'right .2s'}}/>
-          </button>
-          <span style={{fontSize:15,color:'#000000',fontWeight:700}}>כולל מועמדים שהושמו בעבר 🏅</span>
-        </div>
-        <button onClick={hunt}
-          style={{padding:'11px 36px',background:'#e85d26',color:'white',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:800,fontSize:16,cursor:'pointer',boxShadow:'0 4px 16px rgba(232,93,38,0.4)'}}>
-          🎯 צייד!
-        </button>
-      </div>
-    </div>
-
-    {/* Results */}
-    {searched&&results!==null&&(
-      <div>
-        {results.length===0
-          ? <div className="sbox" style={{textAlign:'center',padding:40,color:MUT}}>
-              <div style={{fontSize:48,marginBottom:12}}>🔍</div>
-              <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>לא נמצאו מועמדים מתאימים</div>
-              <div style={{fontSize:13}}>נסה להרחיב את קריטריוני החיפוש</div>
-            </div>
-          : <>
-              <div style={{marginBottom:16,display:'flex',alignItems:'center',gap:12}}>
-                <div style={{fontWeight:700,fontSize:16}}>נמצאו <span style={{color:ACC,fontSize:20}}>{results.length}</span> מועמדים</div>
-                <div style={{display:'flex',gap:8}}>
-                  {high.length>0&&<span style={{background:'#f0fdf4',color:'#16a34a',border:'1px solid #86efac',borderRadius:20,padding:'3px 10px',fontSize:12,fontWeight:700}}>🟢 {high.length} התאמה גבוהה</span>}
-                  {mid.length>0&&<span style={{background:'#fffbeb',color:'#d97706',border:'1px solid #fcd34d',borderRadius:20,padding:'3px 10px',fontSize:12,fontWeight:700}}>🟡 {mid.length} התאמה חלקית</span>}
-                </div>
-              </div>
-
-              <div style={{display:'flex',flexDirection:'column',gap:10}}>
-                {results.map(c=>{
-                  const t=tierLabel[tier(c._score)];
-                  const prevJob=c.status==='השמה מוצלחת'?data.jobs.find(j=>c.appliedJobs?.includes(j.id)&&j.status!=='פתוח')||data.jobs.find(j=>c.appliedJobs?.includes(j.id)):null;
-                  return <div key={c.id} style={{background:'white',borderRadius:14,padding:'16px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',border:`1.5px solid ${t.border}`,display:'flex',alignItems:'center',gap:16}}>
-                    {/* Score ring */}
-                    <div style={{width:52,height:52,borderRadius:26,background:t.bg,border:`3px solid ${t.color}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                      <div style={{fontWeight:800,fontSize:15,color:t.color}}>{c._score}</div>
-                    </div>
-                    {/* Info */}
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                        <span style={{fontWeight:800,fontSize:15,color:'#1a1a2e'}}>{c.name}</span>
-                        <Tag label={c.status}/>
-                        {c.status==='השמה מוצלחת'&&<span style={{fontSize:11,background:'#fef3c7',color:'#92400e',border:'1px solid #fcd34d',borderRadius:4,padding:'1px 6px',fontWeight:700}}>🏅 הושם</span>}
-                        <span style={{fontSize:11,background:t.bg,color:t.color,border:`1px solid ${t.border}`,borderRadius:4,padding:'1px 6px',fontWeight:700}}>{t.label}</span>
-                      </div>
-                      <div style={{display:'flex',gap:16,fontSize:12,color:MUT,flexWrap:'wrap'}}>
-                        {c.domain&&<span>🏷 {c.domain}</span>}
-                        {c.role&&<span>👤 {c.role}</span>}
-                        {c.city&&<span>📍 {c.city}</span>}
-                        {c.experience&&<span>⏱ {c.experience}</span>}
-                        {prevJob&&<span style={{color:'#7c3aed',fontWeight:600}}>📌 הושם ב: {prevJob.title}</span>}
-                      </div>
-                    </div>
-                    {/* Score bars */}
-                    <div style={{display:'flex',flexDirection:'column',gap:4,minWidth:120}}>
-                      {[['תחום',domain&&c.domain===domain?35:0,35],['תפקיד',role&&c.role===role?25:0,25],['אזור',!city||c.city===city?20:0,20]].map(([lbl,val,max])=>(
-                        <div key={lbl} style={{display:'flex',alignItems:'center',gap:6}}>
-                          <div style={{fontSize:10,color:MUT,width:32,textAlign:'right'}}>{lbl}</div>
-                          <div style={{flex:1,height:6,background:'#f0ede6',borderRadius:3,overflow:'hidden'}}>
-                            <div style={{height:'100%',width:`${(val/max)*100}%`,background:val===max?'#16a34a':'#e5e7eb',borderRadius:3,transition:'width .3s'}}/>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Actions */}
-                    <div style={{display:'flex',flexDirection:'column',gap:6,flexShrink:0}}>
-                      <button onClick={()=>setMsgTarget(c)}
-                        style={{padding:'8px 14px',background:'#fff5f0',border:'1.5px solid #fcd5c0',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer',color:'#c94d1a',whiteSpace:'nowrap'}}>
-                        ✉️ שלח הצעה
-                      </button>
-                      {c.phone&&<button onClick={()=>{const p=(c.phone||'').replace(/[-\s]/g,'').replace(/^0/,'972');window.open(`https://wa.me/${p}`,'_blank');}}
-                        style={{padding:'8px 14px',background:'#f0fdf4',border:'1.5px solid #86efac',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer',color:'#15803d',whiteSpace:'nowrap'}}>
-                        💬 WhatsApp
-                      </button>}
-                    </div>
-                  </div>;
-                })}
-              </div>
-            </>
-        }
-      </div>
-    )}
-
-    {!searched&&<div style={{textAlign:'center',padding:'28px 0',color:MUT}}>
-      <div style={{fontSize:56,marginBottom:12}}>🎯</div>
-      <div style={{fontWeight:800,fontSize:18,marginBottom:8,color:'#000000'}}>מוכן לצייד מועמדים</div>
-      <div style={{fontSize:14,color:'#374151'}}>הגדר דרישות למעלה ולחץ "צייד!" כדי למצוא את המועמדים המתאימים ביותר</div>
+          <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',justifyContent:'flex-end'}}>
+            <span style={{fontSize:12,background:col.bg,color:col.color,borderRadius:6,padding:'2px 9px',fontWeight:700}}>{col.icon} {t.status}</span>
+            <span style={{fontSize:12,background:PRIO_BG[t.priority]||'#f3f4f6',color:pc,borderRadius:6,padding:'2px 9px',fontWeight:700}}>{t.priority}</span>
+            {emp&&<span style={{fontSize:12,color:'#6b7280'}}>🏢 {emp.name}</span>}
+            {t.dueDate&&<span style={{fontSize:12,color:'#6b7280'}}>📅 {t.dueDate}</span>}
+            <button onClick={()=>setModal(t)} style={{padding:'5px 10px',background:'white',border:'1px solid #e5e7eb',borderRadius:6,cursor:'pointer',fontSize:12,fontFamily:'Heebo'}}>✏️</button>
+            <button onClick={()=>{if(confirm('למחוק?'))delTask(t.id);}} style={{padding:'5px 10px',background:'white',border:'1px solid #fecaca',borderRadius:6,cursor:'pointer',fontSize:12,fontFamily:'Heebo',color:'#ef4444'}}>🗑</button>
+          </div>
+        </div>;
+      })}
     </div>}
 
-    {msgTarget&&<MessageModal
-      type="candidate"
-      person={msgTarget}
-      job={data.jobs.find(j=>msgTarget.appliedJobs?.includes(j.id))}
-      employer={null}
-      candidate={msgTarget}
-      onClose={()=>setMsgTarget(null)}
-    />}
+    {modal&&<TaskModal task={modal?.id?modal:null} data={data} onSave={saveTask} onClose={()=>setModal(null)} initialStatus={modal?.initialStatus||'פתוח'}/>}
   </div>;
 }
 
@@ -3940,8 +3718,8 @@ function Settings({data,setData}){
   const [industries,setIndustries]=React.useState(()=>data.industries||DEFAULT_INDUSTRIES);
   React.useEffect(()=>{if(data.industries)setIndustries(data.industries);},[data.industries]);
   const [newIndustry,setNewIndustry]=React.useState('');
-  const addIndustry=()=>{const v=newIndustry.trim();if(!v||industries.includes(v))return;const updated=[...industries,v];setIndustries(updated);setData(d=>({...d,industries:updated}));setNewIndustry('');};
-  const delIndustry=name=>{if(industries.length<=1)return;const updated=industries.filter(i=>i!==name);setIndustries(updated);setData(d=>({...d,industries:updated}));};
+  const addIndustry=()=>{const v=newIndustry.trim();if(!v||industries.includes(v))return;const updated=[...industries,v];setIndustries(updated);setData(d=>({...d,industries:updated,statuses:{...(d.statuses||{}),industries:updated}}));setNewIndustry('');};
+  const delIndustry=name=>{if(industries.length<=1)return;const updated=industries.filter(i=>i!==name);setIndustries(updated);setData(d=>({...d,industries:updated,statuses:{...(d.statuses||{}),industries:updated}}));};
   const [newStatus,setNewStatus]=React.useState({candidates:'',jobs:'',employers:''});
   const addStatus=(key)=>{const v=newStatus[key].trim();if(!v)return;const updated={...statuses,[key]:[...statuses[key],v]};setStatuses(updated);setData(d=>({...d,statuses:updated}));setNewStatus(n=>({...n,[key]:''}));};
   const delStatus=(key,item)=>{const updated={...statuses,[key]:statuses[key].filter(s=>s!==item)};setStatuses(updated);setData(d=>({...d,statuses:updated}));};
