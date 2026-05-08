@@ -2685,7 +2685,101 @@ function Candidates({data,setData}){
   const [showJobPicker,setShowJobPicker]=React.useState(false);
   const [cvDrag,setCvDrag]=React.useState(false);
   const [cvParsing,setCvParsing]=React.useState(false);
-  const [aiFields,setAiFields]=React.useState({}); // tracks which fields were AI-filled
+  const [aiFields,setAiFields]=React.useState({});
+
+  // ── CV Parsing functions ──
+  const extractTextFromFile=async(file)=>{
+    const ext=file.name.split('.').pop().toLowerCase();
+    if(ext==='pdf'){
+      const pdfjsLib=window.pdfjsLib;
+      if(!pdfjsLib){console.warn('PDF.js not loaded');return '';}
+      pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const ab=await file.arrayBuffer();
+      const pdf=await pdfjsLib.getDocument({data:new Uint8Array(ab)}).promise;
+      let text='';
+      for(let i=1;i<=Math.min(pdf.numPages,5);i++){
+        const page=await pdf.getPage(i);
+        const tc=await page.getTextContent();
+        text+=tc.items.map(s=>s.str).join(' ')+'
+';
+      }
+      return text;
+    } else if(ext==='docx'||ext==='doc'){
+      const ab=await file.arrayBuffer();
+      const result=await mammoth.extractRawText({arrayBuffer:ab});
+      return result.value;
+    }
+    return '';
+  };
+
+  const parseWithAI=async(text)=>{
+    const domains=(data.jobDomains||[]).map(d=>d.name).join(', ');
+    const promptJson='{
+  "name": "שם מלא",
+  "phone": "טלפון",
+  "email": "אימייל",
+  "city": "עיר מגורים",
+  "birthDate": "YYYY-MM-DD או ריק",
+  "gender": "זכר/נקבה/אחר או ריק",
+  "maritalStatus": "רווק/ה/נשוי/אה/גרוש/ה/אלמן/ה או ריק",
+  "drivingLicense": "יש/אין או ריק",
+  "education": "רמת השכלה אחרונה",
+  "experience": "שנות ניסיון או תיאור קצר",
+  "domain": "תחום מקצועי — בחר מתוך: '+domains+' — או ריק",
+  "role": "תפקיד מתאים",
+  "minSalary": "ציפיות שכר מינימום במספר בלבד או ריק",
+  "notes": "מידע נוסף חשוב"
+}';
+    const prompt='אתה מנתח קורות חיים. חלץ את המידע הבא מהטקסט ותחזיר JSON בלבד (ללא הסבר, ללא מרכאות חיצוניות):
+'+promptJson+'
+אם שדה לא נמצא — השאר ריק. קורות החיים:
+'+text.slice(0,4000);
+    const res=await fetch('/.netlify/functions/claude-proxy',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    const data2=await res.json();
+    const raw=data2?.content?.[0]?.text||'{}';
+    try{return JSON.parse(raw.replace(/```json|```/g,'').trim());}
+    catch{return {};}
+  };
+
+  const applyParsedFields=(parsed)=>{
+    const filled={};const updates={};
+    const fields=['name','phone','email','city','birthDate','gender','maritalStatus','drivingLicense','education','experience','domain','role','minSalary','notes'];
+    fields.forEach(k=>{if(parsed[k]&&parsed[k].trim&&parsed[k].trim()){updates[k]=parsed[k].trim();filled[k]=true;}});
+    if(Object.keys(updates).length>0){setForm(f=>({...f,...updates}));setAiFields(filled);setTimeout(()=>setAiFields({}),3500);}
+  };
+
+  const runParseOnExisting=async()=>{
+    if(!form._cvFile)return;
+    setCvParsing(true);
+    try{
+      const text=await extractTextFromFile(form._cvFile);
+      if(text.trim().length>50){const parsed=await parseWithAI(text);applyParsedFields(parsed);}
+    }catch(err){console.warn('CV parsing failed:',err);}
+    finally{setCvParsing(false);}
+  };
+
+  const handleCvDrop=async(e)=>{
+    e.preventDefault();setCvDrag(false);
+    const file=e.dataTransfer?.files?.[0]||e.target?.files?.[0];
+    if(!file)return;
+    setForm(f=>({...f,_cvFile:file,_cvName:file.name}));
+    setCvParsing(true);
+    try{
+      const text=await extractTextFromFile(file);
+      if(text.trim().length>50){const parsed=await parseWithAI(text);applyParsedFields(parsed);}
+    }catch(err){console.warn('CV parsing failed:',err);}
+    finally{setCvParsing(false);}
+    if(modal==='edit'&&form.id){
+      const ext=file.name.split('.').pop();
+      const fname='cv-'+form.id+'.'+ext;
+      const {error}=await sb.storage.from('job-images').upload(fname,file,{upsert:true,contentType:file.type});
+      if(!error){const {data:u}=sb.storage.from('job-images').getPublicUrl(fname);setForm(f=>({...f,cv:true,cvUrl:u.publicUrl}));}
+    }
+  }; // tracks which fields were AI-filled
   const [confirmDel,setConfirmDel]=React.useState(null);
 
   // open detail card — also init editable form
@@ -3350,104 +3444,11 @@ function Candidates({data,setData}){
                     <div style={{fontSize:48}}>📄</div>
                     <a href={form.cvUrl} target="_blank" rel="noreferrer" style={{padding:'10px 20px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14}}>פתח קובץ</a>
                   </div>
-              : (()=>{
-                  const extractTextFromFile=async(file)=>{
-                    const ext=file.name.split('.').pop().toLowerCase();
-                    if(ext==='pdf'){
-                      const pdfjsLib=window.pdfjsLib;
-                      if(!pdfjsLib){console.warn('PDF.js not loaded');return '';}
-                      pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-                      const ab=await file.arrayBuffer();
-                      const pdf=await pdfjsLib.getDocument({data:new Uint8Array(ab)}).promise;
-                      let text='';
-                      for(let i=1;i<=Math.min(pdf.numPages,5);i++){
-                        const page=await pdf.getPage(i);
-                        const tc=await page.getTextContent();
-                        text+=tc.items.map(s=>s.str).join(' ')+'\n';
-                      }
-                      return text;
-                    } else if(ext==='docx'||ext==='doc'){
-                      const ab=await file.arrayBuffer();
-                      const result=await mammoth.extractRawText({arrayBuffer:ab});
-                      return result.value;
-                    }
-                    return '';
-                  };
-
-                  const parseWithAI=async(text)=>{
-                    const domains=(data.jobDomains||[]).map(d=>d.name).join(', ');
-                    const promptJson='{\n  "name": "שם מלא",\n  "phone": "טלפון",\n  "email": "אימייל",\n  "city": "עיר מגורים",\n  "birthDate": "YYYY-MM-DD או ריק",\n  "gender": "זכר/נקבה/אחר או ריק",\n  "maritalStatus": "רווק/ה/נשוי/אה/גרוש/ה/אלמן/ה או ריק",\n  "drivingLicense": "יש/אין או ריק",\n  "education": "רמת השכלה אחרונה",\n  "experience": "שנות ניסיון או תיאור קצר",\n  "domain": "תחום מקצועי — בחר מתוך: '+domains+' — או ריק",\n  "role": "תפקיד מתאים",\n  "minSalary": "ציפיות שכר מינימום במספר בלבד או ריק",\n  "notes": "מידע נוסף חשוב"\n}';
-                    const prompt='אתה מנתח קורות חיים. חלץ את המידע הבא מהטקסט ותחזיר JSON בלבד (ללא הסבר, ללא מרכאות חיצוניות):\n'+promptJson+'\nאם שדה לא נמצא — השאר ריק. קורות החיים:\n'+text.slice(0,4000);
-
-                    const res=await fetch('/.netlify/functions/claude-proxy',{
-                      method:'POST',
-                      headers:{'Content-Type':'application/json'},
-                      body:JSON.stringify({
-                        model:'claude-sonnet-4-20250514',
-                        max_tokens:1000,
-                        messages:[{role:'user',content:prompt}]
-                      })
-                    });
-                    const data2=await res.json();
-                    const raw=data2?.content?.[0]?.text||'{}';
-                    try{return JSON.parse(raw.replace(/```json|```/g,'').trim());}
-                    catch{return {};}
-                  };
-
-                  const handleDrop=async(e)=>{
-                    e.preventDefault();setCvDrag(false);
-                    const file=e.dataTransfer?.files?.[0]||e.target?.files?.[0];
-                    if(!file)return;
-                    // Store file for upload on save
-                    setForm(f=>({...f,_cvFile:file,_cvName:file.name}));
-                    // Start AI parsing
-                    setCvParsing(true);
-                    try{
-                      const text=await extractTextFromFile(file);
-                      if(text.trim().length>50){
-                        const parsed=await parseWithAI(text);
-                        const filled={};
-                        const updates={};
-                        const fields=['name','phone','email','city','birthDate','gender','maritalStatus','drivingLicense','education','experience','domain','role','minSalary','notes'];
-                        fields.forEach(k=>{if(parsed[k]&&parsed[k].trim&&parsed[k].trim()){updates[k]=parsed[k].trim();filled[k]=true;}});
-                        if(Object.keys(updates).length>0){
-                          setForm(f=>({...f,...updates}));
-                          setAiFields(filled);
-                          setTimeout(()=>setAiFields({}),3500);
-                        }
-                      }
-                    }catch(err){console.warn('CV parsing failed:',err);}
-                    finally{setCvParsing(false);}
-                    // Upload CV if editing existing candidate
-                    if(modal==='edit'&&form.id){
-                      const ext=file.name.split('.').pop();
-                      const fname=`cv-${form.id}.${ext}`;
-                      const {error}=await sb.storage.from('job-images').upload(fname,file,{upsert:true,contentType:file.type});
-                      if(!error){const {data:u}=sb.storage.from('job-images').getPublicUrl(fname);setForm(f=>({...f,cv:true,cvUrl:u.publicUrl}));}
-                    }
-                  };
-
-                  const runParseOnExisting=async()=>{
-                    if(!form._cvFile)return;
-                    setCvParsing(true);
-                    try{
-                      const text=await extractTextFromFile(form._cvFile);
-                      if(text.trim().length>50){
-                        const parsed=await parseWithAI(text);
-                        const filled={};const updates={};
-                        const fields=['name','phone','email','city','birthDate','gender','maritalStatus','drivingLicense','education','experience','domain','role','minSalary','notes'];
-                        fields.forEach(k=>{if(parsed[k]&&parsed[k].trim&&parsed[k].trim()){updates[k]=parsed[k].trim();filled[k]=true;}});
-                        if(Object.keys(updates).length>0){setForm(f=>({...f,...updates}));setAiFields(filled);setTimeout(()=>setAiFields({}),3500);}
-                      }
-                    }catch(err){console.warn('CV parsing failed:',err);}
-                    finally{setCvParsing(false);}
-                  };
-
-                  return <div
+              : <div
                     onDragOver={e=>{e.preventDefault();setCvDrag(true);}}
                     onDragLeave={()=>setCvDrag(false)}
-                    onDrop={handleDrop}
-                    style={{height:'calc(90vh - 200px)',background:cvDrag?'#fff5f0':cvParsing?'#eff6ff':'#f8f9fb',border:`2px dashed ${cvDrag?'#e85d26':cvParsing?'#3b82f6':'#d1d5db'}`,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12,transition:'all .2s',padding:24}}>
+                    onDrop={handleCvDrop}
+                    style={{height:'calc(90vh - 200px)',background:cvDrag?'#fff5f0':cvParsing?'#eff6ff':'#f8f9fb',border:'2px dashed '+(cvDrag?'#e85d26':cvParsing?'#3b82f6':'#d1d5db'),display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12,transition:'all .2s',padding:24}}>
                     {cvParsing
                       ? <>
                           <div style={{fontSize:44}}>🤖</div>
@@ -3462,9 +3463,7 @@ function Candidates({data,setData}){
                           <div style={{fontWeight:800,fontSize:15,color:cvDrag?'#e85d26':'#374151',textAlign:'center'}}>
                             {form._cvName||'גרור קורות חיים לכאן'}
                           </div>
-                          {!form._cvName&&<div style={{fontSize:12,color:'#9ca3af',textAlign:'center'}}>
-                            גרור לכאן · PDF / DOC / DOCX
-                          </div>}
+                          {!form._cvName&&<div style={{fontSize:12,color:'#9ca3af',textAlign:'center'}}>גרור לכאן · PDF / DOC / DOCX</div>}
                           <button type="button"
                             onClick={e=>{e.stopPropagation();document.getElementById('cv-upload-input').click();}}
                             style={{padding:'8px 18px',background:'white',border:'2px solid #d1d5db',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#374151',marginTop:4}}>
@@ -3472,14 +3471,13 @@ function Candidates({data,setData}){
                           </button>
                           {form._cvFile&&<button type="button"
                             onClick={e=>{e.stopPropagation();runParseOnExisting();}}
-                            style={{padding:'9px 20px',background:'linear-gradient(135deg,#3b82f6,#2563eb)',border:'none',borderRadius:9,fontFamily:'Heebo',fontWeight:800,fontSize:13,cursor:'pointer',color:'white',boxShadow:'0 4px 12px rgba(59,130,246,0.4)',display:'flex',alignItems:'center',gap:6}}> 
+                            style={{padding:'9px 20px',background:'linear-gradient(135deg,#3b82f6,#2563eb)',border:'none',borderRadius:9,fontFamily:'Heebo',fontWeight:800,fontSize:13,cursor:'pointer',color:'white',boxShadow:'0 4px 12px rgba(59,130,246,0.4)',display:'flex',alignItems:'center',gap:6}}>
                             🤖 זהה שדות אוטומטית
                           </button>}
                         </>
                     }
-                    <input id="cv-upload-input" type="file" accept=".pdf,.doc,.docx" style={{display:'none'}} onChange={handleDrop}/>
-                  </div>;
-                })()
+                    <input id="cv-upload-input" type="file" accept=".pdf,.doc,.docx" style={{display:'none'}} onChange={handleCvDrop}/>
+                  </div>
             }
           </div>
         </div>
