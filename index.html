@@ -9,6 +9,8 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root { --acc: #e85d26; --acc-light: #fde8dc; --acc-dark: #c94d1a; }
@@ -84,6 +86,30 @@ body { background: #f0f2f5; font-family: 'Heebo', sans-serif; direction: rtl; ov
 .dd-item.dd-placeholder:hover { background: #f8fafc !important; color: #374151; }
 .dd-item.dd-empty { color: #94a3b8; cursor: default; font-size: 13px; }
 .dd-item.dd-empty:hover { background: white !important; }
+
+/* ── AI CV Parsing ── */
+@keyframes ai-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.6), 0 0 0 0 rgba(59,130,246,0.3); border-color: #3b82f6; }
+  50%  { box-shadow: 0 0 0 4px rgba(59,130,246,0.15), 0 0 0 8px rgba(59,130,246,0.05); border-color: #60a5fa; }
+  100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); border-color: #3b82f6; }
+}
+.ai-filled {
+  animation: ai-pulse 1.2s ease-out 2;
+  border-color: #3b82f6 !important;
+  background: #eff6ff !important;
+  transition: background 1s ease;
+}
+@keyframes parsing-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.parsing-overlay {
+  position: absolute; inset: 0; border-radius: 12px; z-index: 10;
+  background: linear-gradient(90deg, transparent 25%, rgba(59,130,246,0.08) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: parsing-shimmer 1.5s infinite;
+  pointer-events: none;
+}
 </style>
 <script>
 (function(){
@@ -105,6 +131,8 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{"accentColor":"#e85d26"}/*EDITMODE-END
 const SB_URL = 'https://rdzmwtixtfenmojeugyx.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkem13dGl4dGZlbm1vamV1Z3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjcxODUsImV4cCI6MjA5MjM0MzE4NX0.FUHtMO-wRs0B0weWGuDxSbXflx7RsVOGVYbC7kUrn0M';
 const sb = supabase.createClient(SB_URL, SB_KEY);
+// ← הדבק כאן את ה-Claude API Key שלך
+const CLAUDE_API_KEY = '';
 
 async function saveToSupabase(data) {
   try {
@@ -286,13 +314,13 @@ function SearchBar({placeholder,value,onChange}){
 }
 
 function Modal({title,onClose,children,wide=false}){
-  return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(4px)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:12,overflowY:'auto'}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-    <div style={{background:'#f8f7f4',borderRadius:20,width:wide?'96vw':'560px',maxWidth:wide?1400:'560px',maxHeight:'94vh',overflow:'hidden',boxShadow:'0 32px 100px rgba(0,0,0,0.3)',display:'flex',flexDirection:'column'}} onClick={e=>e.stopPropagation()}>
-      <div style={{background:'#1a1a2e',borderRadius:'20px 20px 0 0',padding:'16px 24px',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+  return <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(4px)',zIndex:1000,display:'flex',alignItems:'flex-start',justifyContent:'center',padding:'20px 12px',overflowY:'auto'}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div style={{background:'#f8f7f4',borderRadius:20,width:wide?'96vw':'560px',maxWidth:wide?1400:'560px',boxShadow:'0 32px 100px rgba(0,0,0,0.3)',display:'flex',flexDirection:'column',marginBottom:20}} onClick={e=>e.stopPropagation()}>
+      <div style={{background:'#1a1a2e',borderRadius:'20px 20px 0 0',padding:'16px 24px',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:10}}>
         <div style={{color:'white',fontWeight:800,fontSize:18}}>{title}</div>
         <button onClick={onClose} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'white',width:34,height:34,borderRadius:17,cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
       </div>
-      <div style={{overflow:'auto',flex:1,padding:'16px 20px 20px'}}>
+      <div style={{padding:'16px 20px 20px'}}>
         {children}
       </div>
     </div>
@@ -313,17 +341,17 @@ function FormCard({title,icon,color='#fff5f0',children}){
   </div>;
 }
 
-function FF({label,type='text',value,onChange,options,hint,full=false}){
+function FF({label,type='text',value,onChange,options,hint,full=false,aiHighlight=false}){
   const s={width:'100%',padding:'9px 12px',border:'2px solid #d1d5db',borderRadius:8,fontFamily:'Heebo',fontSize:13,color:'#1a1a2e',background:'#ffffff',outline:'none',boxSizing:'border-box'};
   const handleFocus=e=>{e.target.style.border='2px solid #1a3a6b';e.target.style.boxShadow='0 0 0 3px rgba(26,58,107,0.1)';};
   const handleBlur=e=>{e.target.style.border='2px solid #d1d5db';e.target.style.boxShadow='none';};
   return <div style={{marginBottom:10,gridColumn:full?'1 / -1':'auto'}}>
-    {label&&<label style={{display:'block',fontSize:11,marginBottom:4,fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'0.3px'}}>{label}</label>}
+    {label&&<label style={{display:'block',fontSize:11,marginBottom:4,fontWeight:700,color:aiHighlight?'#2563eb':'#374151',textTransform:'uppercase',letterSpacing:'0.3px'}}>{label}{aiHighlight&&<span style={{marginRight:4,fontSize:10,color:'#3b82f6',fontWeight:800}}>✨ AI</span>}</label>}
     {type==='select'
-      ?<select value={value} onChange={e=>onChange(e.target.value)} onFocus={handleFocus} onBlur={handleBlur} style={{...s,cursor:'pointer'}}>{options.map(o=><option key={o}>{o}</option>)}</select>
+      ?<select value={value} onChange={e=>onChange(e.target.value)} onFocus={handleFocus} onBlur={handleBlur} className={aiHighlight?'ai-filled':''} style={{...s,cursor:'pointer'}}>{options.map(o=><option key={o}>{o}</option>)}</select>
       :type==='textarea'
-      ?<textarea value={value} onChange={e=>onChange(e.target.value)} rows={3} onFocus={handleFocus} onBlur={handleBlur} style={{...s,resize:'vertical'}}/>
-      :<input type={type} value={value} onChange={e=>onChange(e.target.value)} onFocus={handleFocus} onBlur={handleBlur} style={s}/>}
+      ?<textarea value={value} onChange={e=>onChange(e.target.value)} rows={3} onFocus={handleFocus} onBlur={handleBlur} className={aiHighlight?'ai-filled':''} style={{...s,resize:'vertical'}}/>
+      :<input type={type} value={value} onChange={e=>onChange(e.target.value)} onFocus={handleFocus} onBlur={handleBlur} className={aiHighlight?'ai-filled':''} style={s}/>}
     {hint&&<div style={{fontSize:11,color:'#6b7280',marginTop:3}}>{hint}</div>}
   </div>;
 }
@@ -1828,9 +1856,9 @@ function Employers({data,setData}){
         <div>
           <FormCard title="פרטי המעסיק" icon="🏢" color="#fff5f0">
             <FormGrid>
-              <FF label="שם חברה" value={form.name||''} onChange={v=>setForm(f=>({...f,name:v}))}/>
+              <FF label="שם חברה" value={form.name||''} onChange={v=>setForm(f=>({...f,name:v}))} aiHighlight={!!aiFields["name"]}/>
               <FF label="ענף" type="select" value={form.industry||'הייטק'} onChange={v=>setForm(f=>({...f,industry:v}))} options={data.industries||['הייטק','תעשייה','פיננסים','קמעונאות','בריאות','חינוך','אחר']}/>
-              <FF label="עיר" value={form.city||''} onChange={v=>setForm(f=>({...f,city:v}))}/>
+              <FF label="עיר" value={form.city||''} onChange={v=>setForm(f=>({...f,city:v}))} aiHighlight={!!aiFields["city"]}/>
               <FF label="סטטוס" type="select" value={form.status||'פעיל'} onChange={v=>setForm(f=>({...f,status:v}))} options={data.statuses?.employers?.length?data.statuses.employers:['פעיל','פסיבי']}/>
             </FormGrid>
           </FormCard>
@@ -1865,7 +1893,7 @@ function Employers({data,setData}){
           </FormCard>
 
           <FormCard title="הערות" icon="📝" color="#fffbeb">
-            <FF label="" type="textarea" value={form.notes||''} onChange={v=>setForm(f=>({...f,notes:v}))}/>
+            <FF label="" type="textarea" value={form.notes||''} onChange={v=>setForm(f=>({...f,notes:v}))} aiHighlight={!!aiFields["notes"]}/>
           </FormCard>
         </div>
 
@@ -2494,14 +2522,14 @@ function Jobs({data,setData}){
             <FormGrid>
               <div>
                 <label style={{display:'block',fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תחום</label>
-                <select value={form.domain||''} onChange={e=>setForm(f=>({...f,domain:e.target.value,role:''}))} style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14}}>
+                <select value={form.domain||''} onChange={e=>setForm(f=>({...f,domain:e.target.value,role:''}))} className={aiFields["domain"]?"ai-filled":""} style={{width:'100%',padding:'9px 12px',border:aiFields["domain"]?'2px solid #3b82f6':'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14}}>
                   <option value="">-- בחר תחום --</option>
                   {(data.jobDomains||[]).map(d=><option key={d.id} value={d.name}>{d.name}</option>)}
                 </select>
               </div>
               <div>
                 <label style={{display:'block',fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תפקיד</label>
-                <select value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))} disabled={!form.domain} style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,background:!form.domain?'#f5f5f5':'white'}}>
+                <select value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))} disabled={!form.domain} className={aiFields["role"]?"ai-filled":""} style={{width:'100%',padding:'9px 12px',border:aiFields["role"]?'2px solid #3b82f6':'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,background:!form.domain?'#f5f5f5':'white'}}>
                   <option value="">{form.domain?'-- בחר תפקיד --':'בחר תחום תחילה'}</option>
                   {(data.jobDomains||[]).find(d=>d.name===form.domain)?.roles.map(r=><option key={r} value={r}>{r}</option>)}
                 </select>
@@ -2542,7 +2570,7 @@ function Jobs({data,setData}){
             <FormGrid>
               <FF label="ניסיון נדרש" value={form.reqExperience||''} onChange={v=>setForm(f=>({...f,reqExperience:v}))} hint="למשל: 2+ שנים"/>
               <FF label="השכלה נדרשת" value={form.reqEducation||''} onChange={v=>setForm(f=>({...f,reqEducation:v}))} hint="למשל: תואר ראשון"/>
-              <FF label="רישיון נהיגה" type="select" value={form.reqLicense||''} onChange={v=>setForm(f=>({...f,reqLicense:v}))} options={['','נדרש','לא נדרש','יתרון']}/>
+              <FF label="רישיון נהיגה" type="select" value={form.reqLicense||''} onChange={v=>setForm(f=>({...f,reqLicense:v}))} options={['','נדרש','לא נדרש','יתרון']} aiHighlight={!!aiFields["drivingLicense"]}/>
               <FF label="נידות" type="select" value={form.reqMobility||''} onChange={v=>setForm(f=>({...f,reqMobility:v}))} options={['','נדרשת','לא נדרשת','יתרון']}/>
               <FF label="מין מועדף" type="select" value={form.reqGender||''} onChange={v=>setForm(f=>({...f,reqGender:v}))} options={['','זכר','נקבה','לא משנה']}/>
               <FF label="עברית" type="select" value={form.reqLangHebrew||''} onChange={v=>setForm(f=>({...f,reqLangHebrew:v}))} options={['','שפת אם','טובה מאוד','טובה','בסיסית']}/>
@@ -2655,6 +2683,9 @@ function Candidates({data,setData}){
   const [msgTarget,setMsgTarget]=React.useState(null);
   const [jobSearch,setJobSearch]=React.useState('');
   const [showJobPicker,setShowJobPicker]=React.useState(false);
+  const [cvDrag,setCvDrag]=React.useState(false);
+  const [cvParsing,setCvParsing]=React.useState(false);
+  const [aiFields,setAiFields]=React.useState({}); // tracks which fields were AI-filled
   const [confirmDel,setConfirmDel]=React.useState(null);
 
   // open detail card — also init editable form
@@ -2707,7 +2738,22 @@ function Candidates({data,setData}){
     const isAdd=modal==='add';
     const entry=mkLog('candidate',isAdd?'added':'updated',form.name);
     if(isAdd){
-      setData(d=>({...d,candidates:[...d.candidates,withStatusChange(null,{...form,id:'c'+Date.now()})],activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
+      const newId='c'+Date.now();
+      const candData={...form,id:newId};
+      // Upload CV if dragged/selected
+      if(form._cvFile){
+        const file=form._cvFile;
+        const ext=file.name.split('.').pop();
+        const fname=`cv-${newId}.${ext}`;
+        sb.storage.from('job-images').upload(fname,file,{upsert:true,contentType:file.type}).then(({error})=>{
+          if(!error){
+            const {data:u}=sb.storage.from('job-images').getPublicUrl(fname);
+            setData(d=>({...d,candidates:d.candidates.map(c=>c.id===newId?{...c,cv:true,cvUrl:u.publicUrl}:c)}));
+          }
+        });
+      }
+      delete candData._cvFile; delete candData._cvName;
+      setData(d=>({...d,candidates:[...d.candidates,withStatusChange(null,candData)],activityLog:[entry,...(d.activityLog||[])].slice(0,50)}));
     } else {
       const prevCand=data.candidates.find(c=>c.id===form.id);
       const statusChanged=prevCand&&prevCand.status!==form.status&&form.status==='השמה מוצלחת';
@@ -3136,21 +3182,40 @@ function Candidates({data,setData}){
         </div>}
 
     {(modal==='add'||modal==='edit')&&<Modal title={modal==='add'?'מועמד חדש':'עריכת מועמד'} onClose={()=>setModal(null)} wide={true}>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 55%',gap:14,alignItems:'start'}}>
 
-        {/* COL 1 — פרטים אישיים + שפות */}
-        <div>
+      {/* שורת פעולות עליונה */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16,paddingBottom:14,borderBottom:'2px solid #f0ede6'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div style={{width:40,height:40,borderRadius:12,background:'linear-gradient(135deg,#e85d26,#c94d1a)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>👤</div>
+          <div>
+            <div style={{fontWeight:900,fontSize:17,color:'#1a1a2e'}}>{modal==='add'?'מועמד חדש':form.name||'עריכת מועמד'}</div>
+            <div style={{fontSize:12,color:'#6b7280'}}>{modal==='add'?'הוספת מועמד למערכת':'עריכת פרטי המועמד'}</div>
+          </div>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={()=>setModal(null)} style={{padding:'9px 20px',background:'white',border:'2px solid #e5e7eb',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer',color:'#374151'}}>← חזרה לרשימה</button>
+          <button onClick={save} style={{padding:'9px 24px',background:'linear-gradient(135deg,#e85d26,#c94d1a)',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:800,fontSize:14,cursor:'pointer',color:'white',boxShadow:'0 4px 12px rgba(232,93,38,0.35)',display:'flex',alignItems:'center',gap:6}}>
+            🔒 שמור
+          </button>
+        </div>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'58% 42%',gap:18,alignItems:'start'}}>
+
+        {/* COL 1 — טופס מימין */}
+        <div style={{position:'relative'}}>
+          {cvParsing&&<div className="parsing-overlay"/>}
           <FormCard title="פרטים אישיים" icon="👤" color="#fff5f0">
             <FormGrid>
               <FF label="שם מלא" value={form.name||''} onChange={v=>setForm(f=>({...f,name:v}))} full={true}/>
               <FF label="תעודת זהות" value={form.idNumber||''} onChange={v=>setForm(f=>({...f,idNumber:v}))}/>
-              <FF label="טלפון" value={form.phone||''} onChange={v=>setForm(f=>({...f,phone:v}))}/>
-              <FF label="אימייל" type="email" value={form.email||''} onChange={v=>setForm(f=>({...f,email:v}))}/>
-              <FF label="עיר" value={form.city||''} onChange={v=>setForm(f=>({...f,city:v}))}/>
-              <FF label="תאריך לידה" type="date" value={form.birthDate||''} onChange={v=>setForm(f=>({...f,birthDate:v}))}/>
-              <FF label="מין" type="select" value={form.gender||''} onChange={v=>setForm(f=>({...f,gender:v}))} options={['','זכר','נקבה','אחר']}/>
-              <FF label="מצב משפחתי" type="select" value={form.maritalStatus||''} onChange={v=>setForm(f=>({...f,maritalStatus:v}))} options={['','רווק/ה','נשוי/אה','גרוש/ה','אלמן/ה']}/>
-              <FF label="רישיון נהיגה" type="select" value={form.drivingLicense||''} onChange={v=>setForm(f=>({...f,drivingLicense:v}))} options={['','יש','אין']}/>
+              <FF label="טלפון" value={form.phone||''} onChange={v=>setForm(f=>({...f,phone:v}))} aiHighlight={!!aiFields["phone"]}/>
+              <FF label="אימייל" type="email" value={form.email||''} onChange={v=>setForm(f=>({...f,email:v}))} aiHighlight={!!aiFields["email"]}/>
+              <FF label="עיר" value={form.city||''} onChange={v=>setForm(f=>({...f,city:v}))} aiHighlight={!!aiFields["city"]}/>
+              <FF label="תאריך לידה" type="date" value={form.birthDate||''} onChange={v=>setForm(f=>({...f,birthDate:v}))} aiHighlight={!!aiFields["birthDate"]}/>
+              <FF label="מין" type="select" value={form.gender||''} onChange={v=>setForm(f=>({...f,gender:v}))} options={['','זכר','נקבה','אחר']} aiHighlight={!!aiFields["gender"]}/>
+              <FF label="מצב משפחתי" type="select" value={form.maritalStatus||''} onChange={v=>setForm(f=>({...f,maritalStatus:v}))} options={['','רווק/ה','נשוי/אה','גרוש/ה','אלמן/ה']} aiHighlight={!!aiFields["maritalStatus"]}/>
+              <FF label="רישיון נהיגה" type="select" value={form.drivingLicense||''} onChange={v=>setForm(f=>({...f,drivingLicense:v}))} options={['','יש','אין']} aiHighlight={!!aiFields["drivingLicense"]}/>
               <FF label="נידות" type="select" value={form.mobility||''} onChange={v=>setForm(f=>({...f,mobility:v}))} options={['','כן','לא','חלקית']}/>
             </FormGrid>
           </FormCard>
@@ -3159,21 +3224,21 @@ function Candidates({data,setData}){
             <FormGrid>
               <div>
                 <label style={{display:'block',fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תחום</label>
-                <select value={form.domain||''} onChange={e=>setForm(f=>({...f,domain:e.target.value,role:''}))} style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14}}>
+                <select value={form.domain||''} onChange={e=>setForm(f=>({...f,domain:e.target.value,role:''}))} className={aiFields["domain"]?"ai-filled":""} style={{width:'100%',padding:'9px 12px',border:aiFields["domain"]?'2px solid #3b82f6':'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14}}>
                   <option value="">-- בחר תחום --</option>
                   {(data.jobDomains||[]).map(d=><option key={d.id} value={d.name}>{d.name}</option>)}
                 </select>
               </div>
               <div>
                 <label style={{display:'block',fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תפקיד</label>
-                <select value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))} disabled={!form.domain} style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,background:!form.domain?'#f5f5f5':'white'}}>
+                <select value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))} disabled={!form.domain} className={aiFields["role"]?"ai-filled":""} style={{width:'100%',padding:'9px 12px',border:aiFields["role"]?'2px solid #3b82f6':'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,background:!form.domain?'#f5f5f5':'white'}}>
                   <option value="">{form.domain?'-- בחר תפקיד --':'בחר תחום תחילה'}</option>
                   {(data.jobDomains||[]).find(d=>d.name===form.domain)?.roles.map(r=><option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
-              <FF label="ניסיון" value={form.experience||''} onChange={v=>setForm(f=>({...f,experience:v}))}/>
-              <FF label="השכלה" value={form.education||''} onChange={v=>setForm(f=>({...f,education:v}))}/>
-              <FF label="שכר מינימלי (₪)" value={form.minSalary||''} onChange={v=>setForm(f=>({...f,minSalary:v}))}/>
+              <FF label="ניסיון" value={form.experience||''} onChange={v=>setForm(f=>({...f,experience:v}))} aiHighlight={!!aiFields["experience"]}/>
+              <FF label="השכלה" value={form.education||''} onChange={v=>setForm(f=>({...f,education:v}))} aiHighlight={!!aiFields["education"]}/>
+              <FF label="שכר מינימלי (₪)" value={form.minSalary||''} onChange={v=>setForm(f=>({...f,minSalary:v}))} aiHighlight={!!aiFields["minSalary"]}/>
               <FF label="שכר מקסימלי (₪)" value={form.maxSalary||''} onChange={v=>setForm(f=>({...f,maxSalary:v}))}/>
               <FF label="ציון במבחן" value={form.testScore||''} onChange={v=>setForm(f=>({...f,testScore:v}))}/>
               <FF label="מקור ליד" value={form.leadSource||''} onChange={v=>setForm(f=>({...f,leadSource:v}))} hint="למשל: פייסבוק, לינקדאין, המלצה..." full={false}/>
@@ -3265,40 +3330,163 @@ function Candidates({data,setData}){
           </FormCard>
 
           <FormCard title="הערות" icon="📝" color="#fffbeb">
-            <FF label="" type="textarea" value={form.notes||''} onChange={v=>setForm(f=>({...f,notes:v}))}/>
+            <FF label="" type="textarea" value={form.notes||''} onChange={v=>setForm(f=>({...f,notes:v}))} aiHighlight={!!aiFields["notes"]}/>
           </FormCard>
-        </div>
-
-        {/* COL 2 — CV (שמאל) */}
+        </div>        {/* COL 2 — CV משמאל */}
         <div style={{position:'sticky',top:0}}>
-          <div style={{background:'white',borderRadius:14,padding:'12px 14px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-              <div style={{width:26,height:26,borderRadius:6,background:'#f0fdf4',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>📄</div>
-              <div style={{fontWeight:800,fontSize:13,color:'#1a1a2e',flex:1}}>קורות חיים</div>
+          <div style={{background:'white',borderRadius:16,overflow:'hidden',boxShadow:'0 2px 12px rgba(0,0,0,0.08)',border:'1px solid #e5e7eb'}}>
+            <div style={{background:'#1a1a2e',padding:'12px 18px',display:'flex',alignItems:'center',gap:8}}>
+              <div style={{fontSize:16}}>📄</div>
+              <div style={{fontWeight:800,fontSize:14,color:'white',flex:1}}>קורות חיים</div>
               {modal==='edit'&&form.cvUrl&&<>
-                <a href={form.cvUrl} target="_blank" rel="noreferrer" style={{padding:'4px 10px',background:'#e85d26',color:'white',borderRadius:6,textDecoration:'none',fontWeight:700,fontSize:11}}>📂 פתח</a>
-                <a href={form.cvUrl} download style={{padding:'4px 8px',background:'#1a3a6b',color:'white',borderRadius:6,textDecoration:'none',fontWeight:700,fontSize:11}}>⬇️</a>
+                <a href={form.cvUrl} target="_blank" rel="noreferrer" style={{padding:'4px 12px',background:'#e85d26',color:'white',borderRadius:6,textDecoration:'none',fontWeight:700,fontSize:12}}>פתח</a>
+                <a href={form.cvUrl} download style={{padding:'4px 10px',background:'rgba(255,255,255,0.15)',color:'white',borderRadius:6,textDecoration:'none',fontWeight:700,fontSize:12}}>⬇️</a>
               </>}
             </div>
             {modal==='edit'&&form.cvUrl
               ? form.cvUrl.toLowerCase().endsWith('.pdf')
-                ? <iframe src={form.cvUrl} style={{width:'100%',height:'calc(94vh - 190px)',border:'1px solid #e5e7eb',borderRadius:8,display:'block'}} title="CV"/>
-                : <div style={{height:'calc(94vh - 190px)',background:'#f0fdf4',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:10}}>
-                    <div style={{fontSize:40}}>📄</div>
-                    <a href={form.cvUrl} target="_blank" rel="noreferrer" style={{padding:'8px 16px',background:'#e85d26',color:'white',borderRadius:8,textDecoration:'none',fontWeight:700,fontSize:13}}>פתח קובץ</a>
+                ? <iframe src={form.cvUrl} style={{width:'100%',height:'calc(90vh - 200px)',border:'none',display:'block'}} title="CV"/>
+                : <div style={{height:'calc(90vh - 200px)',background:'#f0fdf4',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12}}>
+                    <div style={{fontSize:48}}>📄</div>
+                    <a href={form.cvUrl} target="_blank" rel="noreferrer" style={{padding:'10px 20px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14}}>פתח קובץ</a>
                   </div>
-              : <div style={{height:'calc(94vh - 190px)',background:'#f3f4f6',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:8,color:'#aaa'}}>
-                  <div style={{fontSize:44,opacity:.3}}>📄</div>
-                  <span style={{fontSize:12}}>{modal==='add'?'ניתן להעלות CV לאחר שמירה':'אין CV מצורף'}</span>
-                </div>
+              : (()=>{
+                  const extractTextFromFile=async(file)=>{
+                    const ext=file.name.split('.').pop().toLowerCase();
+                    if(ext==='pdf'){
+                      const pdfjsLib=window['pdfjs-dist/build/pdf'];
+                      if(pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc=`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+                      const ab=await file.arrayBuffer();
+                      const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+                      let text='';
+                      for(let i=1;i<=Math.min(pdf.numPages,5);i++){
+                        const page=await pdf.getPage(i);
+                        const tc=await page.getTextContent();
+                        text+=tc.items.map(s=>s.str).join(' ')+'\n';
+                      }
+                      return text;
+                    } else if(ext==='docx'||ext==='doc'){
+                      const ab=await file.arrayBuffer();
+                      const result=await mammoth.extractRawText({arrayBuffer:ab});
+                      return result.value;
+                    }
+                    return '';
+                  };
+
+                  const parseWithAI=async(text)=>{
+                    const domains=(data.jobDomains||[]).map(d=>d.name).join(', ');
+                    const promptJson='{\n  "name": "שם מלא",\n  "phone": "טלפון",\n  "email": "אימייל",\n  "city": "עיר מגורים",\n  "birthDate": "YYYY-MM-DD או ריק",\n  "gender": "זכר/נקבה/אחר או ריק",\n  "maritalStatus": "רווק/ה/נשוי/אה/גרוש/ה/אלמן/ה או ריק",\n  "drivingLicense": "יש/אין או ריק",\n  "education": "רמת השכלה אחרונה",\n  "experience": "שנות ניסיון או תיאור קצר",\n  "domain": "תחום מקצועי — בחר מתוך: '+domains+' — או ריק",\n  "role": "תפקיד מתאים",\n  "minSalary": "ציפיות שכר מינימום במספר בלבד או ריק",\n  "notes": "מידע נוסף חשוב"\n}';
+                    const prompt='אתה מנתח קורות חיים. חלץ את המידע הבא מהטקסט ותחזיר JSON בלבד (ללא הסבר, ללא מרכאות חיצוניות):\n'+promptJson+'\nאם שדה לא נמצא — השאר ריק. קורות החיים:\n'+text.slice(0,4000);
+
+                    const res=await fetch('/.netlify/functions/claude-proxy',{
+                      method:'POST',
+                      headers:{'Content-Type':'application/json'},
+                      body:JSON.stringify({
+                        model:'claude-sonnet-4-20250514',
+                        max_tokens:1000,
+                        messages:[{role:'user',content:prompt}]
+                      })
+                    });
+                    const data2=await res.json();
+                    const raw=data2?.content?.[0]?.text||'{}';
+                    try{return JSON.parse(raw.replace(/```json|```/g,'').trim());}
+                    catch{return {};}
+                  };
+
+                  const handleDrop=async(e)=>{
+                    e.preventDefault();setCvDrag(false);
+                    const file=e.dataTransfer?.files?.[0]||e.target?.files?.[0];
+                    if(!file)return;
+                    // Store file for upload on save
+                    setForm(f=>({...f,_cvFile:file,_cvName:file.name}));
+                    // Start AI parsing
+                    setCvParsing(true);
+                    try{
+                      const text=await extractTextFromFile(file);
+                      if(text.trim().length>50){
+                        const parsed=await parseWithAI(text);
+                        const filled={};
+                        const updates={};
+                        const fields=['name','phone','email','city','birthDate','gender','maritalStatus','drivingLicense','education','experience','domain','role','minSalary','notes'];
+                        fields.forEach(k=>{if(parsed[k]&&parsed[k].trim&&parsed[k].trim()){updates[k]=parsed[k].trim();filled[k]=true;}});
+                        if(Object.keys(updates).length>0){
+                          setForm(f=>({...f,...updates}));
+                          setAiFields(filled);
+                          setTimeout(()=>setAiFields({}),3500);
+                        }
+                      }
+                    }catch(err){console.warn('CV parsing failed:',err);}
+                    finally{setCvParsing(false);}
+                    // Upload CV if editing existing candidate
+                    if(modal==='edit'&&form.id){
+                      const ext=file.name.split('.').pop();
+                      const fname=`cv-${form.id}.${ext}`;
+                      const {error}=await sb.storage.from('job-images').upload(fname,file,{upsert:true,contentType:file.type});
+                      if(!error){const {data:u}=sb.storage.from('job-images').getPublicUrl(fname);setForm(f=>({...f,cv:true,cvUrl:u.publicUrl}));}
+                    }
+                  };
+
+                  const runParseOnExisting=async()=>{
+                    if(!form._cvFile)return;
+                    setCvParsing(true);
+                    try{
+                      const text=await extractTextFromFile(form._cvFile);
+                      if(text.trim().length>50){
+                        const parsed=await parseWithAI(text);
+                        const filled={};const updates={};
+                        const fields=['name','phone','email','city','birthDate','gender','maritalStatus','drivingLicense','education','experience','domain','role','minSalary','notes'];
+                        fields.forEach(k=>{if(parsed[k]&&parsed[k].trim&&parsed[k].trim()){updates[k]=parsed[k].trim();filled[k]=true;}});
+                        if(Object.keys(updates).length>0){setForm(f=>({...f,...updates}));setAiFields(filled);setTimeout(()=>setAiFields({}),3500);}
+                      }
+                    }catch(err){console.warn('CV parsing failed:',err);}
+                    finally{setCvParsing(false);}
+                  };
+
+                  return <div
+                    onDragOver={e=>{e.preventDefault();setCvDrag(true);}}
+                    onDragLeave={()=>setCvDrag(false)}
+                    onDrop={handleDrop}
+                    style={{height:'calc(90vh - 200px)',background:cvDrag?'#fff5f0':cvParsing?'#eff6ff':'#f8f9fb',border:`2px dashed ${cvDrag?'#e85d26':cvParsing?'#3b82f6':'#d1d5db'}`,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12,transition:'all .2s',padding:24}}>
+                    {cvParsing
+                      ? <>
+                          <div style={{fontSize:44}}>🤖</div>
+                          <div style={{fontWeight:800,fontSize:15,color:'#3b82f6',textAlign:'center'}}>מפענח נתונים...</div>
+                          <div style={{fontSize:12,color:'#60a5fa',textAlign:'center'}}>הבינה המלאכותית מנתחת את קורות החיים</div>
+                          <div style={{width:140,height:6,background:'#dbeafe',borderRadius:3,overflow:'hidden',marginTop:4}}>
+                            <div style={{height:'100%',width:'40%',background:'linear-gradient(90deg,#3b82f6,#60a5fa)',borderRadius:3,animation:'parsing-shimmer 1s infinite'}}/>
+                          </div>
+                        </>
+                      : <>
+                          <div style={{fontSize:52,opacity:cvDrag?1:.35}}>📄</div>
+                          <div style={{fontWeight:800,fontSize:15,color:cvDrag?'#e85d26':'#374151',textAlign:'center'}}>
+                            {form._cvName||'גרור קורות חיים לכאן'}
+                          </div>
+                          {!form._cvName&&<div style={{fontSize:12,color:'#9ca3af',textAlign:'center'}}>
+                            גרור לכאן · PDF / DOC / DOCX
+                          </div>}
+                          <button type="button"
+                            onClick={e=>{e.stopPropagation();document.getElementById('cv-upload-input').click();}}
+                            style={{padding:'8px 18px',background:'white',border:'2px solid #d1d5db',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#374151',marginTop:4}}>
+                            📂 {form._cvName?'החלף קובץ':'בחר קובץ'}
+                          </button>
+                          {form._cvFile&&!CLAUDE_API_KEY&&<div style={{fontSize:11,background:'#fef9c3',color:'#854d0e',border:'1px solid #fde047',borderRadius:6,padding:'4px 10px',fontWeight:700,textAlign:'center'}}>
+                            ⚠️ הגדר CLAUDE_API_KEY בקוד לפענוח AI
+                          </div>}
+                          {form._cvFile&&CLAUDE_API_KEY&&<button type="button"
+                            onClick={e=>{e.stopPropagation();runParseOnExisting();}}
+                            style={{padding:'9px 20px',background:'linear-gradient(135deg,#3b82f6,#2563eb)',border:'none',borderRadius:9,fontFamily:'Heebo',fontWeight:800,fontSize:13,cursor:'pointer',color:'white',boxShadow:'0 4px 12px rgba(59,130,246,0.4)',display:'flex',alignItems:'center',gap:6}}>
+                            🤖 זהה שדות אוטומטית
+                          </button>}
+                        </>
+                    }
+                    <input id="cv-upload-input" type="file" accept=".pdf,.doc,.docx" style={{display:'none'}} onChange={handleDrop}/>
+                  </div>;
+                })()
             }
           </div>
         </div>
-      </div>
 
-      <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:4}}>
-        <Btn onClick={()=>setModal(null)}>ביטול</Btn>
-        <Btn variant="primary" onClick={save}>שמירה</Btn>
+
       </div>
     </Modal>}
 
