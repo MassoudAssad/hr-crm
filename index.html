@@ -2700,8 +2700,7 @@ function Candidates({data,setData}){
       for(let i=1;i<=Math.min(pdf.numPages,5);i++){
         const page=await pdf.getPage(i);
         const tc=await page.getTextContent();
-        text+=tc.items.map(s=>s.str).join(' ')+'
-';
+        text+=tc.items.map(s=>s.str).join(' ')+'\n';
       }
       return text;
     } else if(ext==='docx'||ext==='doc'){
@@ -2714,26 +2713,7 @@ function Candidates({data,setData}){
 
   const parseWithAI=async(text)=>{
     const domains=(data.jobDomains||[]).map(d=>d.name).join(', ');
-    const promptJson='{
-  "name": "שם מלא",
-  "phone": "טלפון",
-  "email": "אימייל",
-  "city": "עיר מגורים",
-  "birthDate": "YYYY-MM-DD או ריק",
-  "gender": "זכר/נקבה/אחר או ריק",
-  "maritalStatus": "רווק/ה/נשוי/אה/גרוש/ה/אלמן/ה או ריק",
-  "drivingLicense": "יש/אין או ריק",
-  "education": "רמת השכלה אחרונה",
-  "experience": "שנות ניסיון או תיאור קצר",
-  "domain": "תחום מקצועי — בחר מתוך: '+domains+' — או ריק",
-  "role": "תפקיד מתאים",
-  "minSalary": "ציפיות שכר מינימום במספר בלבד או ריק",
-  "notes": "מידע נוסף חשוב"
-}';
-    const prompt='אתה מנתח קורות חיים. חלץ את המידע הבא מהטקסט ותחזיר JSON בלבד (ללא הסבר, ללא מרכאות חיצוניות):
-'+promptJson+'
-אם שדה לא נמצא — השאר ריק. קורות החיים:
-'+text.slice(0,4000);
+    const prompt='אתה מנתח קורות חיים. חלץ את המידע הבא מהטקסט ותחזיר JSON בלבד ללא הסבר:\n{"name":"שם מלא","phone":"טלפון","email":"אימייל","city":"עיר","birthDate":"YYYY-MM-DD","gender":"זכר/נקבה/אחר","maritalStatus":"רווק/ה/נשוי/אה/גרוש/ה/אלמן/ה","drivingLicense":"יש/אין","education":"השכלה","experience":"ניסיון","domain":"תחום מתוך: '+domains+'","role":"תפקיד","minSalary":"שכר מינימום מספר בלבד","notes":"הערות"}\nאם שדה לא נמצא השאר ריק. טקסט:\n'+text.slice(0,4000);
     const res=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -3287,7 +3267,7 @@ function Candidates({data,setData}){
           </div>
         </div>
         <div style={{display:'flex',gap:8}}>
-          <button onClick={()=>setModal(null)} style={{padding:'9px 20px',background:'white',border:'2px solid #e5e7eb',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer',color:'#374151'}}>← חזרה לרשימה</button>
+          <button onClick={()=>setModal(null)} style={{padding:'9px 20px',background:'#f1f5f9',border:'2px solid #cbd5e1',borderRadius:10,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer',color:'#1a3a6b'}}>← חזרה לרשימה</button>
           <button onClick={save} style={{padding:'9px 24px',background:'linear-gradient(135deg,#e85d26,#c94d1a)',border:'none',borderRadius:10,fontFamily:'Heebo',fontWeight:800,fontSize:14,cursor:'pointer',color:'white',boxShadow:'0 4px 12px rgba(232,93,38,0.35)',display:'flex',alignItems:'center',gap:6}}>
             🔒 שמור
           </button>
