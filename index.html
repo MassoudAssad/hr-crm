@@ -2717,7 +2717,7 @@ function Candidates({data,setData}){
     const res=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:'claude-sonnet-4-5-20250929',max_tokens:1000,messages:[{role:'user',content:prompt}]})
     });
     const data2=await res.json();
     const raw=data2?.content?.[0]?.text||'{}';
