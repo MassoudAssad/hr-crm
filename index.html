@@ -1,7 +1,10 @@
-<!DOCTYPE html><!-- v4 -->
+<!DOCTYPE html><!-- v6 -->
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>טופ גרופ CRM</title>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -39,6 +42,8 @@ body { background: #f0f2f5; font-family: 'Heebo', sans-serif; direction: rtl; ov
   50% { box-shadow: 0 0 0 6px rgba(232,93,38,0.15), 0 0 20px rgba(232,93,38,0.2); border-color: var(--acc-dark); }
 }
 .pending-blink { animation: pendingPulse 1.8s ease-in-out infinite; }
+.detail-field-tile { background: #E6F1FB !important; border-radius: 8px !important; padding: 10px 12px !important; }
+.detail-fields-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 8px !important; padding: 12px !important; }
 
 #mobile-nav {
   display: none;
@@ -1247,7 +1252,7 @@ function EmpField({label,value,onChange,type='text',opts,searchOpts,placeholder}
 function EmpCard({title,color,children}){
   return <div style={{background:'white',borderRadius:12,border:'1px solid #e5e7eb',boxShadow:'0 4px 6px rgba(0,0,0,0.06)',marginBottom:20,overflow:'hidden'}}>
     <div style={{background:color||'#f7f8fa',padding:'12px 18px',borderBottom:'1px solid #f0f0f0',fontWeight:800,fontSize:14,color:'#1a1a2e',display:'flex',alignItems:'center',gap:8}}>{title}</div>
-    <div style={{padding:'0 18px 12px'}}>{children}</div>
+    <div className="detail-fields-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,padding:'12px'}}>{children}</div>
   </div>;
 }
 
@@ -1255,11 +1260,11 @@ function EmpCard({title,color,children}){
 // Uncontrolled field - no re-render while typing
 const EmpFieldUncontrolled=React.memo(function EmpFieldUncontrolled({label,fieldKey,defaultVal,onCommit,type,opts,searchOpts,placeholder}){
   const ref=React.useRef(null);
-  const IS={width:'100%',fontFamily:'Heebo',fontSize:15,fontWeight:600,color:'#111',background:'white',border:'2px solid #e5e7eb',borderRadius:8,padding:'9px 12px',outline:'none'};
+  const IS={width:'100%',fontFamily:'Heebo',fontSize:15,fontWeight:600,color:'#111',background:'transparent',border:'2px solid #e5e7eb',borderRadius:8,padding:'9px 12px',outline:'none'};
   const onF=e=>{e.target.style.borderColor='#1a3a6b';e.target.style.boxShadow='0 0 0 3px rgba(26,58,107,0.1)';};
   const onB=e=>{e.target.style.borderColor='#e5e7eb';e.target.style.boxShadow='none';};
-  return <div style={{display:'grid',gridTemplateColumns:'130px 1fr',alignItems:'center',gap:10,padding:'10px 0',borderBottom:'1px solid #f3f4f6'}}>
-    {label&&<div style={{fontSize:12,fontWeight:700,color:'#6b7280',textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</div>}
+  return <div style={{background:'#E6F1FB',borderRadius:'8px',padding:'10px 12px'}}>
+    {label&&<div style={{fontSize:12,fontWeight:700,color:'#6b7280',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4}}>{label}</div>}
     {type==='searchselect'
       ?<SearchSelect value={defaultVal||''} onChange={onCommit} options={searchOpts||[]} placeholder={placeholder||'-- בחר --'} inputStyle={{...IS,padding:'9px 32px 9px 12px'}}/>
       :type==='select'
@@ -2279,9 +2284,9 @@ function Jobs({data,setData}){
                   {title:'🌐 שפות',color:'#f0fdf4',fields:[['עברית',cd.langHebrew],['אנגלית',cd.langEnglish],['ערבית',cd.langArabic],['רוסית',cd.langRussian],['אמהרית',cd.langAmharic]]},
                 ].map(sec=><div key={sec.title} style={{background:'white',borderRadius:12,border:'1px solid #e5e7eb',overflow:'hidden',marginBottom:14}}>
                   <div style={{background:sec.color,padding:'10px 16px',borderBottom:'1px solid #e5e7eb',fontWeight:800,fontSize:14,color:'#111'}}>{sec.title}</div>
-                  <div style={{padding:'4px 16px 10px'}}>
-                    {sec.fields.filter(([,v])=>v).map(([k,v])=><div key={k} style={{display:'grid',gridTemplateColumns:'130px 1fr',alignItems:'baseline',gap:12,padding:'8px 4px',borderBottom:'1px solid #f3f4f6'}}>
-                      <div style={{fontSize:13,fontWeight:700,color:'#333'}}>{k}</div>
+                  <div className="detail-fields-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,padding:'12px'}}>
+                    {sec.fields.filter(([,v])=>v).map(([k,v])=><div key={k} style={{background:'#E6F1FB',borderRadius:'8px',padding:'10px 12px'}}>
+                      <div style={{fontSize:13,fontWeight:700,color:'#333',marginBottom:4}}>{k}</div>
                       <div style={{fontSize:15,fontWeight:600,color:'#111'}}>{v}</div>
                     </div>)}
                   </div>
@@ -2345,8 +2350,8 @@ function Jobs({data,setData}){
       const onF=e=>{e.target.style.borderColor='#1a3a6b';e.target.style.boxShadow='0 0 0 3px rgba(26,58,107,0.1)';};
       const onB=e=>{e.target.style.borderColor='#e5e7eb';e.target.style.boxShadow='none';};
       const JF=({label,field,type='text',opts,hint,placeholder:ph})=>(
-        <div style={{display:'grid',gridTemplateColumns:'130px 1fr',alignItems:'center',gap:10,padding:'10px 0',borderBottom:'1px solid #f3f4f6'}}>
-          <div style={{fontSize:12,fontWeight:700,color:'#6b7280',textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</div>
+        <div style={{background:'#E6F1FB',borderRadius:'8px',padding:'10px 12px'}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#6b7280',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4}}>{label}</div>
           {type==='select'
             ?<select value={detailForm[field]||''} onChange={e=>jfSet(field,e.target.value)} onFocus={onF} onBlur={onB} style={{...iStyle,cursor:'pointer'}}>
                 <option value=''>—</option>
@@ -2362,7 +2367,7 @@ function Jobs({data,setData}){
       );
       const Card=({title,color,children})=><div style={{background:'white',borderRadius:12,border:'1px solid #e5e7eb',boxShadow:'0 4px 6px rgba(0,0,0,0.06)',marginBottom:20,overflow:'hidden'}}>
         <div style={{background:color||'#f7f8fa',padding:'12px 18px',borderBottom:'1px solid #f0f0f0',fontWeight:800,fontSize:14,color:'#1a1a2e',display:'flex',alignItems:'center',gap:8}}>{title}</div>
-        <div style={{padding:'0 18px 12px'}}>{children}</div>
+        <div className="detail-fields-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,padding:'12px'}}>{children}</div>
       </div>;
       return <div style={{position:'fixed',top:60,bottom:0,left:0,right:0,background:'#f3f4f6',zIndex:999,display:'flex',flexDirection:'column',overflow:'hidden'}}>
 
@@ -3119,8 +3124,8 @@ function Candidates({data,setData}){
                   const onFocus=e=>{e.target.style.borderColor='#1a3a6b';e.target.style.boxShadow='0 0 0 3px rgba(26,58,107,0.12)';};
                   const onBlur=e=>{e.target.style.borderColor='#d1d5db';e.target.style.boxShadow='none';};
                   const Row=({label,field,type='text',opts})=>(
-                    <div style={{display:'grid',gridTemplateColumns:'140px 1fr',alignItems:'center',gap:10,padding:'10px 12px',borderBottom:'1px solid #eef0f3'}}>
-                      <div style={{fontSize:13,color:'#333',fontWeight:700}}>{label}</div>
+                    <div style={{background:'#E6F1FB',borderRadius:'8px',padding:'10px 12px'}}>
+                      <div style={{fontSize:13,color:'#333',fontWeight:700,marginBottom:4}}>{label}</div>
                       {type==='select'
                         ?<select defaultValue={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} onFocus={onFocus} onBlur={e=>{dfSet(field,e.target.value);onBlur(e);}} style={{...iStyle,cursor:'pointer'}}>
                             {opts.map(o=><option key={o} value={o}>{o||'—'}</option>)}
@@ -3135,7 +3140,7 @@ function Candidates({data,setData}){
                   const Section=({title,color,children})=>(
                     <div style={{background:'white',borderRadius:14,border:'1px solid #e8ecf0',overflow:'hidden',boxShadow:'0 3px 10px rgba(0,0,0,0.07)',marginBottom:16}}>
                       <div style={{background:color||'#f9fafb',padding:'12px 18px',borderBottom:'1px solid #eef0f3',fontWeight:800,fontSize:14,color:'#1a1a2e',letterSpacing:'0.2px'}}>{title}</div>
-                      <div style={{padding:'4px 16px 12px'}}>{children}</div>
+                      <div className="detail-fields-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,padding:'12px'}}>{children}</div>
                     </div>
                   );
 
