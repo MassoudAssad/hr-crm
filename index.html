@@ -3118,12 +3118,12 @@ function Candidates({data,setData}){
                     <div style={{display:'grid',gridTemplateColumns:'140px 1fr',alignItems:'center',gap:10,padding:'10px 12px',borderBottom:'1px solid #eef0f3'}}>
                       <div style={{fontSize:13,color:'#333',fontWeight:700}}>{label}</div>
                       {type==='select'
-                        ?<select value={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} onFocus={onFocus} onBlur={onBlur} style={{...iStyle,cursor:'pointer'}}>
+                        ?<select defaultValue={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} onFocus={onFocus} onBlur={e=>{dfSet(field,e.target.value);onBlur(e);}} style={{...iStyle,cursor:'pointer'}}>
                             {opts.map(o=><option key={o} value={o}>{o||'—'}</option>)}
                           </select>
                         :type==='textarea'
-                        ?<textarea value={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} onFocus={onFocus} onBlur={onBlur} rows={3} style={{...iStyle,resize:'vertical'}}/>
-                        :<input type={type} value={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} onFocus={onFocus} onBlur={onBlur} style={iStyle}/>
+                        ?<textarea key={field+'_'+detail.id} defaultValue={detailForm[field]||''} onBlur={e=>{dfSet(field,e.target.value);onBlur(e);}} onFocus={onFocus} rows={3} style={{...iStyle,resize:'vertical'}}/>
+                        :<input key={field+'_'+detail.id} type={type} defaultValue={detailForm[field]||''} onBlur={e=>{dfSet(field,e.target.value);onBlur(e);}} onFocus={onFocus} style={iStyle}/>
                       }
                     </div>
                   );
@@ -3174,7 +3174,7 @@ function Candidates({data,setData}){
 
                     <Section title="📝 הערות" color="#fffbeb">
                       <div style={{paddingTop:8}}>
-                        <textarea value={detailForm.notes||''} onChange={e=>dfSet('notes',e.target.value)} onFocus={e=>{e.target.style.borderColor='#1a3a6b';}} onBlur={e=>{e.target.style.borderColor='#d1d5db';}}
+                        <textarea key={'notes_'+detail.id} defaultValue={detailForm.notes||''} onBlur={e=>{dfSet('notes',e.target.value);e.target.style.borderColor='#d1d5db';}} onFocus={e=>{e.target.style.borderColor='#1a3a6b';}}
                           rows={4} placeholder="הוסף הערה..."
                           style={{width:'100%',fontFamily:'Heebo',fontSize:15,color:'#111',background:'white',border:'2px solid #d1d5db',borderRadius:8,padding:'8px 12px',outline:'none',resize:'vertical'}}/>
                       </div>
