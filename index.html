@@ -3129,6 +3129,7 @@ function Candidates({data,setData}){
                   const iStyle={width:'100%',fontFamily:'Heebo',fontSize:15,fontWeight:600,color:'#111',background:'white',border:'2px solid #d1d5db',borderRadius:8,padding:'8px 12px',outline:'none'};
                   const onFocus=e=>{e.target.style.borderColor='#1a3a6b';e.target.style.boxShadow='0 0 0 3px rgba(26,58,107,0.12)';};
                   const onBlur=e=>{e.target.style.borderColor='#d1d5db';e.target.style.boxShadow='none';};
+                  const saveOnBlur=e=>{dfSet(e.target.dataset.field,e.target.value);e.target.style.borderColor='#d1d5db';e.target.style.boxShadow='none';};
                   const Row=({label,field,type='text',opts})=>(
                     <div className="data-field-tile">
                       <div style={{fontSize:12,color:'#555',fontWeight:700,marginBottom:4}}>{label}</div>
@@ -3137,8 +3138,8 @@ function Candidates({data,setData}){
                             {opts.map(o=><option key={o} value={o}>{o||'—'}</option>)}
                           </select>
                         :type==='textarea'
-                          ?<textarea value={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} style={{...iStyle,minHeight:70,resize:'vertical',boxSizing:'border-box'}} onFocus={onFocus} onBlur={onBlur} rows={3}/>
-                          :<input type={type} value={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} style={{...iStyle,boxSizing:'border-box'}} onFocus={onFocus} onBlur={onBlur}/>
+                          ?<textarea key={detail.id+'_'+field} data-field={field} defaultValue={detailForm[field]||''} onBlur={saveOnBlur} onFocus={onFocus} style={{...iStyle,minHeight:70,resize:'vertical',boxSizing:'border-box'}} rows={3}/>
+                          :<input key={detail.id+'_'+field} type={type} data-field={field} defaultValue={detailForm[field]||''} onBlur={saveOnBlur} onFocus={onFocus} style={{...iStyle,boxSizing:'border-box'}}/>
                       }
                     </div>
                   );
