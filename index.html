@@ -2284,7 +2284,9 @@ function Jobs({data,setData}){
                   {cd.cvUrl
                     ?cd.cvUrl.toLowerCase().endsWith('.pdf')
                       ?<iframe src={cd.cvUrl} style={{width:'100%',height:'100%',border:'none',minHeight:'calc(100vh - 110px)'}} title="CV"/>
-                      :<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%'}}><a href={cd.cvUrl} target="_blank" rel="noreferrer" style={{padding:'12px 24px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:16}}>📂 פתח קורות חיים</a></div>
+                      :(cd.cvUrl.toLowerCase().endsWith('.docx')||cd.cvUrl.toLowerCase().endsWith('.doc'))
+                        ?<iframe src={'https://docs.google.com/gview?url='+encodeURIComponent(cd.cvUrl)+'&embedded=true'} style={{width:'100%',height:'100%',border:'none',minHeight:'calc(100vh - 110px)'}} title="CV"/>
+                        :<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%'}}><a href={cd.cvUrl} download style={{padding:'12px 24px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:16}}>⬇️ הורד קובץ</a></div>
                     :<div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:8,color:'#aaa'}}>
                       <div style={{fontSize:56,opacity:.2}}>📄</div>
                       <div style={{fontSize:15,fontWeight:600}}>לא צורף CV</div>
@@ -2692,11 +2694,22 @@ function Candidates({data,setData}){
   const parseWithAI=async(text)=>{
     const domains=(data.jobDomains||[]).map(d=>d.name).join(', ');
     const prompt='אתה מנתח קורות חיים. חלץ את המידע הבא מהטקסט ותחזיר JSON בלבד ללא הסבר:\n{"name":"שם מלא","phone":"טלפון","email":"אימייל","city":"עיר","birthDate":"YYYY-MM-DD","gender":"זכר/נקבה/אחר","maritalStatus":"רווק/ה/נשוי/אה/גרוש/ה/אלמן/ה","drivingLicense":"יש/אין","education":"השכלה","experience":"ניסיון","domain":"תחום מתוך: '+domains+'","role":"תפקיד","minSalary":"שכר מינימום מספר בלבד","notes":"הערות"}\nאם שדה לא נמצא השאר ריק. טקסט:\n'+text.slice(0,4000);
-    const res=await fetch('/.netlify/functions/claude-proxy',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5-20250929',max_tokens:1000,messages:[{role:'user',content:prompt}]})
-    });
+    const payload={model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]};
+    let res;
+    if(CLAUDE_API_KEY){
+      res=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':CLAUDE_API_KEY,'anthropic-version':'2023-06-01'},
+        body:JSON.stringify(payload)
+      });
+    } else {
+      res=await fetch('/.netlify/functions/claude-proxy',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+    }
+    if(!res.ok){const err=await res.text();throw new Error('API '+res.status+': '+err.slice(0,200));}
     const data2=await res.json();
     const raw=data2?.content?.[0]?.text||'{}';
     try{return JSON.parse(raw.replace(/```json|```/g,'').trim());}
@@ -2716,7 +2729,11 @@ function Candidates({data,setData}){
     try{
       const text=await extractTextFromFile(form._cvFile);
       if(text.trim().length>50){const parsed=await parseWithAI(text);applyParsedFields(parsed);}
-    }catch(err){console.warn('CV parsing failed:',err);}
+      else{alert('לא נמצא טקסט בקובץ לפיענוח');}
+    }catch(err){
+      console.warn('CV parsing failed:',err);
+      alert('שגיאה בפיענוח קורות חיים:\n'+err.message+'\n\nוודא שה-CLAUDE_API_KEY מוגדר בקוד (שורה 140).');
+    }
     finally{setCvParsing(false);}
   };
 
@@ -3198,10 +3215,12 @@ function Candidates({data,setData}){
                 {detail.cvUrl
                   ? detail.cvUrl.toLowerCase().endsWith('.pdf')
                     ? <iframe src={detail.cvUrl} style={{width:'100%',height:'100%',border:'none',minHeight:'calc(100vh - 110px)'}} title="קורות חיים"/>
-                    : <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:16,padding:24}}>
-                        <div style={{fontSize:56}}>📄</div>
-                        <a href={detail.cvUrl} target="_blank" rel="noreferrer" style={{padding:'12px 24px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:16}}>📂 פתח קורות חיים</a>
-                      </div>
+                    : (detail.cvUrl.toLowerCase().endsWith('.docx')||detail.cvUrl.toLowerCase().endsWith('.doc'))
+                      ? <iframe src={'https://docs.google.com/gview?url='+encodeURIComponent(detail.cvUrl)+'&embedded=true'} style={{width:'100%',height:'100%',border:'none',minHeight:'calc(100vh - 110px)'}} title="קורות חיים"/>
+                      : <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:16,padding:24}}>
+                          <div style={{fontSize:56}}>📄</div>
+                          <a href={detail.cvUrl} download style={{padding:'12px 24px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:16}}>⬇️ הורד קובץ</a>
+                        </div>
                   : <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:12,padding:24}}>
                       <div style={{fontSize:56,opacity:.2}}>📄</div>
                       <div style={{color:'#888',fontSize:15,fontWeight:600}}>לא צורף קובץ CV</div>
@@ -3391,10 +3410,12 @@ function Candidates({data,setData}){
             {modal==='edit'&&form.cvUrl
               ? form.cvUrl.toLowerCase().endsWith('.pdf')
                 ? <iframe src={form.cvUrl} style={{width:'100%',height:'calc(90vh - 200px)',border:'none',display:'block'}} title="CV"/>
-                : <div style={{height:'calc(90vh - 200px)',background:'#f0fdf4',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12}}>
-                    <div style={{fontSize:48}}>📄</div>
-                    <a href={form.cvUrl} target="_blank" rel="noreferrer" style={{padding:'10px 20px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14}}>פתח קובץ</a>
-                  </div>
+                : (form.cvUrl.toLowerCase().endsWith('.docx')||form.cvUrl.toLowerCase().endsWith('.doc'))
+                  ? <iframe src={'https://docs.google.com/gview?url='+encodeURIComponent(form.cvUrl)+'&embedded=true'} style={{width:'100%',height:'calc(90vh - 200px)',border:'none',display:'block'}} title="CV"/>
+                  : <div style={{height:'calc(90vh - 200px)',background:'#f0fdf4',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12}}>
+                      <div style={{fontSize:48}}>📄</div>
+                      <a href={form.cvUrl} download style={{padding:'10px 20px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14}}>⬇️ הורד קובץ</a>
+                    </div>
               : <div
                     onDragOver={e=>{e.preventDefault();setCvDrag(true);}}
                     onDragLeave={()=>setCvDrag(false)}
