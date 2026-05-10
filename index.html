@@ -2666,6 +2666,12 @@ function Candidates({data,setData}){
   const [cvDrag,setCvDrag]=React.useState(false);
   const [cvParsing,setCvParsing]=React.useState(false);
   const [aiFields,setAiFields]=React.useState({});
+  const [dupWarn,setDupWarn]=React.useState(null);
+
+  const checkDupId=(idNum,currentId)=>{
+    if(!idNum||!idNum.trim())return null;
+    return data.candidates.find(c=>c.idNumber&&c.idNumber.trim()===idNum.trim()&&c.id!==currentId)||null;
+  };
 
   // ── CV Parsing functions ──
   const extractTextFromFile=async(file)=>{
@@ -2693,7 +2699,7 @@ function Candidates({data,setData}){
 
   const parseWithAI=async(text)=>{
     const domains=(data.jobDomains||[]).map(d=>d.name).join(', ');
-    const prompt='אתה מנתח קורות חיים. חלץ את המידע הבא מהטקסט ותחזיר JSON בלבד ללא הסבר:\n{"name":"שם מלא","phone":"טלפון","email":"אימייל","city":"עיר","birthDate":"YYYY-MM-DD","gender":"זכר/נקבה/אחר","maritalStatus":"רווק/ה/נשוי/אה/גרוש/ה/אלמן/ה","drivingLicense":"יש/אין","education":"השכלה","experience":"ניסיון","domain":"תחום מתוך: '+domains+'","role":"תפקיד","minSalary":"שכר מינימום מספר בלבד","notes":"הערות"}\nאם שדה לא נמצא השאר ריק. טקסט:\n'+text.slice(0,4000);
+    const prompt='אתה מנתח קורות חיים. חלץ את המידע הבא מהטקסט ותחזיר JSON בלבד ללא הסבר:\n{"name":"שם מלא","idNumber":"תעודת זהות מספרים בלבד","phone":"טלפון","email":"אימייל","city":"עיר","birthDate":"YYYY-MM-DD","gender":"זכר/נקבה/אחר","maritalStatus":"רווק/ה/נשוי/אה/גרוש/ה/אלמן/ה","drivingLicense":"יש/אין","education":"השכלה","experience":"ניסיון","domain":"תחום מתוך: '+domains+'","role":"תפקיד","minSalary":"שכר מינימום מספר בלבד","notes":"הערות"}\nאם שדה לא נמצא השאר ריק. טקסט:\n'+text.slice(0,4000);
     const payload={model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]};
     let res;
     if(CLAUDE_API_KEY){
@@ -2718,9 +2724,20 @@ function Candidates({data,setData}){
 
   const applyParsedFields=(parsed)=>{
     const filled={};const updates={};
-    const fields=['name','phone','email','city','birthDate','gender','maritalStatus','drivingLicense','education','experience','domain','role','minSalary','notes'];
+    const fields=['name','idNumber','phone','email','city','birthDate','gender','maritalStatus','drivingLicense','education','experience','domain','role','minSalary','notes'];
     fields.forEach(k=>{if(parsed[k]&&parsed[k].trim&&parsed[k].trim()){updates[k]=parsed[k].trim();filled[k]=true;}});
-    if(Object.keys(updates).length>0){setForm(f=>({...f,...updates}));setAiFields(filled);setTimeout(()=>setAiFields({}),3500);}
+    if(Object.keys(updates).length>0){
+      setForm(f=>({...f,...updates}));
+      setAiFields(filled);
+      setTimeout(()=>setAiFields({}),3500);
+      if(updates.idNumber){
+        setForm(f=>{
+          const dup=checkDupId(updates.idNumber,f.id);
+          setDupWarn(dup||null);
+          return f;
+        });
+      }
+    }
   };
 
   const runParseOnExisting=async()=>{
@@ -2771,8 +2788,8 @@ function Candidates({data,setData}){
   const pendingIds=new Set(data.pendingCandidates||[]);
   const filtered=data.candidates.filter(c=>!pendingIds.has(c.id)&&(c.name.includes(search)||c.role.includes(search)||(c.city||'').includes(search))&&(stFilter==='הכל'||c.status===stFilter));
   const pendingList=(data.pendingCandidates||[]).map(id=>data.candidates.find(c=>c.id===id)).filter(Boolean);
-  const openAdd=()=>{setForm({name:'',domain:'',role:'',phone:'',email:'',city:'',status:data.defaults?.candidateStatus||'חדש',experience:'',education:'',appliedJobs:[],cv:false,notes:'',idNumber:'',gender:'',maritalStatus:'',drivingLicense:'',mobility:'',birthDate:'',minSalary:'',maxSalary:'',testScore:'',leadSource:'',langHebrew:'שפת אם',langEnglish:'',langArabic:'',langRussian:'',langSpanish:'',langFrench:'',langAmharic:''});setModal('add');};
-  const openEdit=c=>{setForm({idNumber:'',gender:'',maritalStatus:'',drivingLicense:'',mobility:'',birthDate:'',minSalary:'',maxSalary:'',testScore:'',leadSource:'',langHebrew:'שפת אם',langEnglish:'',langArabic:'',langRussian:'',langSpanish:'',langFrench:'',langAmharic:'',...c,appliedJobs:[...c.appliedJobs]});setModal('edit');};
+  const openAdd=()=>{setDupWarn(null);setForm({name:'',domain:'',role:'',phone:'',email:'',city:'',status:data.defaults?.candidateStatus||'חדש',experience:'',education:'',appliedJobs:[],cv:false,notes:'',idNumber:'',gender:'',maritalStatus:'',drivingLicense:'',mobility:'',birthDate:'',minSalary:'',maxSalary:'',testScore:'',leadSource:'',langHebrew:'שפת אם',langEnglish:'',langArabic:'',langRussian:'',langSpanish:'',langFrench:'',langAmharic:''});setModal('add');};
+  const openEdit=c=>{setDupWarn(null);setForm({idNumber:'',gender:'',maritalStatus:'',drivingLicense:'',mobility:'',birthDate:'',minSalary:'',maxSalary:'',testScore:'',leadSource:'',langHebrew:'שפת אם',langEnglish:'',langArabic:'',langRussian:'',langSpanish:'',langFrench:'',langAmharic:'',...c,appliedJobs:[...c.appliedJobs]});setModal('edit');};
   const [placeModal,setPlaceModal]=React.useState(null); // {candidateId, jobs:[]}
 
   // פונקציה אטומית: מעדכנת מועמד + משרה בפעולה אחת
@@ -2805,6 +2822,10 @@ function Candidates({data,setData}){
   };
   const save=()=>{
     const isAdd=modal==='add';
+    if(form.idNumber&&form.idNumber.trim()){
+      const dup=checkDupId(form.idNumber,form.id);
+      if(dup&&!confirm('⚠️ מועמד עם תעודת זהות זהה כבר קיים במערכת:\n\n'+dup.name+'\n\nלהמשיך ולשמור בכל זאת?'))return;
+    }
     const entry=mkLog('candidate',isAdd?'added':'updated',form.name);
     if(isAdd){
       const newId='c'+Date.now();
@@ -3264,6 +3285,15 @@ function Candidates({data,setData}){
         </div>
       </div>
 
+      {dupWarn&&<div style={{background:'#fef2f2',border:'2px solid #f87171',borderRadius:10,padding:'12px 16px',marginBottom:12,display:'flex',alignItems:'center',gap:12}}>
+        <span style={{fontSize:22,flexShrink:0}}>⚠️</span>
+        <div style={{flex:1}}>
+          <div style={{fontWeight:800,fontSize:14,color:'#dc2626'}}>מועמד עם תעודת זהות זהה כבר קיים במערכת!</div>
+          <div style={{fontSize:13,color:'#991b1b',marginTop:2}}>{dupWarn.name} · ת.ז. {dupWarn.idNumber}</div>
+        </div>
+        <button onClick={()=>setDupWarn(null)} style={{background:'none',border:'none',cursor:'pointer',fontSize:18,color:'#dc2626',padding:'0 4px',lineHeight:1}}>✕</button>
+      </div>}
+
       <div style={{display:'grid',gridTemplateColumns:'58% 42%',gap:18,alignItems:'start'}}>
 
         {/* COL 1 — טופס מימין */}
@@ -3272,7 +3302,7 @@ function Candidates({data,setData}){
           <FormCard title="פרטים אישיים" icon="👤" color="#fff5f0">
             <FormGrid>
               <FF label="שם מלא" value={form.name||''} onChange={v=>setForm(f=>({...f,name:v}))} full={true}/>
-              <FF label="תעודת זהות" value={form.idNumber||''} onChange={v=>setForm(f=>({...f,idNumber:v}))}/>
+              <FF label="תעודת זהות" value={form.idNumber||''} onChange={v=>{setForm(f=>({...f,idNumber:v}));setDupWarn(checkDupId(v,form.id));}} aiHighlight={!!aiFields["idNumber"]}/>
               <FF label="טלפון" value={form.phone||''} onChange={v=>setForm(f=>({...f,phone:v}))} aiHighlight={!!aiFields["phone"]}/>
               <FF label="אימייל" type="email" value={form.email||''} onChange={v=>setForm(f=>({...f,email:v}))} aiHighlight={!!aiFields["email"]}/>
               <FF label="עיר" value={form.city||''} onChange={v=>setForm(f=>({...f,city:v}))} aiHighlight={!!aiFields["city"]}/>
