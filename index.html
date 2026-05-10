@@ -2667,6 +2667,8 @@ function Candidates({data,setData}){
   const [cvParsing,setCvParsing]=React.useState(false);
   const [aiFields,setAiFields]=React.useState({});
   const [dupWarn,setDupWarn]=React.useState(null);
+  const [cvBlobUrl,setCvBlobUrl]=React.useState('');
+  const [cvPreviewHtml,setCvPreviewHtml]=React.useState('');
 
   const checkDupId=(idNum,currentId)=>{
     if(!idNum||!idNum.trim())return null;
@@ -2693,14 +2695,24 @@ function Candidates({data,setData}){
       const ab=await file.arrayBuffer();
       const result=await mammoth.extractRawText({arrayBuffer:ab});
       return result.value;
+    } else if(['jpg','jpeg','png','webp','gif'].includes(ext)){
+      return new Promise(resolve=>{
+        const reader=new FileReader();
+        reader.onload=e=>resolve({type:'image',base64:e.target.result.split(',')[1],mediaType:file.type||'image/jpeg'});
+        reader.readAsDataURL(file);
+      });
     }
     return '';
   };
 
-  const parseWithAI=async(text)=>{
+  const parseWithAI=async(input)=>{
     const domains=(data.jobDomains||[]).map(d=>d.name).join(', ');
-    const prompt='אתה מנתח קורות חיים. חלץ את המידע הבא מהטקסט ותחזיר JSON בלבד ללא הסבר:\n{"name":"שם מלא","idNumber":"תעודת זהות מספרים בלבד","phone":"טלפון","email":"אימייל","city":"עיר","birthDate":"YYYY-MM-DD","gender":"זכר/נקבה/אחר","maritalStatus":"רווק/ה/נשוי/אה/גרוש/ה/אלמן/ה","drivingLicense":"יש/אין","education":"השכלה","experience":"ניסיון","domain":"תחום מתוך: '+domains+'","role":"תפקיד","minSalary":"שכר מינימום מספר בלבד","notes":"הערות","langHebrew":"שליטה בעברית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langEnglish":"שליטה באנגלית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langArabic":"שליטה בערבית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langRussian":"שליטה ברוסית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langAmharic":"שליטה באמהרית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langSpanish":"שליטה בספרדית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langFrench":"שליטה בצרפתית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר"}\nהוראות שפות: חלץ רק שפות שמוזכרות במפורש. אל תניח עברית כשפת אם אלא אם כתוב. אם שדה לא נמצא השאר ריק. טקסט:\n'+text.slice(0,4000);
-    const payload={model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]};
+    const prompt='אתה מנתח קורות חיים. חלץ את המידע הבא מהטקסט ותחזיר JSON בלבד ללא הסבר:\n{"name":"שם מלא","idNumber":"תעודת זהות מספרים בלבד","phone":"טלפון","email":"אימייל","city":"עיר","birthDate":"YYYY-MM-DD","gender":"זכר/נקבה/אחר","maritalStatus":"רווק/ה/נשוי/אה/גרוש/ה/אלמן/ה","drivingLicense":"יש/אין","education":"השכלה","experience":"ניסיון","domain":"תחום מתוך: '+domains+'","role":"תפקיד","minSalary":"שכר מינימום מספר בלבד","notes":"הערות","langHebrew":"שליטה בעברית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langEnglish":"שליטה באנגלית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langArabic":"שליטה בערבית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langRussian":"שליטה ברוסית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langAmharic":"שליטה באמהרית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langSpanish":"שליטה בספרדית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langFrench":"שליטה בצרפתית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר"}\nהוראות שפות: חלץ רק שפות שמוזכרות במפורש. אל תניח עברית כשפת אם אלא אם כתוב. אם שדה לא נמצא השאר ריק.';
+    const isImage=typeof input==='object'&&input.type==='image';
+    const messageContent=isImage
+      ?[{type:'image',source:{type:'base64',media_type:input.mediaType,data:input.base64}},{type:'text',text:prompt+'\nנתח את תמונת קורות החיים.'}]
+      :prompt+'\n טקסט:\n'+input.slice(0,4000);
+    const payload={model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:messageContent}]};
     let res;
     if(CLAUDE_API_KEY){
       res=await fetch('https://api.anthropic.com/v1/messages',{
@@ -2744,8 +2756,9 @@ function Candidates({data,setData}){
     if(!form._cvFile)return;
     setCvParsing(true);
     try{
-      const text=await extractTextFromFile(form._cvFile);
-      if(text.trim().length>50){const parsed=await parseWithAI(text);applyParsedFields(parsed);}
+      const result=await extractTextFromFile(form._cvFile);
+      const isImage=typeof result==='object'&&result.type==='image';
+      if(isImage||result.trim().length>50){const parsed=await parseWithAI(result);applyParsedFields(parsed);}
       else{alert('לא נמצא טקסט בקובץ לפיענוח');}
     }catch(err){
       console.warn('CV parsing failed:',err);
@@ -2759,10 +2772,17 @@ function Candidates({data,setData}){
     const file=e.dataTransfer?.files?.[0]||e.target?.files?.[0];
     if(!file)return;
     setForm(f=>({...f,_cvFile:file,_cvName:file.name}));
+    setCvBlobUrl(URL.createObjectURL(file));
+    const fext=file.name.split('.').pop().toLowerCase();
+    if(fext==='docx'||fext==='doc'){
+      try{const ab=await file.arrayBuffer();const r=await mammoth.convertToHtml({arrayBuffer:ab});setCvPreviewHtml(r.value);}
+      catch{setCvPreviewHtml('');}
+    } else {setCvPreviewHtml('');}
     setCvParsing(true);
     try{
-      const text=await extractTextFromFile(file);
-      if(text.trim().length>50){const parsed=await parseWithAI(text);applyParsedFields(parsed);}
+      const result=await extractTextFromFile(file);
+      const isImage=typeof result==='object'&&result.type==='image';
+      if(isImage||result.trim().length>50){const parsed=await parseWithAI(result);applyParsedFields(parsed);}
     }catch(err){console.warn('CV parsing failed:',err);}
     finally{setCvParsing(false);}
     if(modal==='edit'&&form.id){
@@ -2788,8 +2808,8 @@ function Candidates({data,setData}){
   const pendingIds=new Set(data.pendingCandidates||[]);
   const filtered=data.candidates.filter(c=>!pendingIds.has(c.id)&&(c.name.includes(search)||c.role.includes(search)||(c.city||'').includes(search))&&(stFilter==='הכל'||c.status===stFilter));
   const pendingList=(data.pendingCandidates||[]).map(id=>data.candidates.find(c=>c.id===id)).filter(Boolean);
-  const openAdd=()=>{setDupWarn(null);setForm({name:'',domain:'',role:'',phone:'',email:'',city:'',status:data.defaults?.candidateStatus||'חדש',experience:'',education:'',appliedJobs:[],cv:false,notes:'',idNumber:'',gender:'',maritalStatus:'',drivingLicense:'',mobility:'',birthDate:'',minSalary:'',maxSalary:'',testScore:'',leadSource:'',langHebrew:'',langEnglish:'',langArabic:'',langRussian:'',langSpanish:'',langFrench:'',langAmharic:''});setModal('add');};
-  const openEdit=c=>{setDupWarn(null);setForm({idNumber:'',gender:'',maritalStatus:'',drivingLicense:'',mobility:'',birthDate:'',minSalary:'',maxSalary:'',testScore:'',leadSource:'',langHebrew:'',langEnglish:'',langArabic:'',langRussian:'',langSpanish:'',langFrench:'',langAmharic:'',...c,appliedJobs:[...c.appliedJobs]});setModal('edit');};
+  const openAdd=()=>{setDupWarn(null);setCvBlobUrl('');setCvPreviewHtml('');setForm({name:'',domain:'',role:'',phone:'',email:'',city:'',status:data.defaults?.candidateStatus||'חדש',experience:'',education:'',appliedJobs:[],cv:false,notes:'',idNumber:'',gender:'',maritalStatus:'',drivingLicense:'',mobility:'',birthDate:'',minSalary:'',maxSalary:'',testScore:'',leadSource:'',langHebrew:'',langEnglish:'',langArabic:'',langRussian:'',langSpanish:'',langFrench:'',langAmharic:''});setModal('add');};
+  const openEdit=c=>{setDupWarn(null);setCvBlobUrl('');setCvPreviewHtml('');setForm({idNumber:'',gender:'',maritalStatus:'',drivingLicense:'',mobility:'',birthDate:'',minSalary:'',maxSalary:'',testScore:'',leadSource:'',langHebrew:'',langEnglish:'',langArabic:'',langRussian:'',langSpanish:'',langFrench:'',langAmharic:'',...c,appliedJobs:[...c.appliedJobs]});setModal('edit');};
   const [placeModal,setPlaceModal]=React.useState(null); // {candidateId, jobs:[]}
 
   // פונקציה אטומית: מעדכנת מועמד + משרה בפעולה אחת
@@ -3440,27 +3460,62 @@ function Candidates({data,setData}){
             <div style={{background:'#1a1a2e',padding:'12px 18px',display:'flex',alignItems:'center',gap:8}}>
               <div style={{fontSize:16}}>📄</div>
               <div style={{fontWeight:800,fontSize:14,color:'white',flex:1}}>קורות חיים</div>
-              {modal==='edit'&&form.cvUrl&&<>
-                <a href={form.cvUrl} target="_blank" rel="noreferrer" style={{padding:'4px 12px',background:'#e85d26',color:'white',borderRadius:6,textDecoration:'none',fontWeight:700,fontSize:12}}>פתח</a>
-                <a href={form.cvUrl} download style={{padding:'4px 10px',background:'rgba(255,255,255,0.15)',color:'white',borderRadius:6,textDecoration:'none',fontWeight:700,fontSize:12}}>⬇️</a>
-              </>}
+              {form._cvFile
+                ?<a href={cvBlobUrl} target="_blank" rel="noreferrer" style={{padding:'4px 12px',background:'#e85d26',color:'white',borderRadius:6,textDecoration:'none',fontWeight:700,fontSize:12}}>פתח</a>
+                :modal==='edit'&&form.cvUrl&&<>
+                  <a href={form.cvUrl} target="_blank" rel="noreferrer" style={{padding:'4px 12px',background:'#e85d26',color:'white',borderRadius:6,textDecoration:'none',fontWeight:700,fontSize:12}}>פתח</a>
+                  <a href={form.cvUrl} download style={{padding:'4px 10px',background:'rgba(255,255,255,0.15)',color:'white',borderRadius:6,textDecoration:'none',fontWeight:700,fontSize:12}}>⬇️</a>
+                </>}
             </div>
-            {modal==='edit'&&form.cvUrl
-              ? form.cvUrl.toLowerCase().endsWith('.pdf')
-                ? <iframe src={form.cvUrl} style={{width:'100%',height:'calc(90vh - 200px)',border:'none',display:'block'}} title="CV"/>
-                : (form.cvUrl.toLowerCase().endsWith('.docx')||form.cvUrl.toLowerCase().endsWith('.doc'))
-                  ? <iframe src={'https://docs.google.com/gview?url='+encodeURIComponent(form.cvUrl)+'&embedded=true'} style={{width:'100%',height:'calc(90vh - 200px)',border:'none',display:'block'}} title="CV"/>
-                  : <div style={{height:'calc(90vh - 200px)',background:'#f0fdf4',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12}}>
-                      <div style={{fontSize:48}}>📄</div>
-                      <a href={form.cvUrl} download style={{padding:'10px 20px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14}}>⬇️ הורד קובץ</a>
+            {form._cvFile
+              ?(()=>{
+                  const fext=form._cvFile.name.split('.').pop().toLowerCase();
+                  return <>
+                    {fext==='pdf'
+                      ?<iframe src={cvBlobUrl} style={{width:'100%',height:'calc(90vh - 260px)',border:'none',display:'block'}} title="CV"/>
+                      :(fext==='docx'||fext==='doc')
+                        ?cvPreviewHtml
+                          ?<div style={{height:'calc(90vh - 260px)',overflow:'auto',padding:16,direction:'rtl',fontSize:13}} dangerouslySetInnerHTML={{__html:cvPreviewHtml}}/>
+                          :<div style={{height:'calc(90vh - 260px)',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12,padding:24}}>
+                              <div style={{fontSize:44}}>📄</div>
+                              <div style={{fontWeight:700,color:'#374151',textAlign:'center'}}>{form._cvFile.name}</div>
+                              <div style={{fontSize:12,color:'#6b7280'}}>טוען תצוגה מקדימה...</div>
+                            </div>
+                        :['jpg','jpeg','png','webp','gif'].includes(fext)
+                          ?<div style={{height:'calc(90vh - 260px)',overflow:'auto',padding:16,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                              <img src={cvBlobUrl} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}} alt="CV"/>
+                            </div>
+                          :<div style={{height:'calc(90vh - 260px)',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12}}>
+                              <div style={{fontSize:48}}>📄</div>
+                              <a href={cvBlobUrl} download={form._cvFile.name} style={{padding:'10px 20px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14}}>⬇️ הורד קובץ</a>
+                            </div>
+                    }
+                    <div style={{padding:'8px 12px',borderTop:'1px solid #e5e7eb',display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+                      <button type="button" onClick={e=>{e.stopPropagation();document.getElementById('cv-upload-input').click();}} style={{padding:'6px 14px',background:'white',border:'2px solid #d1d5db',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:12,cursor:'pointer',color:'#374151'}}>📂 החלף קובץ</button>
+                      {cvParsing
+                        ?<div style={{fontSize:12,color:'#3b82f6',fontWeight:700,display:'flex',alignItems:'center',gap:6}}><span>🤖</span><span>מפענח...</span></div>
+                        :<button type="button" onClick={e=>{e.stopPropagation();runParseOnExisting();}} style={{padding:'7px 16px',background:'linear-gradient(135deg,#3b82f6,#2563eb)',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:800,fontSize:12,cursor:'pointer',color:'white',boxShadow:'0 2px 8px rgba(59,130,246,0.4)'}}>🤖 זהה שדות אוטומטית</button>
+                      }
+                      <input id="cv-upload-input" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.gif" style={{display:'none'}} onChange={handleCvDrop}/>
                     </div>
-              : <div
+                  </>;
+                })()
+              :modal==='edit'&&form.cvUrl
+                ?form.cvUrl.toLowerCase().endsWith('.pdf')
+                  ?<iframe src={form.cvUrl} style={{width:'100%',height:'calc(90vh - 200px)',border:'none',display:'block'}} title="CV"/>
+                  :(form.cvUrl.toLowerCase().endsWith('.docx')||form.cvUrl.toLowerCase().endsWith('.doc'))
+                    ?<iframe src={'https://docs.google.com/gview?url='+encodeURIComponent(form.cvUrl)+'&embedded=true'} style={{width:'100%',height:'calc(90vh - 200px)',border:'none',display:'block'}} title="CV"/>
+                    :<div style={{height:'calc(90vh - 200px)',background:'#f0fdf4',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12}}>
+                        <div style={{fontSize:48}}>📄</div>
+                        <a href={form.cvUrl} download style={{padding:'10px 20px',background:'#e85d26',color:'white',borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14}}>⬇️ הורד קובץ</a>
+                      </div>
+                :<div
                     onDragOver={e=>{e.preventDefault();setCvDrag(true);}}
                     onDragLeave={()=>setCvDrag(false)}
                     onDrop={handleCvDrop}
                     style={{height:'calc(90vh - 200px)',background:cvDrag?'#fff5f0':cvParsing?'#eff6ff':'#f8f9fb',border:'2px dashed '+(cvDrag?'#e85d26':cvParsing?'#3b82f6':'#d1d5db'),display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12,transition:'all .2s',padding:24}}>
                     {cvParsing
-                      ? <>
+                      ?<>
                           <div style={{fontSize:44}}>🤖</div>
                           <div style={{fontWeight:800,fontSize:15,color:'#3b82f6',textAlign:'center'}}>מפענח נתונים...</div>
                           <div style={{fontSize:12,color:'#60a5fa',textAlign:'center'}}>הבינה המלאכותית מנתחת את קורות החיים</div>
@@ -3468,25 +3523,18 @@ function Candidates({data,setData}){
                             <div style={{height:'100%',width:'40%',background:'linear-gradient(90deg,#3b82f6,#60a5fa)',borderRadius:3,animation:'parsing-shimmer 1s infinite'}}/>
                           </div>
                         </>
-                      : <>
+                      :<>
                           <div style={{fontSize:52,opacity:cvDrag?1:.35}}>📄</div>
-                          <div style={{fontWeight:800,fontSize:15,color:cvDrag?'#e85d26':'#374151',textAlign:'center'}}>
-                            {form._cvName||'גרור קורות חיים לכאן'}
-                          </div>
-                          {!form._cvName&&<div style={{fontSize:12,color:'#9ca3af',textAlign:'center'}}>גרור לכאן · PDF / DOC / DOCX</div>}
+                          <div style={{fontWeight:800,fontSize:15,color:cvDrag?'#e85d26':'#374151',textAlign:'center'}}>{form._cvName||'גרור קורות חיים לכאן'}</div>
+                          {!form._cvName&&<div style={{fontSize:12,color:'#9ca3af',textAlign:'center'}}>גרור לכאן · PDF / DOC / DOCX / תמונה</div>}
                           <button type="button"
                             onClick={e=>{e.stopPropagation();document.getElementById('cv-upload-input').click();}}
                             style={{padding:'8px 18px',background:'white',border:'2px solid #d1d5db',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',color:'#374151',marginTop:4}}>
-                            📂 {form._cvName?'החלף קובץ':'בחר קובץ'}
+                            📂 בחר קובץ
                           </button>
-                          {form._cvFile&&<button type="button"
-                            onClick={e=>{e.stopPropagation();runParseOnExisting();}}
-                            style={{padding:'9px 20px',background:'linear-gradient(135deg,#3b82f6,#2563eb)',border:'none',borderRadius:9,fontFamily:'Heebo',fontWeight:800,fontSize:13,cursor:'pointer',color:'white',boxShadow:'0 4px 12px rgba(59,130,246,0.4)',display:'flex',alignItems:'center',gap:6}}>
-                            🤖 זהה שדות אוטומטית
-                          </button>}
                         </>
                     }
-                    <input id="cv-upload-input" type="file" accept=".pdf,.doc,.docx" style={{display:'none'}} onChange={handleCvDrop}/>
+                    <input id="cv-upload-input" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.gif" style={{display:'none'}} onChange={handleCvDrop}/>
                   </div>
             }
           </div>
