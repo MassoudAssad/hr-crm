@@ -2699,7 +2699,7 @@ function Candidates({data,setData}){
 
   const parseWithAI=async(text)=>{
     const domains=(data.jobDomains||[]).map(d=>d.name).join(', ');
-    const prompt='אתה מנתח קורות חיים. חלץ את המידע הבא מהטקסט ותחזיר JSON בלבד ללא הסבר:\n{"name":"שם מלא","idNumber":"תעודת זהות מספרים בלבד","phone":"טלפון","email":"אימייל","city":"עיר","birthDate":"YYYY-MM-DD","gender":"זכר/נקבה/אחר","maritalStatus":"רווק/ה/נשוי/אה/גרוש/ה/אלמן/ה","drivingLicense":"יש/אין","education":"השכלה","experience":"ניסיון","domain":"תחום מתוך: '+domains+'","role":"תפקיד","minSalary":"שכר מינימום מספר בלבד","notes":"הערות"}\nאם שדה לא נמצא השאר ריק. טקסט:\n'+text.slice(0,4000);
+    const prompt='אתה מנתח קורות חיים. חלץ את המידע הבא מהטקסט ותחזיר JSON בלבד ללא הסבר:\n{"name":"שם מלא","idNumber":"תעודת זהות מספרים בלבד","phone":"טלפון","email":"אימייל","city":"עיר","birthDate":"YYYY-MM-DD","gender":"זכר/נקבה/אחר","maritalStatus":"רווק/ה/נשוי/אה/גרוש/ה/אלמן/ה","drivingLicense":"יש/אין","education":"השכלה","experience":"ניסיון","domain":"תחום מתוך: '+domains+'","role":"תפקיד","minSalary":"שכר מינימום מספר בלבד","notes":"הערות","langHebrew":"שליטה בעברית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langEnglish":"שליטה באנגלית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langArabic":"שליטה בערבית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langRussian":"שליטה ברוסית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langAmharic":"שליטה באמהרית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langSpanish":"שליטה בספרדית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר","langFrench":"שליטה בצרפתית: שפת אם / טובה מאוד / טובה / בסיסית — ריק אם לא מוזכר"}\nהוראות שפות: חלץ רק שפות שמוזכרות במפורש. אל תניח עברית כשפת אם אלא אם כתוב. אם שדה לא נמצא השאר ריק. טקסט:\n'+text.slice(0,4000);
     const payload={model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]};
     let res;
     if(CLAUDE_API_KEY){
@@ -2724,7 +2724,7 @@ function Candidates({data,setData}){
 
   const applyParsedFields=(parsed)=>{
     const filled={};const updates={};
-    const fields=['name','idNumber','phone','email','city','birthDate','gender','maritalStatus','drivingLicense','education','experience','domain','role','minSalary','notes'];
+    const fields=['name','idNumber','phone','email','city','birthDate','gender','maritalStatus','drivingLicense','education','experience','domain','role','minSalary','notes','langHebrew','langEnglish','langArabic','langRussian','langAmharic','langSpanish','langFrench'];
     fields.forEach(k=>{if(parsed[k]&&parsed[k].trim&&parsed[k].trim()){updates[k]=parsed[k].trim();filled[k]=true;}});
     if(Object.keys(updates).length>0){
       setForm(f=>({...f,...updates}));
@@ -2788,8 +2788,8 @@ function Candidates({data,setData}){
   const pendingIds=new Set(data.pendingCandidates||[]);
   const filtered=data.candidates.filter(c=>!pendingIds.has(c.id)&&(c.name.includes(search)||c.role.includes(search)||(c.city||'').includes(search))&&(stFilter==='הכל'||c.status===stFilter));
   const pendingList=(data.pendingCandidates||[]).map(id=>data.candidates.find(c=>c.id===id)).filter(Boolean);
-  const openAdd=()=>{setDupWarn(null);setForm({name:'',domain:'',role:'',phone:'',email:'',city:'',status:data.defaults?.candidateStatus||'חדש',experience:'',education:'',appliedJobs:[],cv:false,notes:'',idNumber:'',gender:'',maritalStatus:'',drivingLicense:'',mobility:'',birthDate:'',minSalary:'',maxSalary:'',testScore:'',leadSource:'',langHebrew:'שפת אם',langEnglish:'',langArabic:'',langRussian:'',langSpanish:'',langFrench:'',langAmharic:''});setModal('add');};
-  const openEdit=c=>{setDupWarn(null);setForm({idNumber:'',gender:'',maritalStatus:'',drivingLicense:'',mobility:'',birthDate:'',minSalary:'',maxSalary:'',testScore:'',leadSource:'',langHebrew:'שפת אם',langEnglish:'',langArabic:'',langRussian:'',langSpanish:'',langFrench:'',langAmharic:'',...c,appliedJobs:[...c.appliedJobs]});setModal('edit');};
+  const openAdd=()=>{setDupWarn(null);setForm({name:'',domain:'',role:'',phone:'',email:'',city:'',status:data.defaults?.candidateStatus||'חדש',experience:'',education:'',appliedJobs:[],cv:false,notes:'',idNumber:'',gender:'',maritalStatus:'',drivingLicense:'',mobility:'',birthDate:'',minSalary:'',maxSalary:'',testScore:'',leadSource:'',langHebrew:'',langEnglish:'',langArabic:'',langRussian:'',langSpanish:'',langFrench:'',langAmharic:''});setModal('add');};
+  const openEdit=c=>{setDupWarn(null);setForm({idNumber:'',gender:'',maritalStatus:'',drivingLicense:'',mobility:'',birthDate:'',minSalary:'',maxSalary:'',testScore:'',leadSource:'',langHebrew:'',langEnglish:'',langArabic:'',langRussian:'',langSpanish:'',langFrench:'',langAmharic:'',...c,appliedJobs:[...c.appliedJobs]});setModal('edit');};
   const [placeModal,setPlaceModal]=React.useState(null); // {candidateId, jobs:[]}
 
   // פונקציה אטומית: מעדכנת מועמד + משרה בפעולה אחת
@@ -3131,8 +3131,15 @@ function Candidates({data,setData}){
                   const onBlur=e=>{e.target.style.borderColor='#d1d5db';e.target.style.boxShadow='none';};
                   const Row=({label,field,type='text',opts})=>(
                     <div className="data-field-tile">
-                      <div style={{fontSize:13,color:'#333',fontWeight:700,marginBottom:4}}>{label}</div>
-                      <div style={{fontSize:15,fontWeight:600,color:'#111',whiteSpace:'pre-wrap',wordBreak:'break-word'}}>{detailForm[field]||'—'}</div>
+                      <div style={{fontSize:12,color:'#555',fontWeight:700,marginBottom:4}}>{label}</div>
+                      {opts
+                        ?<select value={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} style={{...iStyle,boxSizing:'border-box'}} onFocus={onFocus} onBlur={onBlur}>
+                            {opts.map(o=><option key={o} value={o}>{o||'—'}</option>)}
+                          </select>
+                        :type==='textarea'
+                          ?<textarea value={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} style={{...iStyle,minHeight:70,resize:'vertical',boxSizing:'border-box'}} onFocus={onFocus} onBlur={onBlur} rows={3}/>
+                          :<input type={type} value={detailForm[field]||''} onChange={e=>dfSet(field,e.target.value)} style={{...iStyle,boxSizing:'border-box'}} onFocus={onFocus} onBlur={onBlur}/>
+                      }
                     </div>
                   );
 
