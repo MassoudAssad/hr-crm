@@ -2401,7 +2401,7 @@ function Jobs({data,setData}){
               <JF label="מעסיק" field="employerId" type="select" opts={data.employers.map(e=>e.id)} />
               <JF label="תחום" field="domain" type="select" opts={(data.jobDomains||[]).map(d=>d.name)}/>
               <JF label="תפקיד" field="role" type="select" opts={(data.jobDomains||[]).find(d=>d.name===detailForm.domain)?.roles||[]}/>
-              <JF label="סוג משרה" field="type" type="select" opts={['משרה מלאה','משרה חלקית','ארעי','פרויקט','מתנדב']}/>
+              <JF label="סוג משרה" field="type" type="select" opts={data.statuses?.jobTypes?.length?data.statuses.jobTypes:['משרה מלאה','חצי משרה','חלקית','משמרות','פרילנס','זמני']}/>
               <JF label="מיקום" field="location"/>
               <JF label="שכר (₪)" field="salary"/>
               <JF label="אחוז עמלה" field="commissionPct"/>
@@ -2519,7 +2519,7 @@ function Jobs({data,setData}){
                 </select>
               </div>
               <FF label="מעסיק" type="select" value={data.employers.find(e=>e.id===form.employerId)?.name||''} onChange={v=>setForm(f=>({...f,employerId:data.employers.find(e=>e.name===v)?.id||f.employerId}))} options={data.employers.map(e=>e.name)}/>
-              <FF label="סוג משרה" type="select" value={form.type||'משרה מלאה'} onChange={v=>setForm(f=>({...f,type:v}))} options={['משרה מלאה','חצי משרה','משמרות','פרילנס','זמני']}/>
+              <FF label="סוג משרה" type="select" value={form.type||'משרה מלאה'} onChange={v=>setForm(f=>({...f,type:v}))} options={data.statuses?.jobTypes?.length?data.statuses.jobTypes:['משרה מלאה','חצי משרה','חלקית','משמרות','פרילנס','זמני']}/>
               <FF label="מיקום" value={form.location||''} onChange={v=>setForm(f=>({...f,location:v}))}/>
               <div style={{marginBottom:10}}>
                 <label style={{display:'block',fontSize:12,marginBottom:4,fontWeight:700,color:'#6b7280'}}>שכר (₪)</label>
@@ -4273,7 +4273,7 @@ function Settings({data,setData}){
   };
   const delUser=id=>{if(!confirm('למחוק משתמש?'))return;const updated=users.filter(u=>u.id!==id);setUsers(updated);setData(d=>({...d,users:updated}));};
   // Statuses tab state
-  const defaultStatuses={candidates:['חדש','בתהליך','ראיון נקבע','השמה מוצלחת','נדחה'],jobs:['פתוח','ממתין','סגור'],employers:['פעיל','פסיבי']};
+  const defaultStatuses={candidates:['חדש','בתהליך','ראיון נקבע','השמה מוצלחת','נדחה'],jobs:['פתוח','ממתין','סגור'],employers:['פעיל','פסיבי'],jobTypes:['משרה מלאה','חצי משרה','חלקית','משמרות','פרילנס','זמני']};
   const [statuses,setStatuses]=React.useState(()=>data.statuses||defaultStatuses);
   const DEFAULT_INDUSTRIES=['הייטק','תעשייה','פיננסים','קמעונאות','בריאות','חינוך','אחר'];
   const [industries,setIndustries]=React.useState(()=>data.industries||DEFAULT_INDUSTRIES);
@@ -4281,7 +4281,7 @@ function Settings({data,setData}){
   const [newIndustry,setNewIndustry]=React.useState('');
   const addIndustry=()=>{const v=newIndustry.trim();if(!v||industries.includes(v))return;const updated=[...industries,v];setIndustries(updated);setData(d=>({...d,industries:updated,statuses:{...(d.statuses||{}),industries:updated}}));setNewIndustry('');};
   const delIndustry=name=>{if(industries.length<=1)return;const updated=industries.filter(i=>i!==name);setIndustries(updated);setData(d=>({...d,industries:updated,statuses:{...(d.statuses||{}),industries:updated}}));};
-  const [newStatus,setNewStatus]=React.useState({candidates:'',jobs:'',employers:''});
+  const [newStatus,setNewStatus]=React.useState({candidates:'',jobs:'',employers:'',jobTypes:''});
   const addStatus=(key)=>{const v=newStatus[key].trim();if(!v)return;const updated={...statuses,[key]:[...statuses[key],v]};setStatuses(updated);setData(d=>({...d,statuses:updated}));setNewStatus(n=>({...n,[key]:''}));};
   const delStatus=(key,item)=>{const updated={...statuses,[key]:statuses[key].filter(s=>s!==item)};setStatuses(updated);setData(d=>({...d,statuses:updated}));};
 
@@ -4539,7 +4539,7 @@ function Settings({data,setData}){
     </div>}
 
     {tab==='statuses'&&<div style={{maxWidth:500}}>
-      {[['סטטוס מועמדים','candidates'],['סטטוס משרות','jobs'],['סטטוס מעסיקים','employers']].map(([title,key])=><div key={key} className="sbox" style={{background:'#fff',padding:18,marginBottom:14}}>
+      {[['סטטוס מועמדים','candidates'],['סטטוס משרות','jobs'],['סטטוס מעסיקים','employers'],['סטטוס סוגי משרה','jobTypes']].map(([title,key])=><div key={key} className="sbox" style={{background:'#fff',padding:18,marginBottom:14}}>
         <h3 style={{fontSize:17,fontWeight:700,marginBottom:12}}>{title}</h3>
         <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:10}}>
           {(statuses[key]||[]).map(item=><div key={item} style={{display:'flex',alignItems:'center',gap:6,background:'#f0ede6',border:'2px solid #333',borderRadius:3,padding:'4px 10px'}}>
