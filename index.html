@@ -341,7 +341,7 @@ function Modal({title,onClose,children,wide=false}){
         <div style={{color:'white',fontWeight:800,fontSize:18}}>{title}</div>
         <button onClick={onClose} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'white',width:34,height:34,borderRadius:17,cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
       </div>
-      <div style={{padding:'16px 20px 20px'}}>
+      <div style={{padding:'20px 24px 24px'}}>
         {children}
       </div>
     </div>
@@ -349,31 +349,31 @@ function Modal({title,onClose,children,wide=false}){
 }
 
 function FormGrid({children}){
-  return <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px 16px',marginBottom:4}}>{children}</div>;
+  return <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px 18px',marginBottom:4}}>{children}</div>;
 }
 
 function FormCard({title,icon,color='#fff5f0',children}){
-  return <div style={{background:'white',borderRadius:14,padding:'16px 18px',marginBottom:14,boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
-    {title&&<div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
-      <div style={{width:30,height:30,borderRadius:7,background:color,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>{icon}</div>
-      <div style={{fontWeight:800,fontSize:14,color:'#1a1a2e'}}>{title}</div>
+  return <div style={{background:'white',borderRadius:14,padding:'20px 20px',marginBottom:16,boxShadow:'0 2px 12px rgba(0,0,0,0.08)',border:'1px solid #e5e7eb'}}>
+    {title&&<div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14,paddingBottom:12,borderBottom:'1.5px solid #f0f0f0'}}>
+      <div style={{width:34,height:34,borderRadius:8,background:color,display:'flex',alignItems:'center',justifyContent:'center',fontSize:17}}>{icon}</div>
+      <div style={{fontWeight:800,fontSize:16,color:'#1a1a2e'}}>{title}</div>
     </div>}
     {children}
   </div>;
 }
 
 function FF({label,type='text',value,onChange,options,hint,full=false,aiHighlight=false}){
-  const s={width:'100%',padding:'9px 12px',border:'2px solid #d1d5db',borderRadius:8,fontFamily:'Heebo',fontSize:13,color:'#1a1a2e',background:'#ffffff',outline:'none',boxSizing:'border-box'};
-  const handleFocus=e=>{e.target.style.border='2px solid #1a3a6b';e.target.style.boxShadow='0 0 0 3px rgba(26,58,107,0.1)';};
-  const handleBlur=e=>{e.target.style.border='2px solid #d1d5db';e.target.style.boxShadow='none';};
-  return <div style={{marginBottom:10,gridColumn:full?'1 / -1':'auto'}}>
-    {label&&<label style={{display:'block',fontSize:11,marginBottom:4,fontWeight:700,color:aiHighlight?'#2563eb':'#374151',textTransform:'uppercase',letterSpacing:'0.3px'}}>{label}{aiHighlight&&<span style={{marginRight:4,fontSize:10,color:'#3b82f6',fontWeight:800}}>✨ AI</span>}</label>}
+  const s={width:'100%',padding:'10px 14px',border:'2px solid #9ca3af',borderRadius:8,fontFamily:'Heebo',fontSize:15,color:'#111827',background:'#f9fafb',outline:'none',boxSizing:'border-box'};
+  const handleFocus=e=>{e.target.style.border='2px solid #1a3a6b';e.target.style.boxShadow='0 0 0 3px rgba(26,58,107,0.12)';e.target.style.background='#fff';};
+  const handleBlur=e=>{e.target.style.border='2px solid #9ca3af';e.target.style.boxShadow='none';e.target.style.background='#f9fafb';};
+  return <div style={{marginBottom:14,gridColumn:full?'1 / -1':'auto'}}>
+    {label&&<label style={{display:'block',fontSize:13,marginBottom:5,fontWeight:700,color:aiHighlight?'#2563eb':'#1a1a2e',letterSpacing:'0.1px'}}>{label}{aiHighlight&&<span style={{marginRight:4,fontSize:11,color:'#3b82f6',fontWeight:800}}>✨ AI</span>}</label>}
     {type==='select'
       ?<select value={value} onChange={e=>onChange(e.target.value)} onFocus={handleFocus} onBlur={handleBlur} className={aiHighlight?'ai-filled':''} style={{...s,cursor:'pointer'}}>{options.map(o=><option key={o}>{o}</option>)}</select>
       :type==='textarea'
       ?<textarea value={value} onChange={e=>onChange(e.target.value)} rows={3} onFocus={handleFocus} onBlur={handleBlur} className={aiHighlight?'ai-filled':''} style={{...s,resize:'vertical'}}/>
       :<input type={type} value={value} onChange={e=>onChange(e.target.value)} onFocus={handleFocus} onBlur={handleBlur} className={aiHighlight?'ai-filled':''} style={s}/>}
-    {hint&&<div style={{fontSize:11,color:'#6b7280',marginTop:3}}>{hint}</div>}
+    {hint&&<div style={{fontSize:12,color:'#374151',marginTop:4,fontWeight:600}}>{hint}</div>}
   </div>;
 }
 
@@ -2510,8 +2510,8 @@ function Jobs({data,setData}){
           <FormCard title="זיהוי משרה" icon="🔖" color="#fff5f0">
             <FormGrid>
               <div>
-                <label style={{display:'block',fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>מספר משרה</label>
-                <input value={form.jobNumber} readOnly style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,background:'#f0f2f5',color:ACC,fontWeight:700}}/>
+                <label style={{display:'block',fontSize:13,fontWeight:700,color:'#1a1a2e',marginBottom:5}}>מספר משרה</label>
+                <input value={form.jobNumber} readOnly style={{width:'100%',padding:'10px 14px',border:'2px solid #d1d5db',borderRadius:8,fontFamily:'Heebo',fontSize:15,background:'#f0f2f5',color:ACC,fontWeight:700}}/>
               </div>
               <FF label="שם המשרה" value={form.title||''} onChange={v=>setForm(f=>({...f,title:v}))}/>
               <FF label="כותרת פרסום" value={form.publishTitle||''} onChange={v=>setForm(f=>({...f,publishTitle:v}))} hint="הכותרת שתופיע בדף הנחיתה" full={true}/>
@@ -2521,15 +2521,15 @@ function Jobs({data,setData}){
           <FormCard title="פרטי המשרה" icon="📋" color="#eff6ff">
             <FormGrid>
               <div>
-                <label style={{display:'block',fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תחום</label>
-                <select value={form.domain||''} onChange={e=>setForm(f=>({...f,domain:e.target.value,role:''}))} className={aiFields["domain"]?"ai-filled":""} style={{width:'100%',padding:'9px 12px',border:aiFields["domain"]?'2px solid #3b82f6':'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14}}>
+                <label style={{display:'block',fontSize:13,fontWeight:700,color:'#1a1a2e',marginBottom:5}}>תחום</label>
+                <select value={form.domain||''} onChange={e=>setForm(f=>({...f,domain:e.target.value,role:''}))} className={aiFields["domain"]?"ai-filled":""} style={{width:'100%',padding:'10px 14px',border:aiFields["domain"]?'2px solid #3b82f6':'2px solid #9ca3af',borderRadius:8,fontFamily:'Heebo',fontSize:15,background:'#f9fafb'}}>
                   <option value="">-- בחר תחום --</option>
                   {(data.jobDomains||[]).map(d=><option key={d.id} value={d.name}>{d.name}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{display:'block',fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תפקיד</label>
-                <select value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))} disabled={!form.domain} className={aiFields["role"]?"ai-filled":""} style={{width:'100%',padding:'9px 12px',border:aiFields["role"]?'2px solid #3b82f6':'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,background:!form.domain?'#f5f5f5':'white'}}>
+                <label style={{display:'block',fontSize:13,fontWeight:700,color:'#1a1a2e',marginBottom:5}}>תפקיד</label>
+                <select value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))} disabled={!form.domain} className={aiFields["role"]?"ai-filled":""} style={{width:'100%',padding:'10px 14px',border:aiFields["role"]?'2px solid #3b82f6':'2px solid #9ca3af',borderRadius:8,fontFamily:'Heebo',fontSize:15,background:!form.domain?'#f0f2f5':'#f9fafb'}}>
                   <option value="">{form.domain?'-- בחר תפקיד --':'בחר תחום תחילה'}</option>
                   {(data.jobDomains||[]).find(d=>d.name===form.domain)?.roles.map(r=><option key={r} value={r}>{r}</option>)}
                 </select>
@@ -2538,7 +2538,7 @@ function Jobs({data,setData}){
               <FF label="סוג משרה" type="select" value={form.type||'משרה מלאה'} onChange={v=>setForm(f=>({...f,type:v}))} options={data.statuses?.jobTypes?.length?data.statuses.jobTypes:['משרה מלאה','חצי משרה','חלקית','משמרות','פרילנס','זמני']}/>
               <FF label="מיקום" value={form.location||''} onChange={v=>setForm(f=>({...f,location:v}))}/>
               <div style={{marginBottom:10}}>
-                <label style={{display:'block',fontSize:12,marginBottom:4,fontWeight:700,color:'#6b7280'}}>שכר (₪)</label>
+                <label style={{display:'block',fontSize:13,marginBottom:5,fontWeight:700,color:'#1a1a2e'}}>שכר (₪)</label>
                 <input type="number" value={form.salary||''} onChange={e=>{
                   const sal=e.target.value;
                   const pct=parseFloat(form.commissionPct)||0;
@@ -3039,12 +3039,12 @@ function Candidates({data,setData}){
     </div>
     {showAdvanced&&<div style={{background:'white',border:'1.5px solid #e5e7eb',borderRadius:12,padding:'16px 20px',marginBottom:14,boxShadow:'0 4px 16px rgba(0,0,0,0.06)'}}>
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}} className="mobile-grid-1">
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תחום</div><select value={fDomain} onChange={e=>setFDomain(e.target.value)} style={selStyle}><option value="">כל התחומים</option>{allDomains.map(d=><option key={d} value={d}>{d}</option>)}</select></div>
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>עיר</div><select value={fCity} onChange={e=>setFCity(e.target.value)} style={selStyle}><option value="">כל הערים</option>{allCities.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>CV</div><select value={fCv} onChange={e=>setFCv(e.target.value)} style={selStyle}>{['הכל','יש CV','אין CV'].map(o=><option key={o}>{o}</option>)}</select></div>
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>מקור</div><select value={fSource} onChange={e=>setFSource(e.target.value)} style={selStyle}>{['הכל','דף נחיתה','ידני'].map(o=><option key={o}>{o}</option>)}</select></div>
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>מ-תאריך</div><input type="date" value={fDateFrom} onChange={e=>setFDateFrom(e.target.value)} style={selStyle}/></div>
-        <div><div style={{fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>עד-תאריך</div><input type="date" value={fDateTo} onChange={e=>setFDateTo(e.target.value)} style={selStyle}/></div>
+        <div><div style={{fontSize:13,fontWeight:700,color:'#1a1a2e',marginBottom:5}}>תחום</div><select value={fDomain} onChange={e=>setFDomain(e.target.value)} style={selStyle}><option value="">כל התחומים</option>{allDomains.map(d=><option key={d} value={d}>{d}</option>)}</select></div>
+        <div><div style={{fontSize:13,fontWeight:700,color:'#1a1a2e',marginBottom:5}}>עיר</div><select value={fCity} onChange={e=>setFCity(e.target.value)} style={selStyle}><option value="">כל הערים</option>{allCities.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
+        <div><div style={{fontSize:13,fontWeight:700,color:'#1a1a2e',marginBottom:5}}>CV</div><select value={fCv} onChange={e=>setFCv(e.target.value)} style={selStyle}>{['הכל','יש CV','אין CV'].map(o=><option key={o}>{o}</option>)}</select></div>
+        <div><div style={{fontSize:13,fontWeight:700,color:'#1a1a2e',marginBottom:5}}>מקור</div><select value={fSource} onChange={e=>setFSource(e.target.value)} style={selStyle}>{['הכל','דף נחיתה','ידני'].map(o=><option key={o}>{o}</option>)}</select></div>
+        <div><div style={{fontSize:13,fontWeight:700,color:'#1a1a2e',marginBottom:5}}>מ-תאריך</div><input type="date" value={fDateFrom} onChange={e=>setFDateFrom(e.target.value)} style={selStyle}/></div>
+        <div><div style={{fontSize:13,fontWeight:700,color:'#1a1a2e',marginBottom:5}}>עד-תאריך</div><input type="date" value={fDateTo} onChange={e=>setFDateTo(e.target.value)} style={selStyle}/></div>
       </div>
     </div>}
     <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
@@ -3361,15 +3361,15 @@ function Candidates({data,setData}){
           <FormCard title="פרופיל מקצועי" icon="💼" color="#eff6ff">
             <FormGrid>
               <div>
-                <label style={{display:'block',fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תחום</label>
-                <select value={form.domain||''} onChange={e=>setForm(f=>({...f,domain:e.target.value,role:''}))} className={aiFields["domain"]?"ai-filled":""} style={{width:'100%',padding:'9px 12px',border:aiFields["domain"]?'2px solid #3b82f6':'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14}}>
+                <label style={{display:'block',fontSize:13,fontWeight:700,color:'#1a1a2e',marginBottom:5}}>תחום</label>
+                <select value={form.domain||''} onChange={e=>setForm(f=>({...f,domain:e.target.value,role:''}))} className={aiFields["domain"]?"ai-filled":""} style={{width:'100%',padding:'10px 14px',border:aiFields["domain"]?'2px solid #3b82f6':'2px solid #9ca3af',borderRadius:8,fontFamily:'Heebo',fontSize:15,background:'#f9fafb'}}>
                   <option value="">-- בחר תחום --</option>
                   {(data.jobDomains||[]).map(d=><option key={d.id} value={d.name}>{d.name}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{display:'block',fontSize:12,fontWeight:700,color:'#6b7280',marginBottom:4}}>תפקיד</label>
-                <select value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))} disabled={!form.domain} className={aiFields["role"]?"ai-filled":""} style={{width:'100%',padding:'9px 12px',border:aiFields["role"]?'2px solid #3b82f6':'1.5px solid #e5e7eb',borderRadius:9,fontFamily:'Heebo',fontSize:14,background:!form.domain?'#f5f5f5':'white'}}>
+                <label style={{display:'block',fontSize:13,fontWeight:700,color:'#1a1a2e',marginBottom:5}}>תפקיד</label>
+                <select value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))} disabled={!form.domain} className={aiFields["role"]?"ai-filled":""} style={{width:'100%',padding:'10px 14px',border:aiFields["role"]?'2px solid #3b82f6':'2px solid #9ca3af',borderRadius:8,fontFamily:'Heebo',fontSize:15,background:!form.domain?'#f0f2f5':'#f9fafb'}}>
                   <option value="">{form.domain?'-- בחר תפקיד --':'בחר תחום תחילה'}</option>
                   {(data.jobDomains||[]).find(d=>d.name===form.domain)?.roles.map(r=><option key={r} value={r}>{r}</option>)}
                 </select>
