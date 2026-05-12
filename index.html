@@ -115,14 +115,30 @@ body { background: #f0f2f5; font-family: 'Heebo', sans-serif; direction: rtl; ov
   animation: parsing-shimmer 1.5s infinite;
   pointer-events: none;
 }
+/* ── Dark mode: re-invert media elements so they stay readable ── */
+body.dark-mode img,body.dark-mode canvas,body.dark-mode video,body.dark-mode iframe{filter:invert(1) hue-rotate(183deg) !important;}
+/* ── Bold text: force minimum font weight across all text ── */
+body.bold-mode *{font-weight:700 !important;}
 </style>
 <script>
 (function(){
   var acc=localStorage.getItem('crm_accentColor')||'#e85d26';
   var zoom=localStorage.getItem('crm_zoom')||'100%';
+  var dark=localStorage.getItem('crm_darkMode')==='1';
+  var bold=localStorage.getItem('crm_boldText')==='1';
+  var hc=localStorage.getItem('crm_highContrast')==='1';
   document.documentElement.style.setProperty('--acc',acc);
-  if(document.body) document.body.style.zoom=zoom;
-  else document.addEventListener('DOMContentLoaded',function(){document.body.style.zoom=zoom;});
+  function applyAll(){
+    document.body.style.zoom=zoom;
+    var f=[];
+    if(dark)f.push('invert(0.92) hue-rotate(183deg)');
+    if(hc)f.push('contrast(1.4)');
+    document.body.style.filter=f.join(' ');
+    if(dark)document.body.classList.add('dark-mode');
+    if(bold)document.body.classList.add('bold-mode');
+  }
+  if(document.body)applyAll();
+  else document.addEventListener('DOMContentLoaded',applyAll);
 })();
 </script>
 </head>
@@ -4274,7 +4290,7 @@ function Settings({data,setData}){
   const delUser=id=>{if(!confirm('למחוק משתמש?'))return;const updated=users.filter(u=>u.id!==id);setUsers(updated);setData(d=>({...d,users:updated}));};
   // Statuses tab state
   const defaultStatuses={candidates:['חדש','בתהליך','ראיון נקבע','השמה מוצלחת','נדחה'],jobs:['פתוח','ממתין','סגור'],employers:['פעיל','פסיבי'],jobTypes:['משרה מלאה','חצי משרה','חלקית','משמרות','פרילנס','זמני']};
-  const [statuses,setStatuses]=React.useState(()=>data.statuses||defaultStatuses);
+  const [statuses,setStatuses]=React.useState(()=>({...defaultStatuses,...(data.statuses||{})}));
   const DEFAULT_INDUSTRIES=['הייטק','תעשייה','פיננסים','קמעונאות','בריאות','חינוך','אחר'];
   const [industries,setIndustries]=React.useState(()=>data.industries||DEFAULT_INDUSTRIES);
   React.useEffect(()=>{if(data.industries)setIndustries(data.industries);},[data.industries]);
@@ -4282,11 +4298,11 @@ function Settings({data,setData}){
   const addIndustry=()=>{const v=newIndustry.trim();if(!v||industries.includes(v))return;const updated=[...industries,v];setIndustries(updated);setData(d=>({...d,industries:updated,statuses:{...(d.statuses||{}),industries:updated}}));setNewIndustry('');};
   const delIndustry=name=>{if(industries.length<=1)return;const updated=industries.filter(i=>i!==name);setIndustries(updated);setData(d=>({...d,industries:updated,statuses:{...(d.statuses||{}),industries:updated}}));};
   const [newStatus,setNewStatus]=React.useState({candidates:'',jobs:'',employers:'',jobTypes:''});
-  const addStatus=(key)=>{const v=newStatus[key].trim();if(!v)return;const updated={...statuses,[key]:[...statuses[key],v]};setStatuses(updated);setData(d=>({...d,statuses:updated}));setNewStatus(n=>({...n,[key]:''}));};
-  const delStatus=(key,item)=>{const updated={...statuses,[key]:statuses[key].filter(s=>s!==item)};setStatuses(updated);setData(d=>({...d,statuses:updated}));};
+  const addStatus=(key)=>{const v=(newStatus[key]||'').trim();if(!v)return;const updated={...statuses,[key]:[...(statuses[key]||[]),v]};setStatuses(updated);setData(d=>({...d,statuses:updated}));setNewStatus(n=>({...n,[key]:''}));};
+  const delStatus=(key,item)=>{const updated={...statuses,[key]:(statuses[key]||[]).filter(s=>s!==item)};setStatuses(updated);setData(d=>({...d,statuses:updated}));};
 
   // Display settings — defaults always present, merged with Supabase data
-  const DISPLAY_DEFAULTS={zoom:'100',highContrast:false,accentColor:'#e85d26',colorScheme:'light',userName:'מנהל מערכת'};
+  const DISPLAY_DEFAULTS={zoom:'100',highContrast:false,darkMode:false,boldText:false,accentColor:'#e85d26',colorScheme:'light',userName:'מנהל מערכת'};
   const [display,setDisplay]=React.useState(()=>({...DISPLAY_DEFAULTS,...(data.displaySettings||{})}));
   // Sync display state when data loads from Supabase — always merge with defaults
   React.useEffect(()=>{
@@ -4296,13 +4312,20 @@ function Settings({data,setData}){
   const saveDisplay=()=>{
     const saved={...display};
     setData(d=>({...d,displaySettings:saved}));
-    // Zoom: save to localStorage and apply immediately
     const zoomVal=(saved.zoom||'100')+'%';
     localStorage.setItem('crm_zoom',zoomVal);
     localStorage.setItem('crm_accentColor',saved.accentColor||'#e85d26');
+    localStorage.setItem('crm_darkMode',saved.darkMode?'1':'0');
+    localStorage.setItem('crm_boldText',saved.boldText?'1':'0');
+    localStorage.setItem('crm_highContrast',saved.highContrast?'1':'0');
     document.body.style.zoom=zoomVal;
-    document.body.style.filter=saved.highContrast?'contrast(1.25)':'';
+    const filters=[];
+    if(saved.darkMode)filters.push('invert(0.92) hue-rotate(183deg)');
+    if(saved.highContrast)filters.push('contrast(1.4)');
+    document.body.style.filter=filters.join(' ');
     document.documentElement.style.setProperty('--acc',saved.accentColor||'#e85d26');
+    document.body.classList.toggle('dark-mode',!!saved.darkMode);
+    document.body.classList.toggle('bold-mode',!!saved.boldText);
     setDisplaySaved(true);
     setTimeout(()=>setDisplaySaved(false),3000);
   };
@@ -4445,20 +4468,28 @@ function Settings({data,setData}){
       </div>
 
       <div className="sbox" style={{background:'#fff',padding:24,marginBottom:16}}>
-        <h3 style={{fontSize:17,fontWeight:800,marginBottom:14,color:'#1a1a2e'}}>♿ נגישות</h3>
-        <label style={{display:'flex',alignItems:'center',gap:14,cursor:'pointer',padding:'12px 0',borderBottom:'1px dashed #eee'}}>
-          <div style={{position:'relative',width:48,height:26}}>
-            <input type="checkbox" checked={!!display.highContrast} onChange={e=>setDisplay(d=>({...d,highContrast:e.target.checked}))} style={{opacity:0,width:0,height:0}}/>
-            <div style={{position:'absolute',inset:0,background:display.highContrast?ACC:'#ccc',borderRadius:13,transition:'background .2s',cursor:'pointer'}}
-              onClick={()=>setDisplay(d=>({...d,highContrast:!d.highContrast}))}>
-              <div style={{position:'absolute',top:3,right:display.highContrast?3:22,width:20,height:20,background:'white',borderRadius:10,transition:'right .2s',boxShadow:'0 1px 4px rgba(0,0,0,0.3)'}}></div>
+        <h3 style={{fontSize:17,fontWeight:800,marginBottom:6,color:'#1a1a2e'}}>♿ נגישות ונוחות קריאה</h3>
+        <div style={{fontSize:13,color:'#555',marginBottom:14}}>השינויים נכנסים לתוקף מיד לאחר לחיצה על "שמור הגדרות תצוגה"</div>
+        {[
+          {key:'darkMode',icon:'🌙',label:'מצב לילה',desc:'רקע כהה — נוח יותר לעיניים רגישות ובתאורה נמוכה'},
+          {key:'boldText',icon:'𝐁',label:'טקסט מודגש',desc:'מחזק משקל גופן בכל הממשק — אין יותר אפור דק'},
+          {key:'highContrast',icon:'◑',label:'ניגודיות גבוהה',desc:'מגביר ניגודיות צבעים לקריאות מרבית'},
+        ].map(({key,icon,label,desc})=>(
+          <label key={key} style={{display:'flex',alignItems:'center',gap:14,cursor:'pointer',padding:'12px 0',borderBottom:'1px dashed #eee'}}>
+            <div style={{position:'relative',width:48,height:26,flexShrink:0}}>
+              <input type="checkbox" checked={!!display[key]} onChange={e=>setDisplay(d=>({...d,[key]:e.target.checked}))} style={{opacity:0,width:0,height:0}}/>
+              <div style={{position:'absolute',inset:0,background:display[key]?ACC:'#ccc',borderRadius:13,transition:'background .2s',cursor:'pointer'}}
+                onClick={()=>setDisplay(d=>({...d,[key]:!d[key]}))}>
+                <div style={{position:'absolute',top:3,right:display[key]?3:22,width:20,height:20,background:'white',borderRadius:10,transition:'right .2s',boxShadow:'0 1px 4px rgba(0,0,0,0.3)'}}></div>
+              </div>
             </div>
-          </div>
-          <div>
-            <div style={{fontSize:14,fontWeight:700}}>ניגודיות גבוהה</div>
-            <div style={{fontSize:12,color:'#666',marginTop:2}}>מגביר ניגודיות צבעים לקריאות טובה יותר</div>
-          </div>
-        </label>
+            <div style={{flex:1}}>
+              <div style={{fontSize:15,fontWeight:800}}><span style={{marginLeft:6}}>{icon}</span>{label}</div>
+              <div style={{fontSize:12,color:'#555',marginTop:3}}>{desc}</div>
+            </div>
+            {display[key]&&<div style={{fontSize:12,background:'#dcfce7',color:'#16a34a',borderRadius:6,padding:'3px 10px',fontWeight:700}}>פעיל</div>}
+          </label>
+        ))}
       </div>
 
       <div style={{display:'flex',alignItems:'center',gap:12}}>
