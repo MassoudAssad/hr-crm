@@ -11,7 +11,7 @@ exports.handler = async (event) => {
     },
     body: JSON.stringify({
       from: 'hr@topgroup4u.com',
-      to: 'hr@topgroup4u.com',
+      to: 'mass@tghr4u.com',
       subject: `מועמדות חדשה: ${jobTitle || 'משרה'}`,
       html: `
         <div dir="rtl" style="font-family:Arial;padding:20px">
