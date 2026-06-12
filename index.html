@@ -186,7 +186,7 @@ async function uploadImageToStorage(base64, jobId) {
 
 // ── CONTACT CONFIG ────────────────────────────────────────────────────────────
 const FROM_EMAILS = [
-  { email: 'hr@topgroup4u.com',   label: 'טופ גרופ גיוס והשמה' },
+  { email: 'mass@tghr4u.com',   label: 'טופ גרופ גיוס והשמה' },
   { email: 'mass@topgroup4u.com', label: 'טופ גרופ נדל"ן' },
 ];
 const ACC = '#e85d26';
@@ -399,7 +399,7 @@ const MSG_TEMPLATES = {
 
 בברכה,
 צוות טופ גרופ גיוס והשמה
-📞 | 📧 hr@topgroup4u.com`
+📞 | 📧 mass@tghr4u.com`
     },
     { id:'status', label:'ℹ️ עדכון סטטוס',
       subject: (c,j) => `עדכון לגבי מועמדותך – ${j?.publishTitle||j?.title||'משרה'}`,
@@ -474,7 +474,7 @@ const MSG_TEMPLATES = {
 
 בברכה,
 צוות טופ גרופ גיוס והשמה
-📞 | 📧 hr@topgroup4u.com`
+📞 | 📧 mass@tghr4u.com`
     },
     { id:'followup', label:'📞 מעקב / Follow-up',
       subject: (emp,c) => `מעקב – תהליך גיוס | טופ גרופ`,
@@ -4274,7 +4274,7 @@ function CandidateHunter({data}){
 function Settings({data,setData}){
   const [tab,setTab]=React.useState('general');
   // General tab state
-  const [company,setCompany]=React.useState(()=>data.company||{name:'טופ גרופ גיוס והשמה',email:'hr@topgroup4u.com',phone:''});
+  const [company,setCompany]=React.useState(()=>data.company||{name:'טופ גרופ גיוס והשמה',email:'mass@tghr4u.com',phone:''});
   const saveCompany=()=>{setData(d=>({...d,company}));alert('✅ פרטי החברה נשמרו!');};
   // Users tab state
   const [users,setUsers]=React.useState(()=>data.users||[{id:'u1',name:'מנהל מערכת',email:'admin@topgroup4u.com',role:'מנהל',status:'פעיל'}]);
