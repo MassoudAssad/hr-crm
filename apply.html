@@ -384,7 +384,8 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
             updated_at: new Date().toISOString()
           })
         });
-        // שליחת התראה למייל דרך Web3Forms
+        // שליחת התראות למייל דרך Web3Forms ו-Resend
+        // 1. Web3Forms (גיבוי)
         fetch('https://api.web3forms.com/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -399,7 +400,22 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
           })
         }).then(r => r.json()).then(d => {
           if (!d.success) console.warn('Web3Forms error:', d);
-        }).catch(err => console.warn('Notify failed:', err));
+        }).catch(err => console.warn('Web3Forms failed:', err));
+
+        // 2. Resend (Netlify Function) - שולח ל-mass@tghr4u.com
+        fetch('/.netlify/functions/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: candidate.name,
+            phone: candidate.phone,
+            email: candidate.email,
+            jobTitle: job.publishTitle || job.title || 'משרה'
+          })
+        }).then(r => r.json()).then(d => {
+          if (!d.ok) console.warn('Resend notify error:', d);
+          else console.log('Resend notification sent:', d.id);
+        }).catch(err => console.warn('Resend notify failed:', err));
 
       } catch(err) { console.error(err); }
 
