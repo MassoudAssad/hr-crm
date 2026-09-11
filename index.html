@@ -196,7 +196,7 @@ const ACC = '#e85d26';
 const SIDEBAR_BG = '#1a1a2e';
 const MUT = '#888';
 const TAG_COLORS = {
-  'פעיל':'#d4edda','פסיבי':'#f8d7da','פתוח':'#d4edda','ממתין':'#fff3cd',
+  'פעיל':'#d4edda','פסיבי':'#f8d7da','פתוח':'#d4edda','ממתין':'#fff3cd','ממתין לאישור':'#fff3cd',
   'סגור':'#e2e3e5','בתהליך':'#cce5ff','השמה מוצלחת':'#d4edda','ראיון נקבע':'#fff3cd','חדש':'#e2e3e5'
 };
 
@@ -774,7 +774,7 @@ function MessageModal({ type, person, job, employer, candidate, onClose, initial
 // ── NAV ───────────────────────────────────────────────────────────────────────
 const NAV=[{id:'dashboard',icon:'⊞',label:'דשבורד'},{id:'employers',icon:'🏢',label:'מעסיקים'},{id:'jobs',icon:'📋',label:'משרות'},{id:'candidates',icon:'👥',label:'מועמדים'},{id:'hunter',icon:'🎯',label:'צייד מועמדים'},{id:'tasks',icon:'✅',label:'משימות'},{id:'settings',icon:'⚙',label:'הגדרות'}];
 
-function TopNav({active,onNav,pending,onPendingClick}){
+function TopNav({active,onNav,pending,onPendingClick,pendingJobs,onPendingJobsClick}){
   return <div style={{background:'#1a3a6b',borderBottom:'3px solid #122a50',flexShrink:0,display:'flex',alignItems:'stretch',height:60,zIndex:2000,position:'fixed',top:0,width:'100%',boxSizing:'border-box',boxShadow:'0 4px 16px rgba(0,0,0,0.25)',padding:'0 32px'}}>
     {/* Logo */}
     <div style={{display:'flex',alignItems:'center',paddingLeft:0,paddingRight:24,borderLeft:'1px solid rgba(255,255,255,0.15)',flexShrink:0}}>
@@ -800,11 +800,15 @@ function TopNav({active,onNav,pending,onPendingClick}){
           <span style={{fontSize:16}}>{item.icon}</span>
           <span>{item.label}</span>
           {item.id==='candidates'&&pending>0&&<span style={{background:'#e85d26',color:'white',borderRadius:10,padding:'1px 6px',fontSize:11,fontWeight:800,marginRight:2}}>{pending}</span>}
+          {item.id==='jobs'&&pendingJobs>0&&<span style={{background:'#e85d26',color:'white',borderRadius:10,padding:'1px 6px',fontSize:11,fontWeight:800,marginRight:2}}>{pendingJobs}</span>}
         </div>
       ))}
     </nav>
     {/* Left — pending bell + user */}
     <div style={{display:'flex',alignItems:'center',gap:10,paddingRight:0,paddingLeft:0,borderRight:'1px solid rgba(255,255,255,0.15)'}}>
+      {pendingJobs>0&&<button onClick={onPendingJobsClick} style={{background:'rgba(232,93,38,0.25)',border:'1.5px solid #e85d26',color:'white',borderRadius:8,padding:'6px 14px',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
+        📋 <span>{pendingJobs} משרות ממתינות</span>
+      </button>}
       {pending>0&&<button onClick={onPendingClick} style={{background:'rgba(232,93,38,0.25)',border:'1.5px solid #e85d26',color:'white',borderRadius:8,padding:'6px 14px',fontFamily:'Heebo',fontWeight:700,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
         🔔 <span>{pending} ממתינים</span>
       </button>}
@@ -1317,8 +1321,26 @@ const EmpFieldUncontrolled=React.memo(function EmpFieldUncontrolled({label,field
   </div>;
 });
 
-const EmployerDetail=React.memo(function EmployerDetail({data,setData,detail,detailForm,detailDirty,setDetail,setDetailForm,setDetailDirty,efSet,saveEmpDetail,del,setViewCand,setMsgTarget,fmtNum,totals}){
+const EmployerDetail=React.memo(function EmployerDetail({data,setData,detail,detailForm,detailDirty,setDetail,setDetailForm,setDetailDirty,efSet,saveEmpDetail,del,setViewCand,setMsgTarget,fmtNum,totals,onOpenJob}){
       const empJobs=data.jobs.filter(j=>j.employerId===detail.id);
+      const primaryContact=(detailForm.contacts||[]).find(c=>c.isPrimary)||(detailForm.contacts||[])[0];
+      const primaryEmail=primaryContact?.email||detailForm.email||detail.email||'';
+      const [sendingIntake,setSendingIntake]=React.useState(false);
+      const sendIntakeEmail=async()=>{
+        if(!primaryEmail){showToast('אין כתובת מייל למעסיק זה — הוסף איש קשר עם מייל','error');return;}
+        setSendingIntake(true);
+        const url=`https://crm-hr.topgroup4u.com/employer-intake.html?id=${detail.id}`;
+        try{
+          const res=await fetch('/.netlify/functions/send-employer-intake',{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({employerName:detail.name,employerEmail:primaryEmail,contactName:primaryContact?.name||'',link:url})
+          });
+          const d=await res.json();
+          if(res.ok&&d.ok)showToast(`✅ המייל נשלח ל-${primaryEmail}`,'success');
+          else{console.warn('send-employer-intake error:',d);showToast('שגיאה בשליחת המייל','error');}
+        }catch(err){console.warn(err);showToast('שגיאה בשליחת המייל','error');}
+        setSendingIntake(false);
+      };
       const {tc,tf}=totals(detail);
       const EF=({label,field,type='text',opts,searchOpts,placeholder})=><EmpFieldUncontrolled label={label} fieldKey={field} defaultVal={detailForm[field]} onCommit={val=>efSet(field,val)} type={type} opts={opts} searchOpts={searchOpts} placeholder={placeholder}/>;
       const Card=EmpCard;
@@ -1339,6 +1361,17 @@ const EmployerDetail=React.memo(function EmployerDetail({data,setData,detail,det
           <div style={{display:'flex',gap:8,flexShrink:0}}>
             {detailDirty&&<button onClick={saveEmpDetail} style={{padding:'8px 20px',background:'#16a34a',border:'none',color:'white',borderRadius:8,fontFamily:'Heebo',fontWeight:800,fontSize:14,cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,0.2)',animation:'pendingPulse 1.8s ease-in-out infinite'}}>💾 שמור</button>}
             <button onClick={()=>{const title=prompt('כותרת:');if(!title)return;const t={id:'t'+Date.now(),title,description:'',dueDate:'',priority:'בינוני',status:'פתוח',candidateId:'',employerId:detail.id,createdAt:new Date().toISOString()};setData(d=>({...d,tasks:[t,...(d.tasks||[])]}));showToast('✅ משימה נוספה!','success');}} style={{padding:'7px 14px',background:'white',border:'1.5px solid #1a3a6b',color:'#1a3a6b',borderRadius:8,cursor:'pointer',fontFamily:'Heebo',fontWeight:700,fontSize:13}}>+ משימה</button>
+            <button onClick={()=>{
+              const url=`https://crm-hr.topgroup4u.com/employer-intake.html?id=${detail.id}`;
+              navigator.clipboard?.writeText(url).then(()=>showToast('✅ הקישור הועתק! שלח אותו למעסיק','success')).catch(()=>{
+                const ta=document.createElement('textarea');
+                ta.value=url;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+                showToast('✅ הקישור הועתק! שלח אותו למעסיק','success');
+              });
+            }} style={{padding:'7px 14px',background:'#e85d26',border:'none',color:'white',borderRadius:8,cursor:'pointer',fontFamily:'Heebo',fontWeight:700,fontSize:13}}>🔗 קישור למילוי דרישות משרה</button>
+            <button onClick={sendIntakeEmail} disabled={sendingIntake} style={{padding:'7px 14px',background:'#eff6ff',border:'1.5px solid #bfdbfe',color:'#1d4ed8',borderRadius:8,cursor:sendingIntake?'default':'pointer',fontFamily:'Heebo',fontWeight:700,fontSize:13,opacity:sendingIntake?0.6:1}}>
+              {sendingIntake?'שולח...':'📧 שלח מייל למעסיק'}
+            </button>
           </div>
         </div>
 
@@ -1524,7 +1557,7 @@ const EmployerDetail=React.memo(function EmployerDetail({data,setData,detail,det
                 {empJobs.length===0&&<div style={{color:'#6b7280',fontSize:14,padding:'8px 0'}}>אין משרות</div>}
                 {empJobs.map(j=>{
                   const jCands=data.candidates.filter(c=>(c.appliedJobs||[]).includes(j.id));
-                  return <div key={j.id} style={{display:'flex',alignItems:'center',gap:12,padding:'11px 14px',background:'#f9fafb',borderRadius:10,marginBottom:8,border:'1px solid #f3f4f6',cursor:'pointer'}}
+                  return <div key={j.id} onClick={()=>onOpenJob(j.id)} style={{display:'flex',alignItems:'center',gap:12,padding:'11px 14px',background:'#f9fafb',borderRadius:10,marginBottom:8,border:'1px solid #f3f4f6',cursor:'pointer'}}
                     onMouseEnter={e=>e.currentTarget.style.background='#f3f4f6'}
                     onMouseLeave={e=>e.currentTarget.style.background='#f9fafb'}>
                     <div style={{flex:1}}>
@@ -1581,7 +1614,7 @@ const EmployerDetail=React.memo(function EmployerDetail({data,setData,detail,det
 
 })
 
-function Employers({data,setData}){
+function Employers({data,setData,onOpenJob,navTick}){
   const [search,setSearch]=React.useState('');
   const [indFilter,setIndFilter]=React.useState('הכל');
   const [statusFilter,setStatusFilter]=React.useState('הכל');
@@ -1596,6 +1629,12 @@ function Employers({data,setData}){
   const [confirmDel,setConfirmDel]=React.useState(null);
   const [aiFields]=React.useState({});
   const openEmpDetail=(e)=>{setDetail(e);setDetailForm({...e});setDetailDirty(false);};
+  const skipNavTick=React.useRef(true);
+  React.useEffect(()=>{
+    if(skipNavTick.current){skipNavTick.current=false;return;}
+    if(detailDirty&&!confirm('לצאת בלי לשמור?'))return;
+    setDetail(null);setDetailForm(null);setDetailDirty(false);
+  },[navTick]);
   const efSet=(field,val)=>{setDetailForm(f=>({...f,[field]:val}));setDetailDirty(true);};
   const saveEmpDetail=async()=>{
     const updated={...detailForm};
@@ -1780,7 +1819,7 @@ function Employers({data,setData}){
     </div>
 
     {/* Detail modal */}
-    {detail&&detailForm&&<EmployerDetail data={data} setData={setData} detail={detail} detailForm={detailForm} detailDirty={detailDirty} setDetail={setDetail} setDetailForm={setDetailForm} setDetailDirty={setDetailDirty} efSet={efSet} saveEmpDetail={saveEmpDetail} del={del} setViewCand={setViewCand} setMsgTarget={setMsgTarget} fmtNum={fmtNum} totals={totals}/>}
+    {detail&&detailForm&&<EmployerDetail data={data} setData={setData} detail={detail} detailForm={detailForm} detailDirty={detailDirty} setDetail={setDetail} setDetailForm={setDetailForm} setDetailDirty={setDetailDirty} efSet={efSet} saveEmpDetail={saveEmpDetail} del={del} setViewCand={setViewCand} setMsgTarget={setMsgTarget} fmtNum={fmtNum} totals={totals} onOpenJob={onOpenJob}/>}
     {/* Modal מועמד מקומי (מתוך כרטיס מעסיק) */}
     {viewCand&&(()=>{
       const vc=viewCand;
@@ -2040,7 +2079,7 @@ function ImgUpload({form,setForm}){
 function placedCount(jobId,candidates){return(candidates||[]).filter(c=>(c.appliedJobs||[]).includes(jobId)&&c.status==='\u05d4\u05e9\u05de\u05d4 \u05de\u05d5\u05e6\u05dc\u05d7\u05ea').length;}
 function jobQuota(j){return Math.max(1,parseInt(j?.hirQuota)||1);}
 
-function Jobs({data,setData}){
+function Jobs({data,setData,jumpToJobId,clearJumpToJobId,navTick}){
   const [search,setSearch]=React.useState('');
   const [stFilter,setStFilter]=React.useState('הכל');
   const [domainFilter,setDomainFilter]=React.useState('הכל');
@@ -2057,6 +2096,19 @@ function Jobs({data,setData}){
   const [pubJob,setPubJob]=React.useState(null);
   const [confirmDel,setConfirmDel]=React.useState(null);
   const openJobDetail=(j)=>{setDetail(j);setDetailForm({...j});setDetailDirty(false);};
+  React.useEffect(()=>{
+    if(!jumpToJobId)return;
+    const j=data.jobs.find(x=>x.id===jumpToJobId);
+    if(j)openJobDetail(j);
+    clearJumpToJobId();
+  },[jumpToJobId]);
+  const skipNavTick=React.useRef(true);
+  React.useEffect(()=>{
+    if(skipNavTick.current){skipNavTick.current=false;return;}
+    if(jumpToJobId)return;
+    if(detailDirty&&!confirm('לצאת בלי לשמור?'))return;
+    setDetail(null);setDetailForm(null);setDetailDirty(false);
+  },[navTick]);
   const jfSet=(field,val)=>{setDetailForm(f=>({...f,[field]:val}));setDetailDirty(true);};
   const saveJobDetail=async()=>{
     const updated={...detailForm};
@@ -2705,13 +2757,18 @@ function CvZoomViewer({url}){
   </div>;
 }
 
-function Candidates({data,setData}){
+function Candidates({data,setData,navTick}){
   const [search,setSearch]=React.useState('');
   const [stFilter,setStFilter]=React.useState('הכל');
   const [modal,setModal]=React.useState(null);
   const [form,setForm]=React.useState({});
   const [detail,setDetail]=React.useState(null);
   const [detailForm,setDetailForm]=React.useState(null); // editable copy of detail
+  const skipNavTick=React.useRef(true);
+  React.useEffect(()=>{
+    if(skipNavTick.current){skipNavTick.current=false;return;}
+    setDetail(null);setDetailForm(null);
+  },[navTick]);
   const [msgTarget,setMsgTarget]=React.useState(null);
   const [jobSearch,setJobSearch]=React.useState('');
   const [showJobPicker,setShowJobPicker]=React.useState(false);
@@ -4826,7 +4883,9 @@ function App(){
 }
 
 function AppInner(){
-  const [page,setPage]=React.useState('dashboard');
+  const [page,setPageRaw]=React.useState('dashboard');
+  const [navTick,setNavTick]=React.useState(0);
+  const setPage=p=>{setPageRaw(p);setNavTick(t=>t+1);};
   const [syncStatus,setSyncStatus]=React.useState('syncing');
   const [data,setData]=React.useState(()=>{
     try{
@@ -4964,6 +5023,41 @@ function AppInner(){
     setConfirmRejectApp(null);
   };
 
+  // Jump-to-job navigation (from EmployerDetail's job list -> Jobs page)
+  const [jumpToJobId,setJumpToJobId]=React.useState(null);
+
+  // Pending jobs (from employer intake form, await approval)
+  const pendingJobsList=(data.pendingJobs||[]).map(id=>data.jobs.find(j=>j.id===id)).filter(Boolean);
+  const [showPendingJobs,setShowPendingJobs]=React.useState(false);
+
+  const approvePendingJob=(jid)=>{
+    const job=data.jobs.find(j=>j.id===jid);
+    setData(d=>({
+      ...d,
+      pendingJobs:(d.pendingJobs||[]).filter(id=>id!==jid),
+      jobs:d.jobs.map(j=>j.id===jid?{...j,status:d.defaults?.jobStatus||'פתוח'}:j),
+      activityLog:[mkLog('job','approved',job?.publishTitle||job?.title||jid),...(d.activityLog||[])].slice(0,50)
+    }));
+    showToast('✅ המשרה אושרה ופורסמה','success');
+  };
+  const [confirmRejectJob,setConfirmRejectJob]=React.useState(null);
+  const rejectPendingJob=(jid)=>{
+    const job=data.jobs.find(j=>j.id===jid);
+    setConfirmRejectJob({id:jid,name:job?.publishTitle||job?.title||jid});
+  };
+  const doRejectPendingJob=()=>{
+    if(!confirmRejectJob)return;
+    const {id:jid}=confirmRejectJob;
+    const job=data.jobs.find(j=>j.id===jid);
+    setData(d=>({
+      ...d,
+      pendingJobs:(d.pendingJobs||[]).filter(id=>id!==jid),
+      jobs:d.jobs.filter(j=>j.id!==jid),
+      activityLog:[mkLog('job','rejected',job?.publishTitle||job?.title||jid),...(d.activityLog||[])].slice(0,50)
+    }));
+    setConfirmRejectJob(null);
+  };
+
   // Dashboard color states — live here so they survive navigation
   const defaultKpiColorsApp=['#1a1a2e','linear-gradient(135deg,#3b82f6,#1d4ed8)','linear-gradient(135deg,#8b5cf6,#6d28d9)','linear-gradient(135deg,#e85d26,#c94d1a)'];
   const defaultPipelineColorsApp=['linear-gradient(135deg,#f3f4f6,#e5e7eb)','linear-gradient(135deg,#dbeafe,#bfdbfe)','linear-gradient(135deg,#fef3c7,#fde68a)','linear-gradient(135deg,#dcfce7,#bbf7d0)'];
@@ -4978,7 +5072,7 @@ function AppInner(){
   },[data.kpiColors,data.commissionBg,data.pipelineColors]);
 
   return <div style={{display:'flex',flexDirection:'column',height:'100vh',overflow:'hidden',background:'#f0f2f5'}}>
-    <div id="desktop-topnav" className="desktop-only"><TopNav active={page} onNav={setPage} pending={pending.length} onPendingClick={()=>setShowPending(true)}/></div>
+    <div id="desktop-topnav" className="desktop-only"><TopNav active={page} onNav={setPage} pending={pending.length} onPendingClick={()=>setShowPending(true)} pendingJobs={pendingJobsList.length} onPendingJobsClick={()=>setShowPendingJobs(true)}/></div>
     <div id="main-content" style={{flex:1,overflow:'auto',minWidth:0,marginTop:60}}>
       <div style={{background:syncBg,padding:'3px 14px',fontSize:12,textAlign:'center',borderBottom:'1px solid #ddd'}}>{syncMsg}</div>
       {page==='dashboard'&&<Dashboard data={data} onNav={setPage} setData={setData}
@@ -4986,9 +5080,9 @@ function AppInner(){
         commissionBg={commissionBg} setCommissionBg={setCommissionBg}
         pipelineColors={pipelineColors} setPipelineColors={setPipelineColors}
       />}
-      {page==='employers'&&<Employers data={data} setData={setData}/>}
-      {page==='jobs'&&<Jobs data={data} setData={setData}/>}
-      {page==='candidates'&&<Candidates data={data} setData={setData}/>}
+      {page==='employers'&&<Employers data={data} setData={setData} onOpenJob={jid=>{setJumpToJobId(jid);setPage('jobs');}} navTick={navTick}/>}
+      {page==='jobs'&&<Jobs data={data} setData={setData} jumpToJobId={jumpToJobId} clearJumpToJobId={()=>setJumpToJobId(null)} navTick={navTick}/>}
+      {page==='candidates'&&<Candidates data={data} setData={setData} navTick={navTick}/>}
       {page==='hunter'&&<CandidateHunter data={data}/>}
       {page==='tasks'&&<Tasks data={data} setData={setData}/>}
       {page==='settings'&&<Settings data={data} setData={setData}/>}
@@ -4999,6 +5093,8 @@ function AppInner(){
           <span>{item.icon}</span>
           {item.id==='candidates'&&pending.length>0
             ?<span style={{position:'relative'}}>{item.label}<span style={{position:'absolute',top:-8,left:-6,background:'#e85d26',color:'white',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:800}}>{pending.length}</span></span>
+            :item.id==='jobs'&&pendingJobsList.length>0
+            ?<span style={{position:'relative'}}>{item.label}<span style={{position:'absolute',top:-8,left:-6,background:'#e85d26',color:'white',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:800}}>{pendingJobsList.length}</span></span>
             :<span>{item.label}</span>
           }
         </button>
@@ -5061,6 +5157,57 @@ function AppInner(){
         </div>
       </div>
     </div>}
+
+    {/* Pending jobs modal */}
+    {showPendingJobs&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+      <div style={{background:'white',borderRadius:16,width:'100%',maxWidth:620,maxHeight:'85vh',overflow:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}>
+        <div style={{padding:'20px 24px',borderBottom:'2px solid #f0ede6',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,background:'white'}}>
+          <div>
+            <h2 style={{fontSize:20,fontWeight:800}}>📋 משרות ממתינות לאישור</h2>
+            <div style={{fontSize:13,color:'#888',marginTop:2}}>משרות שהוגשו ע"י מעסיקים דרך טופס דרישות המשרה</div>
+          </div>
+          <button onClick={()=>setShowPendingJobs(false)} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:'#888'}}>✕</button>
+        </div>
+        <div style={{padding:16}}>
+          {pendingJobsList.length===0
+            ?<div style={{textAlign:'center',padding:40,color:'#aaa'}}>אין משרות ממתינות</div>
+            :pendingJobsList.map(j=>{
+              const emp=data.employers.find(e=>e.id===j.employerId);
+              return <div key={j.id} style={{border:'2px solid #f0ede6',borderRadius:12,padding:16,marginBottom:12,background:'#fafaf8'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+                  <div>
+                    <div style={{fontWeight:800,fontSize:16}}>{j.publishTitle||j.title}</div>
+                    <div style={{fontSize:13,color:'#666'}}>{j.jobNumber}{emp?' · '+emp.name:''}</div>
+                  </div>
+                  <div style={{fontSize:11,color:'#aaa',textAlign:'left'}}>
+                    {j.submittedAt?new Date(j.submittedAt).toLocaleString('he-IL',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}):''}
+                  </div>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,fontSize:13,color:'#555',marginBottom:12}}>
+                  {j.domain&&<span>🏷 {j.domain}</span>}
+                  {j.type&&<span>💼 {j.type}</span>}
+                  {j.location&&<span>📍 {j.location}</span>}
+                  {j.salary&&<span>💰 {j.salary}</span>}
+                  {j.positions&&<span>👥 {j.positions} משרות</span>}
+                  {j.contactName&&<span>👤 {j.contactName}{j.contactPhone?' · '+j.contactPhone:''}</span>}
+                </div>
+                {j.description&&<div style={{fontSize:13,color:'#555',background:'#f9fafb',borderRadius:6,padding:'8px 10px',marginBottom:8,whiteSpace:'pre-line'}}><strong>תיאור:</strong> {j.description}</div>}
+                {j.requirements&&<div style={{fontSize:13,color:'#555',background:'#f9fafb',borderRadius:6,padding:'8px 10px',marginBottom:10,whiteSpace:'pre-line'}}><strong>דרישות:</strong> {j.requirements}</div>}
+                <div style={{display:'flex',gap:10}}>
+                  <button onClick={()=>approvePendingJob(j.id)} style={{flex:1,padding:'9px 0',background:'#16a34a',color:'white',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+                    ✅ אשר ופרסם
+                  </button>
+                  <button onClick={()=>rejectPendingJob(j.id)} style={{padding:'9px 16px',background:'#fde8dc',color:'#c94d1a',border:'none',borderRadius:8,fontFamily:'Heebo',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+                    ✕ דחה
+                  </button>
+                </div>
+              </div>;
+            })
+          }
+        </div>
+      </div>
+    </div>}
+
     <ConfirmDialog
       open={!!confirmRejectApp}
       title="דחיית מועמד בהמתנה"
@@ -5068,6 +5215,14 @@ function AppInner(){
       name={confirmRejectApp?.name}
       onConfirm={doRejectPending}
       onCancel={()=>setConfirmRejectApp(null)}
+    />
+    <ConfirmDialog
+      open={!!confirmRejectJob}
+      title="דחיית משרה ממתינה"
+      message="האם אתה בטוח שברצונך לדחות את המשרה:"
+      name={confirmRejectJob?.name}
+      onConfirm={doRejectPendingJob}
+      onCancel={()=>setConfirmRejectJob(null)}
     />
     <ToastContainer/>
   </div>;

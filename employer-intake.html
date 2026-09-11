@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>טופ גרופ – דיווח דרישות משרה</title>
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="טופ גרופ גיוס והשמה">
+<meta property="og:title" content="דיווח דרישות משרה – טופ גרופ גיוס והשמה">
+<meta property="og:description" content="מלאו את פרטי המשרה הפתוחה ואנו נטפל בגיוס עבורכם">
+<meta property="og:locale" content="he_IL">
+
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root {
+  --accent: #e85d26;
+  --accent-dark: #c94d1a;
+  --dark: #1a1a2e;
+  --muted: #6b7280;
+  --bg: #f8f7f4;
+  --white: #ffffff;
+  --border: #e5e7eb;
+  --success: #16a34a;
+  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dark); direction: rtl; }
+
+.hero-wrap { max-width: 780px; margin: 32px auto 0; padding: 0 24px; }
+.hero-brand-bar {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 20px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.hero-brand-title { color: #e85d26; font-size: 20px; font-weight: 900; letter-spacing: 0.3px; }
+.hero-brand-tagline { color: rgba(255,255,255,0.45); font-size: 13px; }
+
+.page { max-width: 780px; margin: 0 auto; padding: 24px 20px 80px; }
+
+.welcome-card { background: linear-gradient(135deg,#1a1a2e 0%,#2d2d4e 55%,#3a2a1e 100%); border-radius: 16px; box-shadow: var(--shadow-lg); padding: 32px 28px; margin-bottom: 20px; color: white; }
+.welcome-title { font-size: 24px; font-weight: 900; margin-bottom: 8px; }
+.welcome-body { font-size: 15px; color: rgba(255,255,255,0.75); line-height: 1.7; }
+.welcome-emp { color: var(--accent); font-weight: 800; }
+
+.form-card { background: var(--white); border-radius: 16px; box-shadow: var(--shadow-lg); padding: 32px 28px; margin-bottom: 20px; border-top: 4px solid var(--accent); }
+.form-section-title { font-size: 15px; font-weight: 800; color: var(--dark); margin: 24px 0 14px; padding-top: 18px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.form-section-title:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.form-headline { font-size: 24px; font-weight: 900; color: var(--dark); margin-bottom: 4px; }
+.form-subline { font-size: 14px; color: var(--muted); margin-bottom: 12px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 4px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-label { font-size: 13px; font-weight: 700; color: #374151; }
+.form-label .opt { color: #9ca3af; font-weight: 500; }
+.form-input, .form-select { padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'Heebo'; font-size: 15px; color: var(--dark); background: #fafafa; transition: all .2s; outline: none; width: 100%; }
+.form-input:focus, .form-select:focus { border-color: var(--accent); background: var(--white); box-shadow: 0 0 0 3px rgba(232,93,38,0.1); }
+.form-textarea { resize: vertical; min-height: 90px; }
+select.form-select { cursor: pointer; }
+
+.form-error { display: none; background: #fff5f0; border: 1px solid #fcd5c0; border-radius: 8px; padding: 12px 16px; font-size: 14px; color: var(--accent-dark); margin-bottom: 16px; }
+
+.submit-btn { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: 12px; font-family: 'Heebo'; font-size: 17px; font-weight: 800; cursor: pointer; transition: all .2s; box-shadow: 0 4px 16px rgba(232,93,38,0.3); margin-top: 8px; }
+.submit-btn:hover:not(:disabled) { background: var(--accent-dark); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,93,38,0.4); }
+.submit-btn:disabled { background: #d1d5db; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.success-card { background: var(--white); border-radius: 16px; box-shadow: var(--shadow-lg); padding: 56px 28px; text-align: center; }
+.success-icon { font-size: 72px; margin-bottom: 20px; display: block; animation: pop .4s ease; }
+@keyframes pop { 0%{transform:scale(0)} 80%{transform:scale(1.15)} 100%{transform:scale(1)} }
+.success-title { font-size: 28px; font-weight: 900; color: var(--success); margin-bottom: 12px; }
+.success-body { font-size: 16px; color: var(--muted); line-height: 1.7; }
+
+.footer { text-align: center; color: #9ca3af; font-size: 13px; padding: 20px 0 40px; }
+.footer strong { color: var(--accent); }
+
+.loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; gap: 16px; }
+.spinner { width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 600px) {
+  .hero-wrap { padding: 0 12px; margin-top: 16px; }
+  .hero-brand-bar { border-radius: 12px; padding: 14px 18px; }
+  .hero-brand-title { font-size: 15px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-card { padding: 24px 16px; }
+  .welcome-card { padding: 24px 20px; }
+  .welcome-title { font-size: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div id="root">
+  <div class="loading-screen">
+    <div class="spinner"></div>
+    <div style="font-size:15px;color:#9ca3af">טוען...</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const SB_URL = 'https://rdzmwtixtfenmojeugyx.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkem13dGl4dGZlbm1vamV1Z3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjcxODUsImV4cCI6MjA5MjM0MzE4NX0.FUHtMO-wRs0B0weWGuDxSbXflx7RsVOGVYbC7kUrn0M';
+  const root = document.getElementById('root');
+
+  function getEmployerId() {
+    const p = new URLSearchParams(window.location.search);
+    return p.get('id');
+  }
+
+  async function init() {
+    const employerId = getEmployerId();
+    if (!employerId) { showError(); return; }
+    try {
+      const res = await fetch(`${SB_URL}/rest/v1/crm_state?select=data&id=eq.main`, {
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json' }
+      });
+      const rows = await res.json();
+      const employer = rows?.[0]?.data?.employers?.find(e => e.id === employerId);
+      if (!employer) { showError(); return; }
+      renderForm(employer);
+    } catch (e) {
+      showNetworkError();
+    }
+  }
+
+  function showError() {
+    root.innerHTML = `<div style="max-width:500px;margin:80px auto;padding:20px;text-align:center">
+      <div style="font-size:64px;margin-bottom:20px">😕</div>
+      <div style="font-size:24px;font-weight:800;margin-bottom:10px">הקישור לא תקין</div>
+      <div style="font-size:15px;color:#6b7280">פנה למגייס שלך בטופ גרופ לקבלת קישור מעודכן.</div>
+    </div>`;
+  }
+
+  function showNetworkError() {
+    root.innerHTML = `<div style="max-width:500px;margin:80px auto;padding:20px;text-align:center">
+      <div style="font-size:64px;margin-bottom:20px">📡</div>
+      <div style="font-size:24px;font-weight:800;margin-bottom:10px">בעיית חיבור</div>
+      <div style="font-size:15px;color:#6b7280">לא הצלחנו לטעון את הטופס. בדוק את החיבור לאינטרנט ונסה לרענן את הדף.</div>
+      <button onclick="location.reload()" style="margin-top:20px;padding:10px 24px;background:#e85d26;color:white;border:none;border-radius:10px;font-family:Heebo;font-size:15px;font-weight:700;cursor:pointer">🔄 נסה שוב</button>
+    </div>`;
+  }
+
+  function nextJobNumber(jobs) {
+    const nums = (jobs||[]).map(j => parseInt((j.jobNumber||'').replace('TG-','')) || 0);
+    return 'TG-' + String(Math.max(0, ...nums) + 1).padStart(3,'0');
+  }
+
+  function renderForm(employer) {
+    document.title = `דיווח דרישות משרה – ${employer.name}`;
+
+    root.innerHTML = `
+      <div class="hero-wrap">
+        <div class="hero-brand-bar">
+          <div>
+            <div class="hero-brand-title">טופ גרופ גיוס והשמה</div>
+            <div class="hero-brand-tagline">אנחנו נמצא לכם את המועמד המושלם</div>
+          </div>
+          <div style="font-size:32px">🤝</div>
+        </div>
+      </div>
+
+      <div class="page">
+        <div class="welcome-card">
+          <div class="welcome-title">שלום <span class="welcome-emp">${employer.name}</span> 👋</div>
+          <div class="welcome-body">
+            נשמח לעזור לכם לאייש את המשרה הפתוחה. מלאו את הפרטים למטה ככל שתוכלו במדויק —
+            כך נוכל להתחיל בתהליך הגיוס עבורכם כבר היום. שדות המסומנים ב-* הם חובה.
+          </div>
+        </div>
+
+        <div class="form-card" id="form-card">
+          <div class="form-headline">פרטי המשרה</div>
+          <div class="form-subline">כמה דקות ואנחנו כבר על זה 🚀</div>
+          <form id="intake-form" novalidate>
+
+            <div class="form-section-title">📋 בסיס</div>
+            <div class="form-grid">
+              <div class="form-group full"><label class="form-label">תפקיד / כותרת המשרה *</label><input class="form-input" name="title" required placeholder="לדוגמה: מפתח/ת Full Stack"/></div>
+              <div class="form-group">
+                <label class="form-label">תחום</label>
+                <input class="form-input" name="domain" list="domain-list" placeholder="הייטק, רפואה, מסחר..."/>
+                <datalist id="domain-list">
+                  <option value="הייטק"><option value="רפואה"><option value="פיננסים">
+                  <option value="חינוך"><option value="תעשייה"><option value="מסחר קמעונאי">
+                  <option value="בינוי"><option value="שירותים"><option value="תיירות ומלונאות">
+                </datalist>
+              </div>
+              <div class="form-group">
+                <label class="form-label">סוג משרה</label>
+                <select class="form-select" name="type">
+                  <option value="משרה מלאה">משרה מלאה</option>
+                  <option value="משרה חלקית">משרה חלקית</option>
+                  <option value="זמנית">זמנית</option>
+                  <option value="פרילנס">פרילנס</option>
+                  <option value="משרת סטודנט">משרת סטודנט</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">מיקום</label><input class="form-input" name="location" placeholder="תל אביב"/></div>
+              <div class="form-group"><label class="form-label">טווח שכר <span class="opt">(אופציונלי)</span></label><input class="form-input" name="salary" placeholder="לדוגמה: 15,000-20,000"/></div>
+              <div class="form-group full"><label class="form-label">כמה משרות פתוחות? <span class="opt">(אופציונלי)</span></label><input class="form-input" type="number" min="1" name="positions" placeholder="1"/></div>
+            </div>
+
+            <div class="form-section-title">📝 תיאור ודרישות</div>
+            <div class="form-grid">
+              <div class="form-group full"><label class="form-label">תיאור התפקיד</label><textarea class="form-input form-textarea" name="description" placeholder="במה עוסקת המשרה, מה עיקר האחריות..."></textarea></div>
+              <div class="form-group full"><label class="form-label">דרישות התפקיד</label><textarea class="form-input form-textarea" name="requirements" placeholder="ניסיון נדרש, השכלה, כישורים..."></textarea></div>
+              <div class="form-group full"><label class="form-label">מה אתם מציעים? <span class="opt">(הטבות, אופציונלי)</span></label><textarea class="form-input form-textarea" name="benefits" placeholder="תנאים, הטבות, אווירה..."></textarea></div>
+            </div>
+
+            <div class="form-section-title">👤 איש קשר למשרה זו <span class="opt" style="font-size:12px;font-weight:500">(אם שונה מאיש הקשר הרגיל, אופציונלי)</span></div>
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">שם</label><input class="form-input" name="contactName" placeholder="שם איש הקשר"/></div>
+              <div class="form-group"><label class="form-label">טלפון</label><input class="form-input" name="contactPhone" placeholder="05X-XXXXXXX"/></div>
+            </div>
+
+            <div class="form-error" id="form-error"></div>
+            <button type="submit" class="submit-btn" id="submit-btn">שליחת פרטי המשרה ←</button>
+          </form>
+        </div>
+
+        <div class="footer"><strong>טופ גרופ</strong> גיוס והשמה</div>
+      </div>`;
+
+    document.getElementById('intake-form').addEventListener('submit', async function(e){
+      e.preventDefault();
+      const f = this;
+      const errEl = document.getElementById('form-error');
+      const btn = document.getElementById('submit-btn');
+      errEl.style.display = 'none';
+
+      const title = f.title.value.trim();
+      if (!title) {
+        errEl.textContent = 'נא למלא את כותרת המשרה';
+        errEl.style.display = 'block'; return;
+      }
+
+      btn.disabled = true; btn.textContent = 'שולח...';
+
+      try {
+        const getRes = await fetch(`${SB_URL}/rest/v1/crm_state?select=data&id=eq.main`, {
+          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json' }
+        });
+        const rows = await getRes.json();
+        const existing = rows?.[0]?.data || {};
+        const jobs = existing.jobs || [];
+
+        const job = {
+          id: 'j'+Date.now(),
+          jobNumber: nextJobNumber(jobs),
+          title, publishTitle: title,
+          domain: f.domain.value.trim(),
+          role: f.domain.value.trim(),
+          employerId: employer.id,
+          type: f.type.value,
+          location: f.location.value.trim(),
+          salary: f.salary.value.trim(),
+          positions: f.positions.value.trim(),
+          status: 'ממתין לאישור',
+          deadline: '',
+          description: f.description.value.trim(),
+          requirements: f.requirements.value.trim(),
+          benefits: f.benefits.value.trim(),
+          candidates: [],
+          image: '', imageUrl: '',
+          source: 'employer_intake',
+          contactName: f.contactName.value.trim(),
+          contactPhone: f.contactPhone.value.trim(),
+          submittedAt: new Date().toISOString(),
+          createdAt: new Date().toLocaleDateString('he-IL'),
+        };
+
+        await fetch(`${SB_URL}/rest/v1/crm_state?id=eq.main`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`,
+            'Accept': 'application/json', 'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            data: {
+              ...existing,
+              jobs: [...jobs, job],
+              pendingJobs: [...(existing.pendingJobs||[]), job.id],
+            },
+            updated_at: new Date().toISOString()
+          })
+        });
+      } catch (err) { console.error(err); }
+
+      setTimeout(() => {
+        document.getElementById('form-card').innerHTML = `
+          <div class="success-card">
+            <span class="success-icon">🎉</span>
+            <div class="success-title">הפרטים התקבלו!</div>
+            <div class="success-body">
+              תודה רבה!<br/>
+              קיבלנו את פרטי המשרה <strong>${title}</strong>.<br/>
+              נציג מטופ גרופ יעבור על הפרטים ונתחיל בתהליך הגיוס בהקדם.
+            </div>
+          </div>`;
+      }, 400);
+    });
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
