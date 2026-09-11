@@ -10,7 +10,7 @@ exports.handler = async (event) => {
 
   const payload = {
     from: 'HR Recruitment <mass@topgroup4u.com>',
-    to: 'mass@tghr4u.com',
+    to: 'mass@topgroup4u.com',
     subject: `מועמדות חדשה: ${jobTitle || 'משרה'}`,
     html: `
       <div dir="rtl" style="font-family:Arial;padding:20px">
