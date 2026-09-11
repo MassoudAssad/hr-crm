@@ -1336,8 +1336,14 @@ const EmployerDetail=React.memo(function EmployerDetail({data,setData,detail,det
             body:JSON.stringify({employerName:detail.name,employerEmail:primaryEmail,contactName:primaryContact?.name||'',link:url})
           });
           const d=await res.json();
-          if(res.ok&&d.ok)showToast(`✅ המייל נשלח ל-${primaryEmail}`,'success');
-          else{console.warn('send-employer-intake error:',d);showToast('שגיאה בשליחת המייל','error');}
+          if(res.ok&&d.ok){
+            showToast(`✅ המייל נשלח ל-${primaryEmail}`,'success');
+            const note={id:'n'+Date.now(),text:`📧 נשלח מייל בקשת פרטי משרה ל-${primaryEmail}`,author:data.displaySettings?.userName||'מנהל',ts:new Date().toISOString()};
+            setData(dd=>({...dd,employers:dd.employers.map(e=>e.id===detail.id?{...e,notesList:[note,...(e.notesList||[])]}:e)}));
+            setDetailForm(f=>({...f,notesList:[note,...(f.notesList||[])]}));
+          } else {
+            console.warn('send-employer-intake error:',d);showToast('שגיאה בשליחת המייל','error');
+          }
         }catch(err){console.warn(err);showToast('שגיאה בשליחת המייל','error');}
         setSendingIntake(false);
       };
