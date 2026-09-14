@@ -839,8 +839,6 @@ function TopNav({active,onNav,pending,onPendingClick,pendingJobs,onPendingJobsCl
         >
           <span style={{fontSize:16}}>{item.icon}</span>
           <span>{item.label}</span>
-          {item.id==='candidates'&&pending>0&&<span style={{background:'#E98E82',color:'#2B120C',borderRadius:10,padding:'1px 6px',fontSize:11,fontWeight:800,marginRight:2}}>{pending}</span>}
-          {item.id==='jobs'&&pendingJobs>0&&<span style={{background:'#E98E82',color:'#2B120C',borderRadius:10,padding:'1px 6px',fontSize:11,fontWeight:800,marginRight:2}}>{pendingJobs}</span>}
         </div>
       ))}
     </nav>
@@ -887,6 +885,7 @@ function Dashboard({data,onNav}){
   const totalCandidates=data.candidates.length;
   const activeCandidates=data.candidates.filter(c=>c.status!=='השמה מוצלחת').length;
   const pendingCount=(data.pendingCandidates||[]).length;
+  const pendingJobsCount=(data.pendingJobs||[]).length;
 
   // שיעור גיוס / שיעור הצלחה — אותו מדד (כמו בדוגמה)
   const hireRate=totalCandidates>0?Math.round((placedTotal/totalCandidates)*1000)/10:0;
@@ -978,9 +977,15 @@ function Dashboard({data,onNav}){
         <h1 style={{fontSize:37,fontWeight:700,color:'#2B1F1C',marginBottom:4}}>לוח בקרה</h1>
         <div style={{color:DMUT,fontSize:16}}>ברוכים הבאים חזרה, {data.displaySettings?.userName||'מגייס/ת'}</div>
       </div>
-      {pendingCount>0&&<div onClick={()=>onNav('candidates')} style={{cursor:'pointer',background:'#FDF1DC',border:'1px solid #7A4E0833',borderRadius:12,padding:'10px 18px',display:'flex',alignItems:'center',gap:10,animation:'pendingPulse 1.8s ease-in-out infinite'}}>
-        <span style={{fontSize:23}}>🔔</span>
-        <div><div style={{fontWeight:800,fontSize:17,color:'#7A4E08'}}>{pendingCount} מועמדים ממתינים</div><div style={{fontSize:14,color:'#7A4E08'}}>לחץ לאישור</div></div>
+      {(pendingCount>0||pendingJobsCount>0)&&<div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+        {pendingCount>0&&<div onClick={()=>onNav('candidates')} style={{cursor:'pointer',background:'#FDF1DC',border:'1px solid #7A4E0833',borderRadius:12,padding:'10px 18px',display:'flex',alignItems:'center',gap:10,animation:'pendingPulse 1.8s ease-in-out infinite'}}>
+          <span style={{fontSize:23}}>🔔</span>
+          <div><div style={{fontWeight:800,fontSize:17,color:'#7A4E08'}}>{pendingCount} מועמדים ממתינים</div><div style={{fontSize:14,color:'#7A4E08'}}>לחץ לאישור</div></div>
+        </div>}
+        {pendingJobsCount>0&&<div onClick={()=>onNav('jobs')} style={{cursor:'pointer',background:'#FDF1DC',border:'1px solid #7A4E0833',borderRadius:12,padding:'10px 18px',display:'flex',alignItems:'center',gap:10,animation:'pendingPulse 1.8s ease-in-out infinite'}}>
+          <span style={{fontSize:23}}>📋</span>
+          <div><div style={{fontWeight:800,fontSize:17,color:'#7A4E08'}}>{pendingJobsCount} משרות חדשות</div><div style={{fontSize:14,color:'#7A4E08'}}>לחץ לאישור</div></div>
+        </div>}
       </div>}
     </div>
 
