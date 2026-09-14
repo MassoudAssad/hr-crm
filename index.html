@@ -845,12 +845,12 @@ function TopNav({active,onNav,pending,onPendingClick,pendingJobs,onPendingJobsCl
       ))}
     </nav>
     {/* Left — pending bell + user */}
-    <div style={{display:'flex',alignItems:'center',gap:10,paddingRight:0,paddingLeft:0,borderRight:'1px solid rgba(255,255,255,0.15)'}}>
-      {pendingJobs>0&&<button onClick={onPendingJobsClick} style={{background:'rgba(233,142,130,0.25)',border:'1.5px solid #E98E82',color:'white',borderRadius:8,padding:'6px 14px',fontFamily:'Rubik',fontWeight:700,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
-        📋 <span>{pendingJobs} משרות ממתינות</span>
+    <div style={{display:'flex',alignItems:'center',gap:5,paddingRight:0,paddingLeft:0,borderRight:'1px solid rgba(255,255,255,0.15)'}}>
+      {pendingJobs>0&&<button onClick={onPendingJobsClick} style={{background:'rgba(233,142,130,0.25)',border:'1.5px solid #E98E82',color:'white',borderRadius:8,padding:'6px 8px',fontFamily:'Rubik',fontWeight:700,fontSize:11,cursor:'pointer',display:'flex',alignItems:'center',gap:3}}>
+        📋 <span>{pendingJobs} משרות חדשות</span>
       </button>}
-      {pending>0&&<button onClick={onPendingClick} style={{background:'rgba(233,142,130,0.25)',border:'1.5px solid #E98E82',color:'white',borderRadius:8,padding:'6px 14px',fontFamily:'Rubik',fontWeight:700,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
-        🔔 <span>{pending} ממתינים</span>
+      {pending>0&&<button onClick={onPendingClick} style={{background:'rgba(233,142,130,0.25)',border:'1.5px solid #E98E82',color:'white',borderRadius:8,padding:'6px 8px',fontFamily:'Rubik',fontWeight:700,fontSize:11,cursor:'pointer',display:'flex',alignItems:'center',gap:3}}>
+        🔔 <span>{pending} מועמדים בהמתנה</span>
       </button>}
       <div style={{display:'flex',alignItems:'center',gap:8}}>
         <Avatar name="מנהל" size={30}/>

@@ -294,6 +294,26 @@ select.form-select { cursor: pointer; }
             updated_at: new Date().toISOString()
           })
         });
+
+        // Resend (Netlify Function) - שולח ל-mass@topgroup4u.com
+        fetch('/.netlify/functions/notify-job-intake', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            employerName: employer.name,
+            contactName: job.contactName,
+            contactPhone: job.contactPhone,
+            title: job.title,
+            domain: job.domain,
+            type: job.type,
+            location: job.location,
+            salary: job.salary,
+            positions: job.positions
+          })
+        }).then(r => r.json()).then(d => {
+          if (!d.ok) console.warn('Resend notify error:', d);
+          else console.log('Resend notification sent:', d.id);
+        }).catch(err => console.warn('Resend notify failed:', err));
       } catch (err) { console.error(err); }
 
       setTimeout(() => {
