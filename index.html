@@ -4138,12 +4138,12 @@ function CandidateHunter({data}){
                 {results.map(c=>{
                   const t=tierLabel[tier(c._score)];
                   const prevJob=c.status==='השמה מוצלחת'?data.jobs.find(j=>c.appliedJobs?.includes(j.id)&&j.status!=='פתוח')||data.jobs.find(j=>c.appliedJobs?.includes(j.id)):null;
-                  return <div key={c.id} style={{background:'#FFFFFF',borderRadius:14,padding:'16px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',border:`1.5px solid ${t.border}`,display:'flex',alignItems:'flex-start',gap:16}}>
+                  return <div key={c.id} style={{background:'#FFFFFF',borderRadius:14,padding:'16px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',border:`1.5px solid ${t.border}`,display:'flex',alignItems:'flex-start',gap:16,flexWrap:'wrap'}}>
                     <div style={{width:52,height:52,borderRadius:26,background:t.bg,border:`3px solid ${t.color}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                       <div style={{fontWeight:800,fontSize:17,color:t.color}}>{c._score}</div>
                     </div>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4,flexWrap:'wrap'}}>
                         <span style={{fontWeight:800,fontSize:17,color:'#2B1F1C'}}>{c.name}</span>
                         <Tag label={c.status}/>
                         {c.status==='השמה מוצלחת'&&<span style={{fontSize:13,background:'#FDF1DC',color:'#7A4E08',border:'1px solid #7A4E0866',borderRadius:4,padding:'1px 6px',fontWeight:700}}>🏅 הושם</span>}
