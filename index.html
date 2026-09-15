@@ -56,6 +56,9 @@ option { background: #FBF8F7; color: #2B1F1C; }
   .mobile-grid-2 { grid-template-columns: 1fr 1fr !important; }
   .mobile-pad { padding: 14px !important; }
   .dash-card { padding: 16px !important; }
+  .detail-split { flex-direction: column !important; overflow: auto !important; }
+  .detail-split > div { flex: 0 0 auto !important; width: 100% !important; border-left: none !important; }
+  .detail-split > div:not(:last-child) { border-bottom: 1px solid #EAE2DF !important; }
 }
 @media (min-width: 769px) {
   #mobile-nav { display:none !important; }
@@ -1274,7 +1277,7 @@ const EmployerDetail=React.memo(function EmployerDetail({data,setData,detail,det
         </div>
 
         {/* BODY */}
-        <div style={{display:'flex',flex:1,overflow:'hidden',minHeight:0}}>
+        <div className="detail-split" style={{display:'flex',flex:1,overflow:'hidden',minHeight:0}}>
 
           {/* LEFT 40% — עריכה */}
           <div style={{flex:'0 0 40%',overflowY:'auto',borderLeft:'1px solid #EAE2DF',background:'#FAF7F6',padding:'24px'}}>
@@ -2250,7 +2253,7 @@ function Jobs({data,setData,jumpToJobId,clearJumpToJobId,navTick}){
               {cd.phone&&<button onClick={()=>{const p=(cd.phone||'').replace(/[-\s]/g,'').replace(/^0/,'972');window.open(`https://wa.me/${p}`,'_blank');}} style={{background:'#E3F6EC',border:'1.5px solid #0F6B3366',color:'#0F6B33',borderRadius:8,padding:'7px 14px',fontFamily:'Rubik',fontWeight:700,fontSize:15,cursor:'pointer'}}>💬 WA</button>}
             </div>
             {/* Body */}
-            <div style={{display:'flex',flex:1,overflow:'hidden',minHeight:0}}>
+            <div className="detail-split" style={{display:'flex',flex:1,overflow:'hidden',minHeight:0}}>
               {/* פרטים */}
               <div style={{flex:'0 0 45%',overflowY:'auto',borderLeft:'1px solid #EAE2DF',background:'#FFFFFF',padding:'16px 28px 16px 20px'}}>
                 {[
@@ -2385,7 +2388,7 @@ function Jobs({data,setData,jumpToJobId,clearJumpToJobId,navTick}){
         </div>
 
         {/* BODY */}
-        <div style={{display:'flex',flex:1,overflow:'hidden',minHeight:0}}>
+        <div className="detail-split" style={{display:'flex',flex:1,overflow:'hidden',minHeight:0}}>
 
           {/* RIGHT 45% — שדות עריכה */}
           <div style={{flex:'0 0 45%',overflowY:'auto',borderLeft:'1px solid #EAE2DF',background:'#FAF7F6',padding:'24px'}}>
@@ -3134,7 +3137,7 @@ function Candidates({data,setData,navTick}){
           </div>
 
           {/* ── BODY ── */}
-          <div style={{display:'flex',flex:1,overflow:'hidden',minHeight:0}}>
+          <div className="detail-split" style={{display:'flex',flex:1,overflow:'hidden',minHeight:0}}>
 
             {/* עמודה שמאל — פרטים (גלילה) */}
             <div style={{flex:'0 0 45%',overflowY:'auto',borderLeft:'1px solid #EAE2DF',display:'flex',flexDirection:'column',background:'#FAF7F6'}}>
@@ -4135,7 +4138,7 @@ function CandidateHunter({data}){
                 {results.map(c=>{
                   const t=tierLabel[tier(c._score)];
                   const prevJob=c.status==='השמה מוצלחת'?data.jobs.find(j=>c.appliedJobs?.includes(j.id)&&j.status!=='פתוח')||data.jobs.find(j=>c.appliedJobs?.includes(j.id)):null;
-                  return <div key={c.id} style={{background:'#FFFFFF',borderRadius:14,padding:'16px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',border:`1.5px solid ${t.border}`,display:'flex',alignItems:'center',gap:16}}>
+                  return <div key={c.id} style={{background:'#FFFFFF',borderRadius:14,padding:'16px 20px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',border:`1.5px solid ${t.border}`,display:'flex',alignItems:'flex-start',gap:16}}>
                     <div style={{width:52,height:52,borderRadius:26,background:t.bg,border:`3px solid ${t.color}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                       <div style={{fontWeight:800,fontSize:17,color:t.color}}>{c._score}</div>
                     </div>
