@@ -120,11 +120,12 @@ select.form-select { cursor: pointer; }
     const employerId = getEmployerId();
     if (!employerId) { showError(); return; }
     try {
-      const res = await fetch(`${SB_URL}/rest/v1/crm_state?select=data&id=eq.main`, {
-        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json' }
+      const res = await fetch(`${SB_URL}/rest/v1/rpc/get_employer_public_details`, {
+        method: 'POST',
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_employer_id: employerId })
       });
-      const rows = await res.json();
-      const employer = rows?.[0]?.data?.employers?.find(e => e.id === employerId);
+      const employer = await res.json();
       if (!employer) { showError(); return; }
       renderForm(employer);
     } catch (e) {
