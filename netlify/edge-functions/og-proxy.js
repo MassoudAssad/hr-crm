@@ -36,13 +36,14 @@ export default async (request, context) => {
   let job = null;
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/crm_state?select=data&id=eq.main`,
-      { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json' } }
+      `${SB_URL}/rest/v1/rpc/get_job_public_details`,
+      {
+        method: 'POST',
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_job_id: jobId })
+      }
     );
-    const rows = await res.json();
-    if (rows?.[0]?.data?.jobs) {
-      job = rows[0].data.jobs.find(j => j.id === jobId);
-    }
+    job = await res.json();
   } catch (e) {}
 
   // Fetch apply.html
