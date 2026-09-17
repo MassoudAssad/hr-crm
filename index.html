@@ -1106,11 +1106,10 @@ function AgreementUpload({form,setForm}){
     try{
       const ext=file.name.split('.').pop();
       const fname=`agreement-${form.id||('e'+Date.now())}-${Date.now()}.${ext}`;
-      const uploadUrl=`${SB_URL}/storage/v1/object/job-images/${fname}`;
-      const res=await fetch(uploadUrl,{method:'POST',headers:{'Authorization':`Bearer ${SB_KEY}`,'Content-Type':file.type,'x-upsert':'true'},body:file});
-      if(!res.ok){showToast('שגיאה בהעלאת קובץ','error');return;}
-      const publicUrl=`${SB_URL}/storage/v1/object/public/job-images/${fname}`;
-      setForm(f=>({...f,agreementUrl:publicUrl,agreementName:file.name}));
+      const {error}=await sb.storage.from('job-images').upload(fname,file,{upsert:true,contentType:file.type});
+      if(error){showToast('שגיאה בהעלאת קובץ','error');return;}
+      const {data:urlData}=sb.storage.from('job-images').getPublicUrl(fname);
+      setForm(f=>({...f,agreementUrl:urlData.publicUrl,agreementName:file.name}));
     }catch(err){showToast('שגיאה בהעלאת קובץ','error');console.warn(err);}
     finally{setUploading(false);}
   };
@@ -1946,11 +1945,10 @@ function ImgUpload({form,setForm}){
       const jobId=form.id||('j'+Date.now());
       const filename=`job-${jobId}-${Date.now()}.jpg`;
       const compressed=await compressImage(f);
-      const uploadUrl=`${SB_URL}/storage/v1/object/job-images/${filename}`;
-      const res=await fetch(uploadUrl,{method:'POST',headers:{'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'image/jpeg','x-upsert':'true'},body:compressed});
-      if(!res.ok){const e=await res.text();showToast('שגיאה בהעלאת תמונה','error');console.warn(e);return;}
-      const publicUrl=`${SB_URL}/storage/v1/object/public/job-images/${filename}`;
-      setForm(fm=>({...fm,image:publicUrl,imageUrl:publicUrl}));
+      const {error}=await sb.storage.from('job-images').upload(filename,compressed,{upsert:true,contentType:'image/jpeg'});
+      if(error){showToast('שגיאה בהעלאת תמונה','error');console.warn(error);return;}
+      const {data:urlData}=sb.storage.from('job-images').getPublicUrl(filename);
+      setForm(fm=>({...fm,image:urlData.publicUrl,imageUrl:urlData.publicUrl}));
     }catch(err){showToast('שגיאה בהעלאת תמונה','error');console.warn(err);}
     finally{setUploading(false);}
   };
