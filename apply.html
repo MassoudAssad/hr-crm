@@ -320,70 +320,50 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
 
       btn.disabled = true; btn.textContent = 'שולח...';
 
-      const candidate = {
-        id: 'c'+Date.now(), name, phone, email,
-        city: f.city.value.trim(),
-        experience: f.experience.value.trim(),
-        education: f.education.value.trim(),
-        notes: f.notes.value.trim(),
-        cv: !!cvFileName,
-        domain: job.domain||'', role: job.role||job.title||'',
-        status: 'חדש', appliedJobs: [job.id],
-        source: 'landing_page', jobNumber: job.jobNumber,
-        pendingApproval: true,
-        appliedAt: new Date().toISOString(),
-      };
-
       try {
         // Upload CV to Supabase Storage if file exists
         let cvUrl = '';
+        let cvFname = '';
         if (cvFileName) {
           const cvFile = document.getElementById('cv-input').files[0];
           if (cvFile) {
             const ext = cvFile.name.split('.').pop();
-            const fname = `cv-${candidate.id}.${ext}`;
-            const { error: uploadErr } = await sb.storage.from('job-images').upload(fname, cvFile, { upsert: true, contentType: cvFile.type });
+            cvFname = `cv-${Date.now()}-${crypto.randomUUID()}.${ext}`;
+            const { error: uploadErr } = await sb.storage.from('job-images').upload(cvFname, cvFile, { upsert: true, contentType: cvFile.type });
             if (!uploadErr) {
-              const { data: urlData } = sb.storage.from('job-images').getPublicUrl(fname);
+              const { data: urlData } = sb.storage.from('job-images').getPublicUrl(cvFname);
               cvUrl = urlData.publicUrl;
-              candidate.cvUrl = cvUrl;
+            } else {
+              cvFname = '';
             }
           }
         }
 
-        const getRes = await fetch(`${SB_URL}/rest/v1/crm_state?select=data&id=eq.main`, {
-          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json' }
+        const rpcRes = await fetch(`${SB_URL}/rest/v1/rpc/submit_candidate_application`, {
+          method: 'POST',
+          headers: {
+            'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`,
+            'Accept': 'application/json', 'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            p_job_id: job.id, p_name: name, p_phone: phone, p_email: email,
+            p_city: f.city.value.trim(), p_experience: f.experience.value.trim(),
+            p_education: f.education.value.trim(), p_notes: f.notes.value.trim(),
+            p_has_cv: !!cvFileName, p_cv_url: cvUrl || null
+          })
         });
-        const rows = await getRes.json();
-        const existing = rows?.[0]?.data || {};
-        const candidates = existing.candidates || [];
 
-        if (candidates.some(c => c.phone===phone && c.appliedJobs?.includes(job.id))) {
-          errEl.textContent = 'כבר הגשת מועמדות למשרה זו עם מספר טלפון זה.';
+        if (!rpcRes.ok) {
+          if (cvFname) sb.storage.from('job-images').remove([cvFname]).catch(()=>{});
+          const errBody = await rpcRes.json().catch(()=>({}));
+          if (errBody.message === 'DUPLICATE_APPLICATION') {
+            errEl.textContent = 'כבר הגשת מועמדות למשרה זו עם מספר טלפון זה.';
+          } else {
+            errEl.textContent = 'אירעה שגיאה בשליחת המועמדות. נסה שוב.';
+          }
           errEl.style.display = 'block'; btn.disabled=false; btn.textContent='שלח מועמדות ←'; return;
         }
 
-        const updatedJobs = (existing.jobs||[]).map(j =>
-          j.id===job.id ? {...j, candidates:[...(j.candidates||[]),candidate.id]} : j
-        );
-
-        await fetch(`${SB_URL}/rest/v1/crm_state?id=eq.main`, {
-          method: 'PATCH',
-          headers: {
-            'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`,
-            'Accept': 'application/json', 'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({
-            data: {
-              ...existing,
-              candidates: [...candidates, candidate],
-              jobs: updatedJobs,
-              pendingCandidates: [...(existing.pendingCandidates||[]), candidate.id],
-            },
-            updated_at: new Date().toISOString()
-          })
-        });
         // שליחת התראות למייל דרך Web3Forms ו-Resend
         // 1. Web3Forms (גיבוי)
         fetch('https://api.web3forms.com/submit', {
@@ -392,9 +372,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
           body: JSON.stringify({
             access_key: '7fe52621-8ca9-4ac5-9e18-efedb723a0af',
             subject: 'מועמדות חדשה: ' + (job.publishTitle || job.title || 'משרה'),
-            name: candidate.name,
-            phone: candidate.phone,
-            email: candidate.email,
+            name, phone, email,
             jobTitle: job.publishTitle || job.title,
             from_name: 'טופ גרופ CRM'
           })
@@ -407,9 +385,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name: candidate.name,
-            phone: candidate.phone,
-            email: candidate.email,
+            name, phone, email,
             jobTitle: job.publishTitle || job.title || 'משרה'
           })
         }).then(r => r.json()).then(d => {

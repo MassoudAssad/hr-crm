@@ -149,11 +149,6 @@ select.form-select { cursor: pointer; }
     </div>`;
   }
 
-  function nextJobNumber(jobs) {
-    const nums = (jobs||[]).map(j => parseInt((j.jobNumber||'').replace('TG-','')) || 0);
-    return 'TG-' + String(Math.max(0, ...nums) + 1).padStart(3,'0');
-  }
-
   function renderForm(employer) {
     document.title = `דיווח דרישות משרה – ${employer.name}`;
 
@@ -245,55 +240,33 @@ select.form-select { cursor: pointer; }
 
       btn.disabled = true; btn.textContent = 'שולח...';
 
+      const domain = f.domain.value.trim();
+      const type = f.type.value;
+      const location = f.location.value.trim();
+      const salary = f.salary.value.trim();
+      const positions = f.positions.value.trim();
+      const contactName = f.contactName.value.trim();
+      const contactPhone = f.contactPhone.value.trim();
+
       try {
-        const getRes = await fetch(`${SB_URL}/rest/v1/crm_state?select=data&id=eq.main`, {
-          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Accept': 'application/json' }
-        });
-        const rows = await getRes.json();
-        const existing = rows?.[0]?.data || {};
-        const jobs = existing.jobs || [];
-
-        const job = {
-          id: 'j'+Date.now(),
-          jobNumber: nextJobNumber(jobs),
-          title, publishTitle: title,
-          domain: f.domain.value.trim(),
-          role: f.domain.value.trim(),
-          employerId: employer.id,
-          type: f.type.value,
-          location: f.location.value.trim(),
-          salary: f.salary.value.trim(),
-          positions: f.positions.value.trim(),
-          status: 'ממתין לאישור',
-          deadline: '',
-          description: f.description.value.trim(),
-          requirements: f.requirements.value.trim(),
-          benefits: f.benefits.value.trim(),
-          candidates: [],
-          image: '', imageUrl: '',
-          source: 'employer_intake',
-          contactName: f.contactName.value.trim(),
-          contactPhone: f.contactPhone.value.trim(),
-          submittedAt: new Date().toISOString(),
-          createdAt: new Date().toLocaleDateString('he-IL'),
-        };
-
-        await fetch(`${SB_URL}/rest/v1/crm_state?id=eq.main`, {
-          method: 'PATCH',
+        const rpcRes = await fetch(`${SB_URL}/rest/v1/rpc/submit_job_intake`, {
+          method: 'POST',
           headers: {
             'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`,
-            'Accept': 'application/json', 'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
+            'Accept': 'application/json', 'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            data: {
-              ...existing,
-              jobs: [...jobs, job],
-              pendingJobs: [...(existing.pendingJobs||[]), job.id],
-            },
-            updated_at: new Date().toISOString()
+            p_employer_id: employer.id, p_title: title, p_domain: domain, p_type: type,
+            p_location: location, p_salary: salary, p_positions: positions,
+            p_description: f.description.value.trim(), p_requirements: f.requirements.value.trim(),
+            p_benefits: f.benefits.value.trim(), p_contact_name: contactName, p_contact_phone: contactPhone
           })
         });
+
+        if (!rpcRes.ok) {
+          errEl.textContent = 'אירעה שגיאה בשליחת הפרטים. נסה שוב.';
+          errEl.style.display = 'block'; btn.disabled=false; btn.textContent='שליחת פרטי המשרה ←'; return;
+        }
 
         // Resend (Netlify Function) - שולח ל-mass@topgroup4u.com
         fetch('/.netlify/functions/notify-job-intake', {
@@ -301,14 +274,8 @@ select.form-select { cursor: pointer; }
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             employerName: employer.name,
-            contactName: job.contactName,
-            contactPhone: job.contactPhone,
-            title: job.title,
-            domain: job.domain,
-            type: job.type,
-            location: job.location,
-            salary: job.salary,
-            positions: job.positions
+            contactName, contactPhone,
+            title, domain, type, location, salary, positions
           })
         }).then(r => r.json()).then(d => {
           if (!d.ok) console.warn('Resend notify error:', d);
