@@ -19,8 +19,8 @@ exports.handler = async (event) => {
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const mode = (event.queryStringParameters && event.queryStringParameters.mode) || 'dry-run';
 
-  if (mode !== 'dry-run' && mode !== 'execute') {
-    return { statusCode: 400, body: JSON.stringify({ error: 'mode must be dry-run or execute' }) };
+  if (mode !== 'dry-run' && mode !== 'execute' && mode !== 'lookup') {
+    return { statusCode: 400, body: JSON.stringify({ error: 'mode must be dry-run, execute, or lookup' }) };
   }
 
   // Fetch the full crm_state blob using service_role (bypasses RLS entirely)
@@ -33,6 +33,14 @@ exports.handler = async (event) => {
   }
   const data = stateRows[0].data || {};
   const candidates = data.candidates || [];
+
+  // Temporary diagnostic: name-only lookup by id, for manually spot-checking
+  // migrated candidates in the CRM UI (which can't search by candidateId).
+  if (mode === 'lookup') {
+    const ids = ((event.queryStringParameters && event.queryStringParameters.ids) || '').split(',').map(s => s.trim()).filter(Boolean);
+    const found = candidates.filter(c => ids.includes(c.id)).map(c => ({ id: c.id, name: c.name }));
+    return { statusCode: 200, body: JSON.stringify({ mode: 'lookup', found }) };
+  }
 
   // A candidate needs migration only if ITS OWN cvUrl still points at the
   // old public bucket - no filename guessing, no cross-referencing.
