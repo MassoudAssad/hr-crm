@@ -65,8 +65,8 @@ exports.handler = async (event) => {
 
     // cleanup-execute: bulk-delete all old paths from job-images in one call
     const prefixes = toDelete.map(t => t.oldPath);
-    const delRes = await fetch(`${SB_URL}/storage/v1/object/remove/job-images`, {
-      method: 'POST',
+    const delRes = await fetch(`${SB_URL}/storage/v1/object/job-images`, {
+      method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${SERVICE_KEY}`,
         'apikey': SERVICE_KEY,
