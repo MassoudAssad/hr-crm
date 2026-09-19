@@ -212,9 +212,9 @@ async function uploadImageToStorage(base64, jobId) {
     const blob = await res.blob();
     const ext = blob.type.includes('png') ? 'png' : 'jpg';
     const filename = `job-${jobId}.${ext}`;
-    const { error } = await sb.storage.from('job-images').upload(filename, blob, { upsert: true, contentType: blob.type });
+    const { error } = await sb.storage.from('job-photos').upload(filename, blob, { upsert: true, contentType: blob.type });
     if (error) { console.warn('Storage upload error:', error); return null; }
-    const { data: urlData } = sb.storage.from('job-images').getPublicUrl(filename);
+    const { data: urlData } = sb.storage.from('job-photos').getPublicUrl(filename);
     return urlData.publicUrl;
   } catch(e) { console.warn('Upload exception:', e); return null; }
 }
@@ -1106,10 +1106,11 @@ function AgreementUpload({form,setForm}){
     try{
       const ext=file.name.split('.').pop();
       const fname=`agreement-${form.id||('e'+Date.now())}-${Date.now()}.${ext}`;
-      const {error}=await sb.storage.from('job-images').upload(fname,file,{upsert:true,contentType:file.type});
+      const {error}=await sb.storage.from('employer-documents').upload(fname,file,{upsert:true,contentType:file.type});
       if(error){showToast('שגיאה בהעלאת קובץ','error');return;}
-      const {data:urlData}=sb.storage.from('job-images').getPublicUrl(fname);
-      setForm(f=>({...f,agreementUrl:urlData.publicUrl,agreementName:file.name}));
+      const {data:urlData,error:signErr}=await sb.storage.from('employer-documents').createSignedUrl(fname,315360000);
+      if(signErr){showToast('שגיאה בהעלאת קובץ','error');return;}
+      setForm(f=>({...f,agreementUrl:urlData.signedUrl,agreementName:file.name}));
     }catch(err){showToast('שגיאה בהעלאת קובץ','error');console.warn(err);}
     finally{setUploading(false);}
   };
@@ -1945,9 +1946,9 @@ function ImgUpload({form,setForm}){
       const jobId=form.id||('j'+Date.now());
       const filename=`job-${jobId}-${Date.now()}.jpg`;
       const compressed=await compressImage(f);
-      const {error}=await sb.storage.from('job-images').upload(filename,compressed,{upsert:true,contentType:'image/jpeg'});
+      const {error}=await sb.storage.from('job-photos').upload(filename,compressed,{upsert:true,contentType:'image/jpeg'});
       if(error){showToast('שגיאה בהעלאת תמונה','error');console.warn(error);return;}
-      const {data:urlData}=sb.storage.from('job-images').getPublicUrl(filename);
+      const {data:urlData}=sb.storage.from('job-photos').getPublicUrl(filename);
       setForm(fm=>({...fm,image:urlData.publicUrl,imageUrl:urlData.publicUrl}));
     }catch(err){showToast('שגיאה בהעלאת תמונה','error');console.warn(err);}
     finally{setUploading(false);}
@@ -2791,8 +2792,8 @@ function Candidates({data,setData,navTick}){
     if(modal==='edit'&&form.id){
       const ext=file.name.split('.').pop();
       const fname='cv-'+form.id+'.'+ext;
-      const {error}=await sb.storage.from('job-images').upload(fname,file,{upsert:true,contentType:file.type});
-      if(!error){const {data:u}=sb.storage.from('job-images').getPublicUrl(fname);setForm(f=>({...f,cv:true,cvUrl:u.publicUrl}));}
+      const {error}=await sb.storage.from('candidate-cvs').upload(fname,file,{upsert:true,contentType:file.type});
+      if(!error){const {data:u}=await sb.storage.from('candidate-cvs').createSignedUrl(fname,315360000);if(u){setForm(f=>({...f,cv:true,cvUrl:u.signedUrl}));}}
     }
   }; // tracks which fields were AI-filled
   const [confirmDel,setConfirmDel]=React.useState(null);
@@ -2858,10 +2859,11 @@ function Candidates({data,setData,navTick}){
         const file=form._cvFile;
         const ext=file.name.split('.').pop();
         const fname=`cv-${newId}.${ext}`;
-        sb.storage.from('job-images').upload(fname,file,{upsert:true,contentType:file.type}).then(({error})=>{
+        sb.storage.from('candidate-cvs').upload(fname,file,{upsert:true,contentType:file.type}).then(({error})=>{
           if(!error){
-            const {data:u}=sb.storage.from('job-images').getPublicUrl(fname);
-            setData(d=>({...d,candidates:d.candidates.map(c=>c.id===newId?{...c,cv:true,cvUrl:u.publicUrl}:c)}));
+            sb.storage.from('candidate-cvs').createSignedUrl(fname,315360000).then(({data:u})=>{
+              if(u){setData(d=>({...d,candidates:d.candidates.map(c=>c.id===newId?{...c,cv:true,cvUrl:u.signedUrl}:c)}));}
+            });
           }
         });
       }
@@ -3280,12 +3282,13 @@ function Candidates({data,setData,navTick}){
                         const file=e.target.files[0];if(!file)return;
                         const ext=file.name.split('.').pop();
                         const fname=`cv-${detail.id}.${ext}`;
-                        const {error}=await sb.storage.from('job-images').upload(fname,file,{upsert:true,contentType:file.type});
+                        const {error}=await sb.storage.from('candidate-cvs').upload(fname,file,{upsert:true,contentType:file.type});
                         if(!error){
-                          const {data:urlData}=sb.storage.from('job-images').getPublicUrl(fname);
-                          setData(d=>({...d,candidates:d.candidates.map(c=>c.id===detail.id?{...c,cv:true,cvUrl:urlData.publicUrl}:c)}));
-                          setDetail(prev=>({...prev,cv:true,cvUrl:urlData.publicUrl}));
-                          setDetailForm(prev=>({...prev,cv:true,cvUrl:urlData.publicUrl}));
+                          const {data:urlData}=await sb.storage.from('candidate-cvs').createSignedUrl(fname,315360000);
+                          if(!urlData){return;}
+                          setData(d=>({...d,candidates:d.candidates.map(c=>c.id===detail.id?{...c,cv:true,cvUrl:urlData.signedUrl}:c)}));
+                          setDetail(prev=>({...prev,cv:true,cvUrl:urlData.signedUrl}));
+                          setDetailForm(prev=>({...prev,cv:true,cvUrl:urlData.signedUrl}));
                         }
                       }} style={{padding:'10px',border:'2px dashed #d1d5db',borderRadius:8,fontSize:16,cursor:'pointer'}}/>
                     </div>
