@@ -320,21 +320,37 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
       btn.disabled = true; btn.textContent = 'שולח...';
 
       try {
-        // Upload CV to Supabase Storage if file exists
+        // Upload CV via cv-storage function → direct-to-Supabase into the private bucket
         let cvUrl = '';
-        let cvFname = '';
         if (cvFileName) {
           const cvFile = document.getElementById('cv-input').files[0];
           if (cvFile) {
-            const ext = cvFile.name.split('.').pop();
-            cvFname = `cv-${Date.now()}-${crypto.randomUUID()}.${ext}`;
-            const { error: uploadErr } = await sb.storage.from('job-images').upload(cvFname, cvFile, { upsert: true, contentType: cvFile.type });
-            if (!uploadErr) {
-              const { data: urlData } = sb.storage.from('job-images').getPublicUrl(cvFname);
-              cvUrl = urlData.publicUrl;
-            } else {
-              cvFname = '';
-            }
+            try {
+              const upRes = await fetch('/.netlify/functions/cv-storage?action=upload-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: cvFile.name, contentType: cvFile.type })
+              });
+              if (upRes.ok) {
+                const { path, raw } = await upRes.json();
+                const putRes = await fetch(`${SB_URL}/storage/v1${raw.url}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': cvFile.type },
+                  body: cvFile
+                });
+                if (putRes.ok) {
+                  const readRes = await fetch('/.netlify/functions/cv-storage?action=read-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path })
+                  });
+                  if (readRes.ok) {
+                    const { url } = await readRes.json();
+                    cvUrl = url || '';
+                  }
+                }
+              }
+            } catch (e) { /* CV upload failed — submit continues without a CV, same as before */ }
           }
         }
 
@@ -353,7 +369,6 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--dar
         });
 
         if (!rpcRes.ok) {
-          if (cvFname) sb.storage.from('job-images').remove([cvFname]).catch(()=>{});
           const errBody = await rpcRes.json().catch(()=>({}));
           if (errBody.message === 'DUPLICATE_APPLICATION') {
             errEl.textContent = 'כבר הגשת מועמדות למשרה זו עם מספר טלפון זה.';
