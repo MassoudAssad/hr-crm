@@ -42,6 +42,7 @@ exports.handler = async (event) => {
         'apikey': SERVICE_KEY,
         'Content-Type': 'application/json',
       },
+      body: '{}',
     });
     const resBody = await res.json().catch(() => ({}));
 
