@@ -7,6 +7,7 @@
 
 const SB_URL = 'https://rdzmwtixtfenmojeugyx.supabase.co';
 const OLD_MARKER = '/storage/v1/object/public/job-images/';
+const NEW_MARKER = '/storage/v1/object/sign/candidate-cvs/';
 const SIGN_EXPIRES_IN = 315360000; // 10 years, confirmed honored exactly by Supabase
 
 exports.handler = async (event) => {
@@ -19,8 +20,9 @@ exports.handler = async (event) => {
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const mode = (event.queryStringParameters && event.queryStringParameters.mode) || 'dry-run';
 
-  if (mode !== 'dry-run' && mode !== 'execute' && mode !== 'lookup') {
-    return { statusCode: 400, body: JSON.stringify({ error: 'mode must be dry-run, execute, or lookup' }) };
+  const VALID_MODES = ['dry-run', 'execute', 'lookup', 'cleanup-preview', 'cleanup-execute'];
+  if (!VALID_MODES.includes(mode)) {
+    return { statusCode: 400, body: JSON.stringify({ error: `mode must be one of: ${VALID_MODES.join(', ')}` }) };
   }
 
   // Fetch the full crm_state blob using service_role (bypasses RLS entirely)
@@ -40,6 +42,46 @@ exports.handler = async (event) => {
     const ids = ((event.queryStringParameters && event.queryStringParameters.ids) || '').split(',').map(s => s.trim()).filter(Boolean);
     const found = candidates.filter(c => ids.includes(c.id)).map(c => ({ id: c.id, name: c.name }));
     return { statusCode: 200, body: JSON.stringify({ mode: 'lookup', found }) };
+  }
+
+  // ── cleanup-preview / cleanup-execute: remove the OLD job-images copy for
+  // every candidate whose cvUrl now points at candidate-cvs. Never touches
+  // orphaned files (no candidate points at them, so they're never in this
+  // list at all) and is a safe no-op for candidates who never had a
+  // job-images copy to begin with (new post-migration uploads).
+  if (mode === 'cleanup-preview' || mode === 'cleanup-execute') {
+    const migrated = candidates.filter(c => typeof c.cvUrl === 'string' && c.cvUrl.includes(NEW_MARKER));
+    const toDelete = migrated.map(c => ({
+      candidateId: c.id,
+      oldPath: c.cvUrl.split(NEW_MARKER)[1].split('?')[0],
+    }));
+
+    if (mode === 'cleanup-preview') {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ mode: 'cleanup-preview', candidateCount: toDelete.length, toDelete }),
+      };
+    }
+
+    // cleanup-execute: bulk-delete all old paths from job-images in one call
+    const prefixes = toDelete.map(t => t.oldPath);
+    const delRes = await fetch(`${SB_URL}/storage/v1/object/remove/job-images`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SERVICE_KEY}`,
+        'apikey': SERVICE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prefixes }),
+    });
+    const delBody = await delRes.json().catch(() => null);
+    if (!delRes.ok) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'delete failed', details: delBody, attempted: toDelete }) };
+    }
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ mode: 'cleanup-execute', attempted: toDelete.length, deleted: delBody }),
+    };
   }
 
   // A candidate needs migration only if ITS OWN cvUrl still points at the
