@@ -40,7 +40,7 @@ exports.handler = async (event) => {
   // migrated candidates in the CRM UI (which can't search by candidateId).
   if (mode === 'lookup') {
     const ids = ((event.queryStringParameters && event.queryStringParameters.ids) || '').split(',').map(s => s.trim()).filter(Boolean);
-    const found = candidates.filter(c => ids.includes(c.id)).map(c => ({ id: c.id, name: c.name }));
+    const found = candidates.filter(c => ids.includes(c.id)).map(c => ({ id: c.id, name: c.name, cvUrl: c.cvUrl || null }));
     return { statusCode: 200, body: JSON.stringify({ mode: 'lookup', found }) };
   }
 
